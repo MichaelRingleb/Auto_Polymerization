@@ -1,0 +1,13 @@
+setup.py
+Stirrer/IKA_RET_Control_Visc.py
+Stirrer/__init__.py
+Stirrer/hotplate.py
+Stirrer.egg-info/PKG-INFO
+Stirrer.egg-info/SOURCES.txt
+Stirrer.egg-info/dependency_links.txt
+Stirrer.egg-info/requires.txt
+Stirrer.egg-info/top_level.txt
+Stirrer/Log/Logging_Class.py
+Stirrer/Log/__init__.py
+Stirrer/serial_labware/__init__.py
+Stirrer/serial_labware/serial_labware_py.py
