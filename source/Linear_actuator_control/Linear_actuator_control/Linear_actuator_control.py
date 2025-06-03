@@ -16,7 +16,7 @@ if arduino_port is None:
 # If port is found, open the serial connection
 arduino = serial.Serial(arduino_port, 9600, timeout=1)
 time.sleep(2)  # Give Arduino time to reset
-
+# Define a function to move the actuator with a given PWM value (1000-2000), 1000 is fully retracted, 2000 is fully extended (10 cm)
 def move_actuator(pwm_value):
     if 1000 <= pwm_value <= 2000:
         command = f"{pwm_value}\n"

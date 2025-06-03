@@ -2,23 +2,16 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>2742669f-eb5f-4ab2-8c69-ac649a8c4c41</ProjectGuid>
+    <ProjectGuid>07e347f7-0eb9-4478-b5a2-d113af57f73a</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>
-    </StartupFile>
+    <StartupFile>linear_actuator_control\linear_actuator_control.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>Auto_Polymerization</Name>
-    <RootNamespace>Auto_Polymerization</RootNamespace>
+    <Name>Linear_actuator_control</Name>
+    <RootNamespace>Linear_actuator_control</RootNamespace>
     <InterpreterId>CondaEnv|CondaEnv|auto_polymerization_env</InterpreterId>
-    <IsWindowsApplication>False</IsWindowsApplication>
-    <LaunchProvider>Standard Python launcher</LaunchProvider>
-    <EnableNativeCodeDebugging>False</EnableNativeCodeDebugging>
-    <TestFramework>none</TestFramework>
-    <UnitTestPattern>test*.py</UnitTestPattern>
-    <UnitTestRootDirectory>.</UnitTestRootDirectory>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -29,19 +22,18 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Devices\Linear_actuator\linear_actuator.py" />
-    <Compile Include="Devices\Linear_actuator\__init__.py" />
-    <Compile Include="Workflow.py" />
+    <Compile Include="linear_actuator_control\linear_actuator_control.py" />
+    <Compile Include="linear_actuator_control\__init__.py" />
+    <Compile Include="setup.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="linear_actuator_control\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <InterpreterReference Include="CondaEnv|CondaEnv|auto_polymerization_env" />
-  </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Devices\" />
-    <Folder Include="Devices\Linear_actuator\" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="environment.yml" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
