@@ -2,6 +2,7 @@ import sys
 import os
 import time
 import serial
+import serial.tools.list_ports
 
 
 base_dir = os.path.dirname(__file__)
@@ -50,12 +51,18 @@ def test_peristaltic_pump(com_port, rpm_in, direct_in, on_in):
     
 
 def test_relay(com_port, relay_pos):
-    arduino = serial.Serial(com_port, 9600, timeout=1)
+    for port in serial.tools.list_ports.comports():
+         if "Arduino" in port.description:
+            arduino_port = port.device
+            print(f"Found Arduino at: {arduino_port}")
+            break
+    arduino = serial.Serial(arduino_port, 9600, timeout=1)
     time.sleep(2)
     if relay_pos == "ON":
-        arduino.write(b"ON\n")#open relay
-    else: 
-        arduino.write(b"OFF\n") #close relay
+        arduino.write(b"ON\n")
+    else:
+        arduino.write(b"OFF\n")
+    arduino.close()
 
 
 
@@ -86,15 +93,9 @@ dev.write(b"\x71\x00")
 """
 
 if __name__ == "__main__":
+    
 
-    #test_actuator("COM5", 1000)
-    import serial
 
-    try:
-        arduino = serial.Serial('COM5', 9600)
-        print("Connection successful.")
-        arduino.close()
-    except serial.SerialException as e:
-        print(f"Serial error: {e}")
-
-#    test_relay("COM5", "OFF")
+   test_actuator("COM5", 1000)
+   
+   #test_relay("COM5", "OFF")

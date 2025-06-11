@@ -1,23 +1,22 @@
+from re import A
 import serial
 import serial.tools.list_ports
 import time
 
 # Search for a port whose description contains "Arduino"
-arduino_port = None
-for port in serial.tools.list_ports.comports():
-    if "Arduino" in port.description:
-        arduino_port = port.device
-        print(f"Found Arduino at: {arduino_port}")
-        break
-"""
-if arduino_port is None:
-    raise Exception("No Arduino device found. Please check the connection.")
-"""
-# If port is found, open the serial connection
-arduino = serial.Serial(arduino_port, 9600, timeout=1)
-time.sleep(2)  # Give Arduino time to reset
+
 # Define a function to move the actuator with a given PWM value (1000-2000), 1000 is fully retracted, 2000 is fully extended (10 cm)
 def move_actuator(pwm_value):
+    arduino_port = None
+    for port in serial.tools.list_ports.comports():
+        if "Arduino" in port.description:
+            arduino_port = port.device
+            print(f"Found Arduino at: {arduino_port}")
+            break
+
+    # If port is found, open the serial connection
+    arduino = serial.Serial(arduino_port, 9600, timeout=1)
+    time.sleep(2)  # Give Arduino time to reset
     if 1000 <= pwm_value <= 2000:
         command = f"{pwm_value}\n"
         arduino.write(command.encode())
