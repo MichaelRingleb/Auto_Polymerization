@@ -54,24 +54,24 @@ def test_relay(com_port, relay_pos):
     for port in serial.tools.list_ports.comports():
          if "Arduino" in port.description:
             arduino_port = port.device
-            print(f"Found Arduino at: {arduino_port}")
+            print(f"Found Arduino on: {arduino_port}")
             break
     arduino = serial.Serial(arduino_port, 9600, timeout=1)
     time.sleep(2)
-    if relay_pos == "ON":
+    if relay_pos == "ON" or "on":
         arduino.write(b"ON\n")
     else:
-        arduino.write(b"OFF\n")
+        arduino.write(b"OFF\n")  #Normally open (NO) port at valve opened
     arduino.close()
 
 
-
-def test_actuator(com_port, actuator_pos):
+def test_actuator(com_port):
     # Test control of linear actuator
     # Move actuator to certain position (1000 = 0%, 2000 = 100%)
     while True:
         actuator_pos = int(input("actuator position (1000 - 2000):"))
         move_actuator(actuator_pos) # Move actuator to half position
+
 
 def test_hotplate(com_port, _temp, _rpm, heat_switch):
     #Test control of IKA hotplate
@@ -96,6 +96,5 @@ if __name__ == "__main__":
     
 
 
-   test_actuator("COM5", 1000)
-   
-   #test_relay("COM5", "OFF")
+   test_actuator("COM5")
+   test_relay("COM5", "ON")
