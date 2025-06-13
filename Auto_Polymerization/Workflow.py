@@ -29,7 +29,7 @@ def str_to_bool(s):
 def test_peristaltic_pump(com_port, rpm_in, direct_in, on_in):
     # Test control of Peristaltic pump
     while True:
-
+        """
         pump_solvent = LongerPeristalticPump(com_port="COM10", address=1)
         rpm_in= input("pump_solvent rpm:")
         direct_in = input("pump_solvent direction (True/False):")
@@ -38,7 +38,7 @@ def test_peristaltic_pump(com_port, rpm_in, direct_in, on_in):
               direction=str_to_bool(direct_in), 
               rpm=float(rpm_in)) # Example to set pump on, CCW direction, and 100 RPM
         print(pump_solvent.query_pump())
-    
+        """
 
         pump_polymer = LongerPeristalticPump(com_port="COM12", address=2)
         rpm_in= input("pump_polymer rpm:")
@@ -58,9 +58,9 @@ def test_relay(com_port, relay_pos):
             break
     arduino = serial.Serial(arduino_port, 9600, timeout=1)
     time.sleep(2)
-    if relay_pos == "ON" or "on":
+    if relay_pos == "ON" or relay_pos == "on":
         arduino.write(b"ON\n")
-    else:
+    elif relay_pos == "OFF" or relay_pos == "off":
         arduino.write(b"OFF\n")  #Normally open (NO) port at valve opened
     arduino.close()
 
@@ -94,7 +94,7 @@ dev.write(b"\x71\x00")
 
 if __name__ == "__main__":
     
+   #test_peristaltic_pump("COM12", 99, "True", "True")
 
-
-   test_actuator("COM5")
+   #test_actuator("COM5")
    test_relay("COM5", "ON")
