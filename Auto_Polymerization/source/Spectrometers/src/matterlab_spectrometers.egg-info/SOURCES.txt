@@ -1,0 +1,15 @@
+MANIFEST.in
+setup.cfg
+setup.py
+src/matterlab_spectrometers/__init__.py
+src/matterlab_spectrometers/ccs_spectrometer.py
+src/matterlab_spectrometers/hamamatsu_mini.py
+src/matterlab_spectrometers/ksc101_solenoid.py
+src/matterlab_spectrometers/pm100d_powermeter.py
+src/matterlab_spectrometers/pm16X_spectrometer.py
+src/matterlab_spectrometers/tlup_leddriver.py
+src/matterlab_spectrometers.egg-info/PKG-INFO
+src/matterlab_spectrometers.egg-info/SOURCES.txt
+src/matterlab_spectrometers.egg-info/dependency_links.txt
+src/matterlab_spectrometers.egg-info/requires.txt
+src/matterlab_spectrometers.egg-info/top_level.txt
