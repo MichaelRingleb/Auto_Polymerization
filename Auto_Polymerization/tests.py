@@ -3,6 +3,7 @@ import os
 import time
 import serial
 import serial.tools.list_ports
+import matplotlib.pyplot as plt
 
 # Add the source directories to sys.path
 base_dir = os.path.dirname(__file__)
@@ -91,22 +92,24 @@ def test_ccs_spectrometer():
         device_model="CCS200",
         device_id="M00479664"
     )
-    spectrum = spec.measure_spectrum(0.1)  # 0.1 Sekunden Integrationszeit
-    print("Spektrum:", spectrum)
+    # measure sectrometer spectrum
+    spectrum = spec.measure_spectrum(0.01)  # 0.01 Sekunde Integrationszeit
+    # load wavelength data
+    wavelengths = spec.get_wavelength_data()
+    # Plot
+    plt.figure()
+    plt.plot(wavelengths, spectrum)
+    plt.xlabel("Wavelength (nm)")
+    plt.ylabel("Intensity (a.u.)")
+    plt.title("Measured spectrum")
+    plt.grid(True)
+    plt.show()
     spec.close_instrument()
-    
 
-
-"""
-# Test control of continous syringe pump
-from serial import Serial
-dev = Serial("COM11", timeout = 1)
-dev.write(b"\x71\x00")
-"""
 
 if __name__ == "__main__":
-   test_ccs_spectrometer()  # Test the CCS spectrometer
-   #test_peristaltic_pump("COM12", 99, "True", "True") 
+   #test_ccs_spectrometer()  # Test the CCS spectrometer
+   test_peristaltic_pump("COM12", 99, "True", "True") 
    #test_hotplate("COM7", 50, 100, "True") 
    #test_relay("COM5", "ON")
    #test_actuator("COM5")
