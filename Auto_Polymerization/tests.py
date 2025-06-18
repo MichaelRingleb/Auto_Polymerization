@@ -4,6 +4,7 @@ import time
 import serial
 import serial.tools.list_ports
 import matplotlib.pyplot as plt
+import yaml
 
 # Add the source directories to sys.path
 base_dir = os.path.dirname(__file__)
@@ -20,14 +21,69 @@ sys.path.append(spectrometer_src)
 
 # Import necessary classes from the modules
 from matterlab_pumps.longer_peri import LongerPeristalticPump
+from matterlab_pumps.jkem_pump import JKemPump
 from matterlab_serial_device.serial_device import SerialDevice, open_close
 from matterlab_hotplates.ika_hotplate import IKAHotplate
 from linear_actuator import move_actuator
 from matterlab_spectrometers.ccs_spectrometer import CCSSpectrometer
 
+
+# Load config from YAML
+config_path = os.path.join(base_dir, "config.yml")
+with open(config_path, "r") as f:
+    config = yaml.safe_load(f)
+
+
+# Initialize peristaltic pumps as dict
+peristaltic_pumps = {
+    pump_cfg["name"]: LongerPeristalticPump(
+        com_port=pump_cfg["com_port"],
+        address=pump_cfg["address"]
+    )
+    for pump_cfg in config["peristaltic_pumps"]
+}
+
+# Initialize syringe pumps as dict
+syringe_pumps = {
+    pump_cfg["name"]: JKemPump(
+        com_port=pump_cfg["com_port"],
+        address=pump_cfg["address"],
+        syringe_volume=pump_cfg["syringe_volume"]
+    )
+    for pump_cfg in config["syringe_pumps"]
+}
+
+# Initialize hotplate
+hotplate = IKAHotplate(com_port=config["hotplate"]["com_port"])
+
+# Initialize actuator and solenoid valve COM ports
+linear_actuator_port = config["linear_actuator"]["com_port"]
+solenoid_valve_port = config["solenoid_valve"]["com_port"]
+
+
+
 # Function to convert string input to boolean
 def str_to_bool(s):
     return s.strip().lower() in ("true", "1", "yes", "y")
+
+
+# Function to test the JKem syringe pump
+def test_jkem_pump():
+    # Initialize the JKem pump (adjust COM port and address as needed)
+    pump = JKemPump(
+        com_port="COM3",        # e.g., "COM3" or "COM5" depending on your setup
+        address=1,              # Address set in daisy chain (fro left to right: 1 to 7)     
+        syringe_volume=1e-2     # Syringe volume in liters (e.g., 10 mL = 1e-2 L)
+    )
+
+    # Move the valve to port 2
+    pump.move_valve(valve_num=2)
+    print("Valve position:", pump.port)
+
+    # Draw and dispense 1.5 mL (move plunger)
+    pump.draw_and_dispense(1.5, 2,4,2,2)
+
+
 
 
 # Function to test the peristaltic pump
@@ -85,6 +141,7 @@ def test_hotplate(com_port, _temp, _rpm, heat_switch):
     hotplate._heat_switch = heat_switch                                 #Turn off heating
     #print(hotplate.query_hotplate())                                   #Query hotplate status
 
+   
 
 def test_ccs_spectrometer():
     spec = CCSSpectrometer(
@@ -108,8 +165,9 @@ def test_ccs_spectrometer():
 
 
 if __name__ == "__main__":
-   #test_ccs_spectrometer()  # Test the CCS spectrometer
+   #test_jkem_pump()  
    test_peristaltic_pump("COM12", 99, "True", "True") 
    #test_hotplate("COM7", 50, 100, "True") 
    #test_relay("COM5", "ON")
    #test_actuator("COM5")
+   #test_ccs_spectrometer()  # Test the CCS spectrometer
