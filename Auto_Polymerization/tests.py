@@ -3,21 +3,21 @@ import os
 import time
 import serial
 import serial.tools.list_ports
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 import yaml
 
 # Add the source directories to sys.path
 base_dir = os.path.dirname(__file__)
-pumps_src = os.path.abspath(os.path.join(base_dir, "source", "Pumps", "src"))                   #add Pumps source directory 
-serial_dev_src = os.path.abspath(os.path.join(base_dir, "source", "SerialDevice", "src"))       #add SerialDevice source directory  
+#pumps_src = os.path.abspath(os.path.join(base_dir, "source", "Pumps", "src"))                   #add Pumps source directory 
+#serial_dev_src = os.path.abspath(os.path.join(base_dir, "source", "SerialDevice", "src"))       #add SerialDevice source directory  
 actuator_src = os.path.abspath(os.path.join(base_dir, "source", "LinearActuator","src")) #add LinearActuator source directory to sys.path
-hotplate_src = os.path.abspath(os.path.join(base_dir, "source", "Hotplates", "src")) #add Hotplate source directory to sys.path
-spectrometer_src = os.path.abspath(os.path.join(base_dir, "source", "Spectrometers", "src"))
-sys.path.append(pumps_src)
-sys.path.append(serial_dev_src)
+#hotplate_src = os.path.abspath(os.path.join(base_dir, "source", "Hotplates", "src")) #add Hotplate source directory to sys.path
+#spectrometer_src = os.path.abspath(os.path.join(base_dir, "source", "Spectrometers", "src"))
+#sys.path.append(pumps_src)
+#sys.path.append(serial_dev_src)
 sys.path.append(actuator_src)
-sys.path.append(hotplate_src)
-sys.path.append(spectrometer_src)
+#sys.path.append(hotplate_src)
+#sys.path.append(spectrometer_src)
 
 # Import necessary classes from the modules
 from matterlab_pumps.longer_peri import LongerPeristalticPump
