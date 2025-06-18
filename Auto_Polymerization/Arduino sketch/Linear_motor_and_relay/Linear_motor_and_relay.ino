@@ -19,7 +19,7 @@ void loop() {
 
     input.trim();                                             // trims whitespaces and linebreaks
 
-    if (input.toInt() >= 1000 && input.toInt() <= 2000) {     // if serial input string is between "1000" and "2000"
+    if (input.toInt() >= 1000 && input.toInt () <= 2000) {     // if serial input string is between "1000" and "2000"
       actuator.writeMicroseconds(input.toInt());              //  send value to actuator which will then move to the required position (1000 = 0 cm, 2000 = 10 cm)
     } else if (input == "ON") {                               // if input == ON
       digitalWrite(relayPin, HIGH);                           // set PinMode which will trigger the relay and hence, the solenoid valve

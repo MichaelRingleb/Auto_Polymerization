@@ -4,6 +4,9 @@
 
 
 ## Required packages and installation
+Thorlabs Drivers for CCS200 spectrometer: https://www.thorlabs.com/thorproduct.cfm?partnumber=CCS200#ad-image-0 
+#Thorlabs Driver for upLED controller: https://www.thorlabs.com/thorproduct.cfm?partnumber=UPLED 
+
 python == 3.10
 
 

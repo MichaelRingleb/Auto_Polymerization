@@ -28,38 +28,37 @@ from linear_actuator import move_actuator
 from matterlab_spectrometers.ccs_spectrometer import CCSSpectrometer
 
 
-# Load config from YAML
-config_path = os.path.join(base_dir, "config.yml")
-with open(config_path, "r") as f:
-    config = yaml.safe_load(f)
+# # Load config from YAML
+# config_path = os.path.join(base_dir, "config.yml")
+# with open(config_path, "r") as f:
+#     config = yaml.safe_load(f)
 
 
-# Initialize peristaltic pumps as dict
-peristaltic_pumps = {
-    pump_cfg["name"]: LongerPeristalticPump(
-        com_port=pump_cfg["com_port"],
-        address=pump_cfg["address"]
-    )
-    for pump_cfg in config["peristaltic_pumps"]
-}
+# # Initialize peristaltic pumps as dict
+# peristaltic_pumps = {
+#     pump_cfg["name"]: LongerPeristalticPump(
+#         com_port=pump_cfg["com_port"],
+#         address=pump_cfg["address"]
+#     )
+#     for pump_cfg in config["peristaltic_pumps"]
+# }
 
-# Initialize syringe pumps as dict
-syringe_pumps = {
-    pump_cfg["name"]: JKemPump(
-        com_port=pump_cfg["com_port"],
-        address=pump_cfg["address"],
-        syringe_volume=pump_cfg["syringe_volume"]
-    )
-    for pump_cfg in config["syringe_pumps"]
-}
+# # Initialize syringe pumps as dict
+# syringe_pumps = {
+#     pump_cfg["name"]: JKemPump(
+#         com_port=pump_cfg["com_port"],
+#         address=pump_cfg["address"],
+#         syringe_volume=pump_cfg["syringe_volume"]
+#     )
+#     for pump_cfg in config["syringe_pumps"]
+# }
 
-# Initialize hotplate
-hotplate = IKAHotplate(com_port=config["hotplate"]["com_port"])
+# # Initialize hotplate
+# hotplate = IKAHotplate(com_port=config["hotplate"]["com_port"])
 
-# Initialize actuator and solenoid valve COM ports
-linear_actuator_port = config["linear_actuator"]["com_port"]
-solenoid_valve_port = config["solenoid_valve"]["com_port"]
-
+# # Initialize actuator and solenoid valve COM ports
+# linear_actuator_port = config["linear_actuator"]["com_port"]
+# solenoid_valve_port = config["solenoid_valve"]["com_port"]
 
 
 # Function to convert string input to boolean
@@ -133,13 +132,11 @@ def test_actuator(com_port):
 
 # Function to test the IKA hotplate
 def test_hotplate(com_port, _temp, _rpm, heat_switch):
-    hotplate = IKAHotplate(com_port="COM7", max_temp=200, max_rpm=1700) #Initialize the hotplate with the specified COM port, max temperature, and max RPM
+    hotplate = IKAHotplate(com_port, max_temp=200, max_rpm=1700) #Initialize the hotplate with the specified COM port, max temperature, and max RPM
     hotplate.temp = _temp                                               #Set hotplate temperature
-    hotplate.rpm = _rpm                                                 #Set hotplate RPM
-    time.sleep(5)                                                       #Wait for 5 seconds to allow hotplate to stabilize
+    hotplate.rpm = _rpm                                                 #Set hotplate RPM                                                     #Wait for 5 seconds to allow hotplate to stabilize
     hotplate._heat_switch = heat_switch                                 #Turn off heating
-    #print(hotplate.query_hotplate())                                   #Query hotplate status
-
+    
    
 
 def test_ccs_spectrometer():
@@ -166,7 +163,7 @@ def test_ccs_spectrometer():
 if __name__ == "__main__":
    #test_jkem_pump()  
    #test_peristaltic_pump("COM12", 99, "True", "True") 
-   test_hotplate( 50, 100, "True") 
-   #test_relay("COM5", "ON")
-   #test_actuator("COM5")
-   #test_ccs_spectrometer()  # Test the CCS spectrometer
+   #test_hotplate("COM14",20, 0, False)  #for heat_switch: bool
+   #test_relay("COM12", "ON")
+   #test_actuator("COM12")
+   test_ccs_spectrometer()  # Test the CCS spectrometer
