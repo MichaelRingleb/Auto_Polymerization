@@ -25,7 +25,7 @@ syringe_pumps:
     syringe_volume: 0.01
 
 hotplate:
-    com_port: COM7    
+    com_port: COM14    
 
 
 linear_actuator:
