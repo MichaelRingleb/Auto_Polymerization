@@ -7,7 +7,7 @@
 python == 3.10
 
 
-scipy, numpy, pandas, matplotlib, pyserial, nmrglue, requests, pyserial
+scipy, numpy, pandas, matplotlib, pyserial, nmrglue, requests, pyserial,pyyaml
 
 from matterlab:
 https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices
