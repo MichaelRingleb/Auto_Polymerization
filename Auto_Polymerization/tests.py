@@ -114,7 +114,6 @@ def test_peristaltic_pump(com_port, rpm_in, direct_in, on_in):
 
 # Function to test the relay
 def test_relay(com_port, relay_pos):
-      
     arduino = serial.Serial(com_port, 9600, timeout=1)      #Open the serial port for communication
     time.sleep(2)                                           #Give Arduino time to reset
   

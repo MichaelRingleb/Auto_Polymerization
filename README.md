@@ -3,7 +3,20 @@
 
 
 
--For the control of the stirrer
+## Required packages and installation
+python == 3.10
+
+
+scipy, numpy, pandas, matplotlib, pyserial, nmrglue, requests, pyserial
+
+from matterlab:
+https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices
+Hotplates
+Pumps
+Spectrometer 
+Serial Device
+
+Install Arduino IDE on PC and upload the Arduino code (in subfolder Arduino sketch) to the Arduino board
 
 
 ## Notes
@@ -16,8 +29,6 @@
 If you want to develop the package further, use the development mode (`pip install -e .`). Changes to the source code will be picked up immediately.
 
 ## License
-
-(c) 2017 The Cronin Group, University of Glasgow  
 MIT License (or specify your own license here)
 
 ---
