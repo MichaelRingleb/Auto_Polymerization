@@ -71,7 +71,7 @@ def str_to_bool(s):
 def test_jkem_pump():
     # Initialize the JKem pump (adjust COM port and address as needed)
     pump = JKemPump(
-        com_port="COM3",        # e.g., "COM3" or "COM5" depending on your setup
+        com_port="COM7",        # e.g., "COM3" or "COM5" depending on your setup
         address=1,              # Address set in daisy chain (fro left to right: 1 to 7)     
         syringe_volume=1e-2     # Syringe volume in liters (e.g., 10 mL = 1e-2 L)
     )
@@ -162,9 +162,9 @@ def test_ccs_spectrometer():
 
 
 if __name__ == "__main__":
-   #test_jkem_pump()  
+   test_jkem_pump()  
    #test_peristaltic_pump("COM12", 99, "True", "True") 
    #test_hotplate("COM14",20, 0, False)  #for heat_switch: bool
    #test_relay("COM12", "ON")
    #test_actuator("COM12")
-   test_ccs_spectrometer()  # Test the CCS spectrometer
+   #test_ccs_spectrometer()  # Test the CCS spectrometer
