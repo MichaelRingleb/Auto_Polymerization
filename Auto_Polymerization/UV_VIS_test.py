@@ -20,10 +20,10 @@ def plot_spectrum(wavelengths, spectrum, title):
     plt.ylabel("Intensity (a.u.)")
     plt.title(title)
     plt.grid(True)
-    plt.show(block=False)  # show non-blocking so the loop can continue
+    #plt.show(block=False)  # show non-blocking so the loop can continue
 
 def pump_spectrum_loop():
-    pump = LongerPeristalticPump(com_port="COM10", address=1)
+    pump = LongerPeristalticPump(com_port="COM15", address=1)
     spec = CCSSpectrometer(
         usb_port="USB",
         device_model="CCS200",
@@ -32,9 +32,9 @@ def pump_spectrum_loop():
     try:
         i = 1
         while True:
-            print(f"--- Loop {i}: Starting pump for 60 seconds ---")
+            print(f"--- Loop {i}: Starting pump for 300 seconds ---")
             pump.set_pump(rpm=0.7, on=True, direction=True)
-            time.sleep(120)
+            time.sleep(300) 
             print("Stopping pump and taking spectrum...")
             pump.set_pump(on=False)
             time.sleep(2)  # short wait to ensure flow stops
@@ -48,7 +48,7 @@ def pump_spectrum_loop():
             plot_spectrum(wavelengths, spectrum, f"Spectrum {i} ({now.strftime('%Y-%m-%d %H:%M:%S')})")
             i += 1
             print("Restarting pump...")
-            pump.set_pump(rpm=0.7, on=True, direction=True)
+            pump.set_pump(rpm=10, on=True, direction=True)
             time.sleep(2)  # short wait before next loop
     except KeyboardInterrupt:
         print("Loop interrupted by user. Stopping pump and closing spectrometer.")

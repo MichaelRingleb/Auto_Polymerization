@@ -98,8 +98,9 @@ def test_peristaltic_pump(com_port, rpm_in, direct_in, on_in):
         pump_solvent.set_pump(on=str_to_bool(on_in), 
               direction=str_to_bool(direct_in), 
 
+
               rpm=float(rpm_in)) # Example to set pump on, CCW direction, and 100 RPM
-        #print(pump_solvent.query_pump())
+        print(pump_solvent.query_pump())
         
         # Test control of peristaltic pump for the polymer, address referes to the address of the pump on the DIP (see manual from Longer and also DIP panel on the pump)
         pump_polymer = LongerPeristalticPump(com_port="COM16", address=2)  #COM port on my computer == 12
@@ -110,7 +111,7 @@ def test_peristaltic_pump(com_port, rpm_in, direct_in, on_in):
         pump_polymer.set_pump(on=str_to_bool(on_in), 
               direction=str_to_bool(direct_in), 
               rpm=float(rpm_in)) # Example to set pump on, CCW direction, and 100 RPM
-        #print(pump_polymer.query_pump())
+        print(pump_polymer.query_pump())
     
 
 # Function to test the relay
