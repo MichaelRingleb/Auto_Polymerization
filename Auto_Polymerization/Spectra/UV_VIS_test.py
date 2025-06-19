@@ -56,4 +56,16 @@ def pump_spectrum_loop():
         spec.close_instrument()
 
 if __name__ == "__main__":
-    pump_spectrum_loop()
+    #pump_spectrum_loop()
+    spec = CCSSpectrometer(
+        usb_port="USB",
+        device_model="CCS200",
+        device_id="M00479664"
+    )
+    spectrum = spec.measure_spectrum(0.003)
+    wavelengths = spec.get_wavelength_data()
+    # filename with date and datetime
+    now = datetime.now()
+    filename = now.strftime("DMSO+CTA_spectrum_%Y-%m-%d_%H-%M-%S.txt")
+    save_spectrum(wavelengths, spectrum, filename)
+    print(f"Spectrum saved as {filename}")
