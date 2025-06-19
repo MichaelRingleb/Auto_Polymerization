@@ -33,7 +33,7 @@ def pump_spectrum_loop():
         i = 1
         while True:
             print(f"--- Loop {i}: Starting pump for 300 seconds ---")
-            pump.set_pump(rpm=0.7, on=True, direction=True)
+            pump.set_pump(rpm=0.7, on=True, direction=False)
             time.sleep(300) 
             print("Stopping pump and taking spectrum...")
             pump.set_pump(on=False)
