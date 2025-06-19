@@ -38,7 +38,7 @@ def pump_spectrum_loop():
             print("Stopping pump and taking spectrum...")
             pump.set_pump(on=False)
             time.sleep(2)  # short wait to ensure flow stops
-            spectrum = spec.measure_spectrum(0.1)
+            spectrum = spec.measure_spectrum(0.01)
             wavelengths = spec.get_wavelength_data()
             # filename with date and datetime
             now = datetime.now()
