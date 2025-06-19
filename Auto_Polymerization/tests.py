@@ -90,18 +90,19 @@ def test_jkem_pump():
 def test_peristaltic_pump(com_port, rpm_in, direct_in, on_in):
     while True:    
         # Test control of peristaltic pump for the solvent, address referes to the address of the pump on the DIP (see manual from Longer and also DIP panel on the pump)
-        pump_solvent = LongerPeristalticPump(com_port="COM10", address=1)
+        pump_solvent = LongerPeristalticPump(com_port="COM15", address=1)   # COM on my PC == 10
         rpm_in= input("pump_solvent rpm:")                              #revolutions per minute on the pump (from 0.1 to 99)
         direct_in = input("pump_solvent direction (True/False):")       #True = clockwise, False = counter-clockwise
         on_in=input("pump_solvent on/off (True/False):")                #True = on, False = off
 
         pump_solvent.set_pump(on=str_to_bool(on_in), 
               direction=str_to_bool(direct_in), 
+
               rpm=float(rpm_in)) # Example to set pump on, CCW direction, and 100 RPM
-        print(pump_solvent.query_pump())
+        #print(pump_solvent.query_pump())
         
         # Test control of peristaltic pump for the polymer, address referes to the address of the pump on the DIP (see manual from Longer and also DIP panel on the pump)
-        pump_polymer = LongerPeristalticPump(com_port="COM12", address=2)
+        pump_polymer = LongerPeristalticPump(com_port="COM16", address=2)  #COM port on my computer == 12
         rpm_in= input("pump_polymer rpm:")                          #revolutions per minute on the pump (from 0.1 to 99)
         direct_in = input("pump_polymer direction (True/False):")   #True = clockwise, False = counter-clockwise
         on_in=input("pump_polymer on/off (True/False):")            #True = on, False = off
@@ -109,7 +110,7 @@ def test_peristaltic_pump(com_port, rpm_in, direct_in, on_in):
         pump_polymer.set_pump(on=str_to_bool(on_in), 
               direction=str_to_bool(direct_in), 
               rpm=float(rpm_in)) # Example to set pump on, CCW direction, and 100 RPM
-        print(pump_polymer.query_pump())
+        #print(pump_polymer.query_pump())
     
 
 # Function to test the relay
@@ -162,8 +163,8 @@ def test_ccs_spectrometer():
 
 
 if __name__ == "__main__":
-   test_jkem_pump()  
-   #test_peristaltic_pump("COM12", 99, "True", "True") 
+   #test_jkem_pump()  
+   test_peristaltic_pump("COM12", 10, "True", "True") 
    #test_hotplate("COM14",20, 0, False)  #for heat_switch: bool
    #test_relay("COM12", "ON")
    #test_actuator("COM12")
