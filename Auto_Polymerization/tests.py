@@ -98,7 +98,6 @@ def test_peristaltic_pump(com_port, rpm_in, direct_in, on_in):
         pump_solvent.set_pump(on=str_to_bool(on_in), 
               direction=str_to_bool(direct_in), 
 
-
               rpm=float(rpm_in)) # Example to set pump on, CCW direction, and 100 RPM
         print(pump_solvent.query_pump())
         
