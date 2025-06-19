@@ -32,8 +32,8 @@ def pump_spectrum_loop():
     try:
         i = 1
         while True:
-            print(f"--- Loop {i}: Starting pump for 300 seconds ---")
-            pump.set_pump(rpm=3.0, on=True, direction=False)
+            #print(f"--- Loop {i}: Starting pump for 300 seconds ---")
+            pump.set_pump(rpm=0, on=False, direction=False)
             time.sleep(300) 
             print("Stopping pump and taking spectrum...")
             pump.set_pump(on=False)
@@ -48,7 +48,7 @@ def pump_spectrum_loop():
             plot_spectrum(wavelengths, spectrum, f"Spectrum {i} ({now.strftime('%Y-%m-%d %H:%M:%S')})")
             i += 1
             print("Restarting pump...")
-            pump.set_pump(rpm=3.0, on=True, direction=False)
+            pump.set_pump(rpm=0, on=False, direction=False)
             time.sleep(2)  # short wait before next loop
     except KeyboardInterrupt:
         print("Loop interrupted by user. Stopping pump and closing spectrometer.")
