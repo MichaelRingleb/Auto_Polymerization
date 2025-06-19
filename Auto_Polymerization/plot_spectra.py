@@ -6,14 +6,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-# -*- coding: utf-8 -*-
-
-import os
-import glob
-import numpy as np
-import matplotlib.pyplot as plt
-
-
 def plot_spectra():
     # Nur im Ordner "spectra" suchen, nicht in Unterordnern
     spectra_dir = os.path.join(os.path.dirname(__file__), "spectra")
