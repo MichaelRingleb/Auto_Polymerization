@@ -24,9 +24,10 @@ def load_spectrum(file):
         return None, None
 
 def save_spectrum(filename, x, y, header):
-    """Save spectrum data to a file."""
+    """Save spectrum data to a file. Overwrites if file exists."""
+    # Overwrite existing file without prompt
     np.savetxt(filename, np.column_stack((x, y)), fmt="%.6f", header=header)
-    print(f"File saved: {filename}")
+    print(f"File saved (overwritten if existed): {filename}")
 
 def plot_spectra(spectra_list, xlabel, ylabel, title):
     plt.figure(figsize=(10, 6))
@@ -108,19 +109,27 @@ def reference_averaged_spectra_to_dmso(folder, dmso_prefix="pure_DMSO_spectrum")
         out_name = os.path.splitext(avg_file)[0] + "_referenced_to_DMSO.txt"
         save_spectrum(out_name, x, y_diff, "Wavelength\tIntensity diff (sample - DMSO)")
 
-def calculate_and_plot_absorbance(folder, ref_filename="pure_DMSO_spectrum_average.txt"):
-    ref_path = os.path.join(folder, ref_filename)
-    if not os.path.exists(ref_path):
-        print(f"Reference file '{ref_path}' not found.")
+def calculate_and_plot_absorbance(
+    sample_folder,
+    ref_spectrum_path
+):
+    """
+    Calculates and plots absorbance spectra for all spectra in sample_folder,
+    using the given reference spectrum (e.g., DMSO).
+    """
+    if not os.path.exists(ref_spectrum_path):
+        print(f"Reference file '{ref_spectrum_path}' not found.")
         return
-    x_ref, I0 = load_spectrum(ref_path)
+    x_ref, I0 = load_spectrum(ref_spectrum_path)
     if x_ref is None or I0 is None:
         print("Reference spectrum could not be loaded.")
         return
     I0[I0 <= 0] = 1e-6
     sample_files = [
-        f for f in glob.glob(os.path.join(folder, "*_average.txt"))
-        if os.path.basename(f) != ref_filename
+        f for f in glob.glob(os.path.join(sample_folder, "*.txt"))
+        if os.path.isfile(f)
+        and not f.endswith("_average.txt")
+        and not f.endswith("_absorbance.txt")
     ]
     spectra_list = []
     for sample_file in sample_files:
@@ -168,9 +177,11 @@ def calculate_and_plot_absorbance_for_all_spectra(
 
 if __name__ == "__main__":
     # Example usage:
-    plot_spectra_from_folder(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\MRG-061-F-4_spectra_while_stopped")
+    #plot_spectra_from_folder(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\MRG-061-F5_spectra_while_stopped_with_alu_foil")
     # average_spectra_in_folder(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\pure_compounds_spectra_test")
     # reference_averaged_spectra_to_dmso(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\pure_compounds_spectra_test")
+    calculate_and_plot_absorbance(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\MRG-061-F5_spectra_while_stopped_with_alu_foil", 
+                                  r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\MRG-061-F-3_pure_compounds_spectra_test\pure_DMSO_spectrum_average.txt")
     # calculate_and_plot_absorbance(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\pure_compounds_spectra_test")
     # calculate_and_plot_absorbance_for_all_spectra(
     #     sample_folder=r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\spectra_while_stopped",
