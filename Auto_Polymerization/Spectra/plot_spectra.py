@@ -261,13 +261,13 @@ def calculate_and_plot_absorbance_for_all_spectra(
 
 
 if __name__ == "__main__":
-    #plot_spectra_from_Spectra_folder()
+    plot_spectra_from_Spectra_folder()
     #average_spectra_in_folder(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\pure_compounds_spectra_test")
     #reference_averaged_spectra_to_dmso(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\pure_compounds_spectra_test")
     #calculate_and_plot_absorbance(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\pure_compounds_spectra_test")
 
     # For all spectra in spectra_while_stopped, referencing DMSO in pure_compounds_spectra_test
-    calculate_and_plot_absorbance_for_all_spectra(
-        sample_folder=r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\spectra_while_stopped",
-        ref_folder=r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\pure_compounds_spectra_test"
-    )
+    # calculate_and_plot_absorbance_for_all_spectra(
+    #     sample_folder=r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\spectra_while_stopped",
+    #     ref_folder=r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\pure_compounds_spectra_test"
+    # )

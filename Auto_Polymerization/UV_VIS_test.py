@@ -33,7 +33,7 @@ def pump_spectrum_loop():
         i = 1
         while True:
             #print(f"--- Loop {i}: Starting pump for 300 seconds ---")
-            pump.set_pump(rpm=0, on=False, direction=False)
+            pump.set_pump(rpm=3, on=True, direction=False)
             time.sleep(300) 
             print("Stopping pump and taking spectrum...")
             pump.set_pump(on=False)
@@ -48,7 +48,7 @@ def pump_spectrum_loop():
             plot_spectrum(wavelengths, spectrum, f"Spectrum {i} ({now.strftime('%Y-%m-%d %H:%M:%S')})")
             i += 1
             print("Restarting pump...")
-            pump.set_pump(rpm=0, on=False, direction=False)
+            pump.set_pump(rpm=3, on=True, direction=False)
             time.sleep(2)  # short wait before next loop
     except KeyboardInterrupt:
         print("Loop interrupted by user. Stopping pump and closing spectrometer.")
@@ -56,16 +56,20 @@ def pump_spectrum_loop():
         spec.close_instrument()
 
 if __name__ == "__main__":
-    #pump_spectrum_loop()
-    spec = CCSSpectrometer(
-        usb_port="USB",
-        device_model="CCS200",
-        device_id="M00479664"
-    )
-    spectrum = spec.measure_spectrum(0.003)
-    wavelengths = spec.get_wavelength_data()
-    # filename with date and datetime
-    now = datetime.now()
-    filename = now.strftime("DMSO+CTA_spectrum_%Y-%m-%d_%H-%M-%S.txt")
-    save_spectrum(wavelengths, spectrum, filename)
-    print(f"Spectrum saved as {filename}")
+    pump_spectrum_loop()
+    
+    
+    
+    
+    # spec = CCSSpectrometer(
+    #     usb_port="USB",
+    #     device_model="CCS200",
+    #     device_id="M00479664"
+    # )
+    # spectrum = spec.measure_spectrum(0.003)
+    # wavelengths = spec.get_wavelength_data()
+    # # filename with date and datetime
+    # now = datetime.now()
+    # filename = now.strftime("DMSO+CTA_spectrum_%Y-%m-%d_%H-%M-%S.txt")
+    # save_spectrum(wavelengths, spectrum, filename)
+    # print(f"Spectrum saved as {filename}")
