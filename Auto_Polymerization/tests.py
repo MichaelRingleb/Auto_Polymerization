@@ -164,8 +164,8 @@ def test_ccs_spectrometer():
 
 if __name__ == "__main__":
    #test_jkem_pump()  
-   test_peristaltic_pump("COM12", 10, "True", "True") 
+   #test_peristaltic_pump("COM12", 10, "True", "True") 
    #test_hotplate("COM14",20, 0, False)  #for heat_switch: bool
    #test_relay("COM12", "ON")
-   #test_actuator("COM12")s
+   test_actuator("COM12")
    #test_ccs_spectrometer()  # Test the CCS spectrometer

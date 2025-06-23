@@ -1,7 +1,7 @@
 #include <Servo.h>
 
 Servo actuator;
-int actuatorPin = 8;      //  Actuator controlled by signal on pin 8
+int actuatorPin = 10;      //  Actuator controlled by signal on pin 8
 int relayPin = 9;         //  Relay for solenoid valve on pin 9
 
 void setup() {
