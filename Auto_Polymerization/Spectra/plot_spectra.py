@@ -177,7 +177,7 @@ def calculate_and_plot_absorbance_for_all_spectra(
 
 if __name__ == "__main__":
     # Example usage:
-    #plot_spectra_from_folder(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\MRG-061-F5_spectra_while_stopped_with_alu_foil")
+    #plot_spectra_from_folder(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\MRG-061-G- spectra_G1_G2_after_aminolysis")
     # average_spectra_in_folder(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\pure_compounds_spectra_test")
     # reference_averaged_spectra_to_dmso(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\pure_compounds_spectra_test")
     calculate_and_plot_absorbance(r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\Spectra\MRG-061-F5_spectra_while_stopped_with_alu_foil", 

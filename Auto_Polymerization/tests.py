@@ -1,3 +1,4 @@
+import re
 import sys
 import os
 import time
@@ -113,15 +114,24 @@ def test_peristaltic_pump(com_port, rpm_in, direct_in, on_in):
         print(pump_polymer.query_pump())
     
 
-# Function to test the relay
-def test_relay(com_port, relay_pos):
+# Function to test the relays
+def test_relays(com_port, relay_pos):
     arduino = serial.Serial(com_port, 9600, timeout=1)      #Open the serial port for communication
-    time.sleep(2)                                           #Give Arduino time to reset
+    time.sleep(3)                                           #Give Arduino time to reset
   
-    if relay_pos == "ON" or relay_pos == "on":              #Turn on the relay -- this will close the normally open (NO) port at the solenoid valve
-        arduino.write(b"ON\n")                              #Send command to turn on the relay to Arduino
-    elif relay_pos == "OFF" or relay_pos == "off":          #Turn off the relay -- this will open the normally open (NO) port at the solenoid valve
-        arduino.write(b"OFF\n")                             #Send command to turn off the relay to Arduino 
+    if relay_pos == "PRECIP_ON" or relay_pos == "precip_on":              #Turn on the relay -- this will close the normally open (NO) port at the solenoid valve for precipitation
+        arduino.write(b"PRECIP_ON\n")                              #Send command to turn on the relay for precipitation to Arduino
+    elif relay_pos == "PRECIP_OFF" or relay_pos == "precip_off":          #Turn off the relay -- this will open the normally open (NO) port at the solenoid valve for precipitation
+        arduino.write(b"PRECIP_OFF\n")                             #Send command to turn off the relay for precipitation to Arduino 
+    elif relay_pos == "GAS_ON" or relay_pos == "gas_on":          #Turn on the relay -- this will close the normally open (NO) port at the solenoid valve for gas
+        arduino.write(b"GAS_ON\n")                             #Send command to turn on the relay for gas to Arduino 
+    elif relay_pos == "GAS_OFF" or relay_pos == "gas_off":          #Turn off the relay -- this will open the normally open (NO) port at the solenoid valve for precipitation
+        arduino.write(b"GAS_OFF\n")                             #Send command to turn off the relay for gas to Arduino 
+    elif relay_pos == "ALL_ON" or relay_pos == "all_on":        #Turn on all relays -- this will close the normally open (NO) port at the solenoid valve for precipitation and gas
+        arduino.write(b"ALL_ON\n")                             #Send command to turn on all relays to Arduino
+    elif relay_pos == "ALL_OFF" or relay_pos == "all_off":      #Turn off all relays -- this will open the normally open (NO) port at the solenoid valve for precipitation and gas
+        arduino.write(b"ALL_OFF\n")                            #Send command to turn off all relays to Arduino
+    print(relay_pos, "command sent to Arduino")  #Print the command sent to Arduino for confirmation)
     arduino.close()                                         #Close the serial connection after sending the command
 
 
@@ -163,9 +173,9 @@ def test_ccs_spectrometer():
 
 
 if __name__ == "__main__":
-   test_jkem_pump()  
+   #test_jkem_pump()  
    #test_peristaltic_pump("COM12", 10, "True", "True") 
    #test_hotplate("COM14",20, 0, False)  #for heat_switch: bool
-   #test_relay("COM12", "ON")
+   test_relays("COM5", "PRECIP_ON")   
    #test_actuator("COM12")
    #test_ccs_spectrometer()  # Test the CCS spectrometer
