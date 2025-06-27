@@ -176,6 +176,7 @@ if __name__ == "__main__":
    #test_jkem_pump()  
    #test_peristaltic_pump("COM12", 10, "True", "True") 
    #test_hotplate("COM14",20, 0, False)  #for heat_switch: bool
-   test_relays("COM5", "PRECIP_ON")   
+   #test_actuator("COM12")
+   test_relays("COM12", "ALL_OFF")
    #test_actuator("COM12")
    #test_ccs_spectrometer()  # Test the CCS spectrometer
