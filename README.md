@@ -10,13 +10,13 @@ Thorlabs Drivers for CCS200 spectrometer: https://www.thorlabs.com/thorproduct.c
 python == 3.10
 
 
-scipy, numpy, pandas, matplotlib, pyserial, nmrglue, requests, pyserial,pyyaml
+scipy, numpy, pandas, matplotlib, pyserial, nmrglue, requests, pyserial,pyyaml, medusa-sdl (pip install medusa-sdl)
 
 from matterlab:
 https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices
 Hotplates
 Pumps
-Spectrometer 
+Spectrometer (NMR spectrometer)
 Serial Device
 
 Install Arduino IDE on PC and upload the Arduino code (in subfolder Arduino sketch) to the Arduino board
