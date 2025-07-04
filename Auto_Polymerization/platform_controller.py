@@ -19,11 +19,10 @@ import time
 from linear_actuator_and_valves_control import move_actuator, set_valve
 
 
-
+#Setup logging for Medusa liquid transfers
 logger = logging.getLogger("test")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
-
 
 
 layout = input("Design .json path\n") 
@@ -41,16 +40,14 @@ Polymerization_temp= 75
 
 
 # open gas valve (in default mode, gas flow will be blocked)
-
-
-
+set_valve("COM12","GAS_ON")
 
 # prime tubing (from vial to waste)
-medusa.transfer_volumetric(source="Solvent_Vessel", destination="Waste_Vessel_1", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Monomer_Vessel", destination="Waste_Vessel_1", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Modification_Vessel", destination="Waste_Vessel_1", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Initiator_Vessel", destination="Waste_Vessel_1", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="CTA_Vessel", destination="Waste_Vessel_1", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
+medusa.transfer_volumetric(source="Solvent_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
+medusa.transfer_volumetric(source="Monomer_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
+medusa.transfer_volumetric(source="Modification_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
+medusa.transfer_volumetric(source="Initiator_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
+medusa.transfer_volumetric(source="CTA_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
 
 # preheat heatplate
 medusa.heat_stir(vessel="Reaction_Vial", temperature= Polymerization_temp, rpm=600)
@@ -64,10 +61,10 @@ medusa.transfer_volumetric(source="NMR", destination="Deuterated_Solvent", pump_
 
 
 # fill reaction vial with things for reaction and flush it to the vial 
-medusa.transfer_volumetric(source="Solvent_Vessel", destination="Waste_Vessel_1", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid", flush=9)
-medusa.transfer_volumetric(source="Monomer_Vessel", destination="Waste_Vessel_1", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid", flush=9)
-medusa.transfer_volumetric(source="Initiator_Vessel", destination="Waste_Vessel_1", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid", flush=9)
-medusa.transfer_volumetric(source="CTA_Vessel", destination="Waste_Vessel_1", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid", flush =9)
+medusa.transfer_volumetric(source="Solvent_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid", flush=9)
+medusa.transfer_volumetric(source="Monomer_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid", flush=9)
+medusa.transfer_volumetric(source="Initiator_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid", flush=9)
+medusa.transfer_volumetric(source="CTA_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid", flush =9)
 
 # wait for heat plate to reach x degree (defined earlier)
     # still needs to be implemented
@@ -121,4 +118,4 @@ medusa.transfer_volumetric(source="NMR", destination="Deuterated_Solvent", pump_
 
 
 
-medusa.transfer_volumetric(source="Gas Reservoir Vessel", destination = "Waste_Vessel_2", pump_id="Analytical_Pump", volume=1,flush=0,transfer_type="gas")
+medusa.transfer_volumetric(source="Gas Reservoir Vessel", destination = "Waste_Vessel", pump_id="Analytical_Pump", volume=1,flush=0,transfer_type="gas")
