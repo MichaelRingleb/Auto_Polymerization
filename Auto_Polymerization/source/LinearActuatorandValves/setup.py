@@ -5,7 +5,8 @@ setup(
        version="0.1.0",
        description="Simple control of an Actuonix linear actuator and valves via Arduino ",
        author="Michael Ringleb",
-       packages=find_packages(),
+       packages=find_packages(where="src"),
+       package_dir={"": "src"},
        install_requires=[
            "pyserial",
        ],
