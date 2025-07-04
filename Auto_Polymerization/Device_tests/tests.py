@@ -26,7 +26,7 @@ from matterlab_pumps.longer_peri import LongerPeristalticPump
 from matterlab_pumps.jkem_pump import JKemPump
 from matterlab_serial_device.serial_device import SerialDevice, open_close
 from matterlab_hotplates.ika_hotplate import IKAHotplate
-from linear_actuator_control import move_actuator
+from linear_actuator_and_valves_control import move_actuator, set_valve
 from matterlab_spectrometers.ccs_spectrometer import CCSSpectrometer
 
 

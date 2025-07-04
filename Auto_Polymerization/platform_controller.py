@@ -17,7 +17,7 @@ from pathlib import Path
 from medusa import Medusa, MedusaDesigner
 import time
 
-from linear_actuator import move_actuator, set_valve
+from linear_actuator_and_valves_control import move_actuator, set_valve
 
 
 logger = logging.getLogger("test")
