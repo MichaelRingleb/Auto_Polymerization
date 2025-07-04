@@ -36,8 +36,8 @@ Solvent_volume= 10
 Monomer_volume=4
 Initiator_volume = 3
 CTA_volume= 4
-Polymerization_temp= 75
-
+Polymerization_temp= 20
+set_rpm = 200
 
 # open gas valve (in default mode, gas flow will be blocked)
 set_valve("COM12","GAS_ON")
@@ -49,8 +49,11 @@ medusa.transfer_volumetric(source="Modification_Vessel", destination="Waste_Vess
 medusa.transfer_volumetric(source="Initiator_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
 medusa.transfer_volumetric(source="CTA_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
 
+# shut gas valve (in default mode, gas flow will be blocked)
+set_valve("COM12","GAS_OFF")
+
 # preheat heatplate
-medusa.heat_stir(vessel="Reaction_Vial", temperature= Polymerization_temp, rpm=600)
+medusa.heat_stir(vessel="Reaction_Vial", temperature= Polymerization_temp, rpm= set_rpm)
 
 # pump deuterated solvent to NMR
 medusa.transfer_volumetric(source="Deuterated_Solvent", destination="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
