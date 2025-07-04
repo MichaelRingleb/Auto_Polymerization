@@ -10,7 +10,7 @@
         "num_valve_port": 8,
         "init_valve": 5,
         "out_valve": 5,
-        "home_pos": null
+        "home_pos": -14000
       }
     },
     {
@@ -23,7 +23,7 @@
         "num_valve_port": 8,
         "init_valve": 5,
         "out_valve": 5,
-        "home_pos": null
+        "home_pos": -14000
       }
     },
     {
@@ -47,7 +47,7 @@
         "num_valve_port": 8,
         "init_valve": 5,
         "out_valve": 5,
-        "home_pos": null
+        "home_pos": -14000
       }
     },
     {
