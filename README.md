@@ -15,7 +15,7 @@ Thorlabs Driver for upLED controller: https://wmit CHatGPT programmiert, dasww.t
 
 python == 3.10
 
-Install the linear_actuator_and_valves_control package from the local source into the environment
+Install the linear_actuator_and_valves_control package from the local source into the environment in editable mode
 
 scipy, numpy, pandas, matplotlib, pyserial, nmrglue, requests, pyserial,pyyaml, medusa-sdl (pip install medusa-sdl)
 
