@@ -1,6 +1,12 @@
 #Module to design own experimental setup (for volumetric transfers) with Medusa designer
 from pathlib import Path
 from medusa import Medusa, MedusaDesigner
+import logging
+
+logger = logging.getLogger("test")
+logger.setLevel(logging.DEBUG)
+logger.addHandler(logging.StreamHandler())
+
 
 
 #opens the webinterface for the designer and saves design to json (in Downloads folder)
@@ -11,7 +17,10 @@ input()
 
 """
 #Show design  → implement later on (for now: screenshot in the Fluid transfers scheme folder)
-design_path = input("Path to your design file (e.g. 'path/to/your_design.json'): ")
-designer = Medusa(design_path)
-Medusa.view_layout(designer)
+layout = input("Design path:")
+medusa = Medusa(
+    graph_layout=layout,
+    logger=logger     
+)
+medusa.view_layout()  # Opens the design in the Medusa viewer)
 """

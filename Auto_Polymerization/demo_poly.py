@@ -1,7 +1,6 @@
 import logging
 from pathlib import Path
 from medusa import Medusa, MedusaDesigner
-import logging
 import time
 
 logger = logging.getLogger("test")
