@@ -9,7 +9,7 @@
 Drivers for the devices used in this project:
 
 Thorlabs Drivers for CCS200 spectrometer: https://www.thorlabs.com/thorproduct.cfm?partnumber=CCS200#ad-image-0 
-Thorlabs Driver for upLED controller: https://wmit CHatGPT programmiert, dasww.thorlabs.com/thorproduct.cfm?partnumber=UPLED 
+Thorlabs Driver for upLED controller: https://www.thorlabs.com/thorproduct.cfm?partnumber=UPLED 
 
 #Python packages:
 
