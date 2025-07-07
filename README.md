@@ -39,8 +39,7 @@ Install Arduino IDE on PC and upload the Arduino code (in subfolder Arduino sket
 
 ## Notes
 - Adjust the COM port (`port="COM7"`) to match your system.
-- The methods and properties of the `IKARETControlVisc` class are defined in `Stirrer/IKA_RET_Control_Visc.py`.
-- For further examples, see the script `Auto_Polymerization/hot_stir_plate.py`.
+
 
 ## Development
 
