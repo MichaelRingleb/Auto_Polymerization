@@ -361,3 +361,35 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Auto_Polymerization project specific ignores
+# User-specific files and directories
+Auto_Polymerization/users/logs/
+Auto_Polymerization/users/data/
+Auto_Polymerization/users/metadata/
+Auto_Polymerization/users/config/*.local
+Auto_Polymerization/users/config/*.secret
+Auto_Polymerization/users/config/*.private
+Auto_Polymerization/users/scripts/*.tmp
+Auto_Polymerization/users/scripts/*.temp
+
+# Ignore egg-info directories
+*.egg-info/
+
+# Ignore build directories
+build/
+dist/
+
+# Ignore IDE files
+.vscode/
+.idea/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore temporary and backup files
+*.bak
+*.tmp
+*.temp
+*~
