@@ -3,13 +3,14 @@
 
 
 
-## Required packages and installation
+## Required packages and setup
 
 
-Drivers for the devices used in this project:
+Install drivers for the devices used in this project:
 
 Thorlabs Drivers for CCS200 spectrometer: https://www.thorlabs.com/thorproduct.cfm?partnumber=CCS200#ad-image-0 
 Thorlabs Driver for upLED controller: https://www.thorlabs.com/thorproduct.cfm?partnumber=UPLED 
+
 
 #Python packages:
 
@@ -17,7 +18,7 @@ python == 3.10
 
 Install the linear_actuator_and_valves_control package from the local source into the environment in editable mode
 
-scipy, numpy, pandas, matplotlib, pyserial, nmrglue, requests, pyserial,pyyaml, medusa-sdl (pip install medusa-sdl)
+pip install scipy, numpy, pandas, matplotlib, pyserial, nmrglue, requests, pyserial, pyyaml, medusa-sdl 
 
 from matterlab:
 https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices
