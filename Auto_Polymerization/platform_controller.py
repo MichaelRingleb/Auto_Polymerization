@@ -9,6 +9,7 @@ config_path = os.path.join(base_dir, "config.yaml")
 with open(config_path, "r") as f:
     config = yaml.safe_load(f)
 """
+from re import M
 import sys
 import os
 import logging
@@ -32,15 +33,15 @@ medusa = Medusa(
 #ideally put into its own module, but for now just import here
 # Definition of added volumes and reaction temperature by user before reaction:
 """
-Solvent_volume= 10 
-Solvent_draw_speed = Solvent_volume / 2  # draw speed in mL/min
-Monomer_volume=4
-Monomer_draw_speed = Monomer_volume / 2  # draw speed in mL/min
-Initiator_volume = 3
-Initiator__draw_speed = Initiator_volume / 2  # draw speed in mL/min
-CTA_volume= 4
-CTA_draw_speed = CTA_volume / 2  # draw speed in mL/min
-Polymerization_temp= 20
+solvent_volume= 10 
+solvent_draw_speed = solvent_volume / 2  # draw speed in mL/min
+monomer_volume=4
+monomer_draw_speed = monomer_volume / 2  # draw speed in mL/min
+initiator_volume = 3
+initiator_draw_speed = initiator_volume / 2  # draw speed in mL/min
+cta_volume= 4
+cta_draw_speed = cta_volume / 2  # draw speed in mL/min
+polymerization_temp= 20
 set_rpm = 200
 
 
@@ -53,7 +54,7 @@ Functionalization_draw_speed = Functionanilzation_volume / 2  # draw speed in mL
 move_actuator("COM12", "2000")  # Move the reaction vial out of the heatplate
 
 # preheat heatplate
-medusa.heat_stir(vessel="Reaction_Vial", temperature= Polymerization_temp, rpm= set_rpm)
+medusa.heat_stir(vessel="Reaction_Vial", temperature= polymerization_temp, rpm= set_rpm)
 
 # open gas valve (in default mode, gas flow will be blocked)
 set_valve("COM12","GAS_ON")
@@ -79,10 +80,10 @@ medusa.transfer_volumetric(source="NMR", destination="Deuterated_Solvent", pump_
 
 
 # fill reaction vial with things for reaction and flush it to the vial 
-medusa.transfer_volumetric(source="Solvent_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= Solvent_volume, transfer_type="liquid", flush=3, draw_speed=Solvent_draw_speed)
-medusa.transfer_volumetric(source="Monomer_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= Monomer_volume, transfer_type="liquid", flush=3, draw_speed=Monomer_draw_speed)
-medusa.transfer_volumetric(source="Initiator_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= Initiator_volume, transfer_type="liquid",flush=3, draw_speed = Initiator__draw_speed)
-medusa.transfer_volumetric(source="CTA_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= CTA_volume, transfer_type="liquid",flush=3, draw_speed = CTA_draw_speed)
+medusa.transfer_volumetric(source="Solvent_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= solvent_volume, transfer_type="liquid", flush=3, draw_speed=solvent_draw_speed)
+medusa.transfer_volumetric(source="Monomer_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= monomer_volume, transfer_type="liquid", flush=3, draw_speed=monomer_draw_speed)
+medusa.transfer_volumetric(source="Initiator_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= initiator_volume, transfer_type="liquid",flush=3, draw_speed=initiator_draw_speed)
+medusa.transfer_volumetric(source="CTA_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= cta_volume, transfer_type="liquid",flush=3, draw_speed=cta_draw_speed)
 
 # wait for heat plate to reach x degree (defined earlier)
     # still needs to be implemented
