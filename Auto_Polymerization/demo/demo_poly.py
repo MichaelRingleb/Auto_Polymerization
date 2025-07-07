@@ -64,18 +64,18 @@ medusa.transfer_volumetric(source="CTA_Vessel", destination="Waste_Vessel_1", pu
 
     # Every 5 minutes
         # Pump 3 mL from reaction vial to NMR
-medusa.transfer_volumetric(source="Reaction_Vial", destination="NMR", pump_id="Analytical_Pump", volume=3,)
+medusa.transfer_volumetric(source="Reaction_Vial", destination="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
         # Take NMR spectrum and evaluate signal at ca. 5.5 ppm with regards to signal intensity of same signal at beginning
         # Pump 3 mL from NMR back to reaction vial and flush rest into vial with argon
-medusa.transfer_volumetric(source="NMR", destination="Reaction_Vial", pump_id="Analytical_Pump", volume=3,)      
+medusa.transfer_volumetric(source="NMR", destination="Reaction_Vial", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")      
 
     # Every ca. 30 minutes
         # pump deuterated solvent to NMR
-medusa.transfer_volumetric(source="Deuterated_Solvent", destination="NMR", pump_id="Analytical_Pump", volume=3,)
+medusa.transfer_volumetric(source="Deuterated_Solvent", destination="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
         # shim NMR on deuterated solvent
             # different process, needs to be implemented still
         # pump deuterated solvent back
-medusa.transfer_volumetric(source="NMR", destination="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3,)
+medusa.transfer_volumetric(source="NMR", destination="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
 
 # When 80% conversion reached
     # Stop heatplate
@@ -88,10 +88,10 @@ medusa.heat_stir("Reaction_Vial", temperature=0)
 
     # Every 5 minutes
         # Pump 3 mL from reaction vial to NMR and evaluate "conversion in comparison to last NMR from polzmerization"
-medusa.transfer_volumetric(source="Reaction_Vial", destination="NMR", pump_id="Analytical_Pump", volume=3,)
+medusa.transfer_volumetric(source="Reaction_Vial", destination="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
         # Take NMR spectrum and evaluate signal at ca. 5.5 ppm with regards to signal intensity of same signal at beginning
         # Pump 3 mL from NMR back to reaction vial and flush rest into vial with argon
-medusa.transfer_volumetric(source="NMR", destination="Reaction_Vial", pump_id="Analytical_Pump", volume=3,)
+medusa.transfer_volumetric(source="NMR", destination="Reaction_Vial", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
 
     # Every ca. 30 minutes
         # pump deuterated solvent to NMR
