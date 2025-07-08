@@ -20,7 +20,7 @@ Requirements:
     - medusa (medusa-sdl) package installed and importable in your environment.
     - Python 3.7 or higher.
 
-Author: Michael Ringleb
+Author: Michael Ringleb, Han Hao
 """
 
 
