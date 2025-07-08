@@ -1,6 +1,6 @@
 #Module to design own experimental setup (for volumetric transfers) with Medusa designer
 from pathlib import Path
-from medusa import Medusa, MedusaDesigner
+from medusa-sdl import Medusa, MedusaDesigner
 import logging
 
 logger = logging.getLogger("test")
@@ -10,6 +10,7 @@ logger.addHandler(logging.StreamHandler())
 
 
 #opens the webinterface for the designer and saves design to json (in Downloads folder)
+#use this to design your own setup
 designer = MedusaDesigner()
 designer.new_design()
 exit()

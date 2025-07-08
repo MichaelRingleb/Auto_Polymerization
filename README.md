@@ -36,7 +36,7 @@ pip install matterlab_serial_device
 For correct DLL for CSS200 spectrometer, you have to change the value for DLL_FILE in ccs_spectrometer.py in the matterlab package.
 The correct file path is typically DLL_FILE = Path(r"C:\Program Files\IVI Foundation\VISA\Win64\Bin\TLCCS_64.dll")
 
-Install Arduino IDE on PC and upload the Arduino code (in subfolder Arduino sketch) to the Arduino board
+Install Arduino IDE on PC and upload the Arduino code (in subfolder users/setup) to the Arduino board
 
 ## Notes
 - Adjust the COM port (`port="COM7"`) to match your system.
