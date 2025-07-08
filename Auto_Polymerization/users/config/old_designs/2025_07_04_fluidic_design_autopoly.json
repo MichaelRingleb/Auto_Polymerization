@@ -236,67 +236,6 @@
         "removable": true,
         "content": "Lower port of precipitation vessel"
       }
-    },
-    {
-      "type": "SerialDevice",
-      "name": "Gas_Valve",
-      "settings": {
-        "com_port": "12",
-        "address": 0
-      }
-    },
-    {
-      "type": "LongerPeristalticPump",
-      "name": "Polymer_Peri_Pump",
-      "settings": {
-        "com_port": "COM16",
-        "address": 2,
-        "syringe_volume": 0,
-        "num_valve_port": 0,
-        "init_valve": null,
-        "out_valve": null,
-        "home_pos": null
-      }
-    },
-    {
-      "type": "Vessel",
-      "name": "Elution_Solvent_Vessel",
-      "settings": {
-        "max_volume": 1000,
-        "current_volume": 1000,
-        "addable": false,
-        "removable": true,
-        "content": "Elution solvent for dialysis"
-      }
-    },
-    {
-      "type": "LongerPeristalticPump",
-      "name": "Solvent_Peri_Pump",
-      "settings": {
-        "com_port": "COM15",
-        "address": 1,
-        "syringe_volume": 0,
-        "num_valve_port": 0,
-        "init_valve": null,
-        "out_valve": null,
-        "home_pos": null
-      }
-    },
-    {
-      "type": "SerialDevice",
-      "name": "Precipitation_Valve",
-      "settings": {
-        "com_port": "12",
-        "address": 0
-      }
-    },
-    {
-      "type": "SerialDevice",
-      "name": "Linear_Actuator",
-      "settings": {
-        "com_port": "12",
-        "address": 0
-      }
     }
   ],
   "links": [
@@ -467,54 +406,6 @@
       "source": "Analytical_Pump",
       "source_port": 3,
       "target": "NMR"
-    },
-    {
-      "type": "volumetric",
-      "source": "Gas_Valve",
-      "source_port": 0,
-      "target": "Gas_Reservoir_Vessel"
-    },
-    {
-      "type": "volumetric",
-      "source": "Solvent_Peri_Pump",
-      "source_port": 0,
-      "target": "Elution_Solvent_Vessel"
-    },
-    {
-      "type": "volumetric",
-      "source": "Solvent_Peri_Pump",
-      "source_port": 1,
-      "target": "Waste_Vessel"
-    },
-    {
-      "type": "volumetric",
-      "source": "Polymer_Peri_Pump",
-      "source_port": 0,
-      "target": "Reaction_Vial"
-    },
-    {
-      "type": "volumetric",
-      "source": "Polymer_Peri_Pump",
-      "source_port": 1,
-      "target": "Reaction_Vial"
-    },
-    {
-      "type": "volumetric",
-      "source": "Precipitation_Valve",
-      "source_port": 0,
-      "target": "Precipitation_Vessel_Solenoid"
-    },
-    {
-      "type": "volumetric",
-      "source": "Gas_Reservoir_Vessel",
-      "source_port": 0,
-      "target": "Precipitation_Valve"
-    },
-    {
-      "type": "volumetric",
-      "source": "Linear_Actuator",
-      "source_port": 0,
-      "target": "Reaction_Vial"
     }
   ]
 }
