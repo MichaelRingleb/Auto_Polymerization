@@ -1,3 +1,10 @@
+#central unit to put together individual workflow steps into a complete workflow
+
+#imports the different workflow steps from the modules in the workflow_steps folder 
+
+
+
+
 
 """
 import yaml
@@ -180,7 +187,7 @@ set_valve("COM12","GAS_OFF")
 
 #pump 25 mL of methanol to the precipitation module
  #set solenoid valve accordingly
- set_valve("COM12","PRECIP_ON")
+set_valve("COM12","PRECIP_ON")
  #pump 25 mL of methanol to the precipitation module
  medusa.transfer_volumetric(source="Methanol_Vessel", destination="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
  #close solenoid valve and open gas valve to bubble argon through bottom
