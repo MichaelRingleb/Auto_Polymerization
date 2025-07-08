@@ -24,14 +24,19 @@ from matterlab:
 https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices
 Hotplates
 Pumps
-Spectrometer (NMR spectrometer, UV_Vis (CSS200))
 Serial Device
 
 packages also pip installable: 
 pip install matterlab_pumps
 pip install matterlab_hotplates
-#pip install matterlab_spectrometer (not pip installable)
 pip install matterlab_serial_device
+
+Spectrometers
+NMR(Nanalysis Benchtop): https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices/nmr install into local environment (git clone repo, then switch to develop branch and then git install -e .)
+UV_Vis (Thorlabs CSS200): https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices/spectrometer install into local environment (git clone repo, switch to develop branch, git install -e .)
+
+
+
 
 For correct DLL for CSS200 spectrometer, you have to change the value for DLL_FILE in ccs_spectrometer.py in the matterlab package.
 The correct file path is typically DLL_FILE = Path(r"C:\Program Files\IVI Foundation\VISA\Win64\Bin\TLCCS_64.dll")

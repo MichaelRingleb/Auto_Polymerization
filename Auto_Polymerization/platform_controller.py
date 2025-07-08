@@ -23,8 +23,7 @@ import logging
 from pathlib import Path
 from medusa import Medusa, MedusaDesigner
 import time
-from src.linear_actuator_and_valves.linear_actuator_and_valves_control import move_actuator, set_valve
-from matterlab_pumps.longer_peri import LongerPeristalticPump    
+from nmr import NMR_control
 #spectrometers still missing
 
 
@@ -40,10 +39,6 @@ medusa = Medusa(
     logger=logger     
 )
 
-
-
-polymer_pump = LongerPeristalticPump(com_port="COM15", address=1)
-solvent_pump = LongerPeristalticPump(com_port="COM16", address=2)
 
 
 """
@@ -68,105 +63,119 @@ Functionalization_draw_speed = Functionanilzation_volume / 2  # draw speed in mL
 
 
 #take the reaction vial out of the heatplate
-move_actuator("COM12", "2000")  # Move the reaction vial out of the heatplate
+medusa.write_serial("COM12", "2000")  # Move the reaction vial out of the heatplate
 
 # preheat heatplate
 medusa.heat_stir(vessel="Reaction_Vial", temperature= polymerization_temp, rpm= set_rpm)
 
 # open gas valve (in default mode, gas flow will be blocked)
-set_valve("COM12","GAS_ON")
+medusa.write_serial("COM12","GAS_ON")
 
 # prime tubing (from vial to waste)
-medusa.transfer_volumetric(source="Solvent_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Monomer_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Modification_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Initiator_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="CTA_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
+medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
+medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
+medusa.transfer_volumetric(source="Modification_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
+medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
+medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
 
 # shut gas valve 
-set_valve("COM12","GAS_OFF")
+medusa.write_serial("COM12","GAS_OFF")
 
 
 #lock and shim NMR
     # pump deuterated solvent to NMR
-medusa.transfer_volumetric(source="Deuterated_Solvent", destination="NMR", pump_id="Analytical_Pump", volume=3.5, transfer_type="liquid")
+medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3.5, transfer_type="liquid")
     # lock and shim NMR on deuterated solvent
         # different process, needs to be implemented still
     # pump deuterated solvent back
-medusa.transfer_volumetric(source="NMR", destination="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3.5, transfer_type="liquid")
+medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3.5, transfer_type="liquid")
 
 
 # fill reaction vial with things for reaction and flush it to the vial 
-medusa.transfer_volumetric(source="Solvent_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= solvent_volume, transfer_type="liquid", flush=3, draw_speed=solvent_draw_speed)
-medusa.transfer_volumetric(source="Monomer_Vessel", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= monomer_volume, transfer_type="liquid", flush=3, draw_speed=monomer_draw_speed)
-medusa.transfer_volumetric(source="Initiator_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= initiator_volume, transfer_type="liquid",flush=3, draw_speed=initiator_draw_speed)
-medusa.transfer_volumetric(source="CTA_Vessel", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= cta_volume, transfer_type="liquid",flush=3, draw_speed=cta_draw_speed)
+medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= solvent_volume, transfer_type="liquid", flush=3, draw_speed=solvent_draw_speed)
+medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= monomer_volume, transfer_type="liquid", flush=3, draw_speed=monomer_draw_speed)
+medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= initiator_volume, transfer_type="liquid",flush=3, draw_speed=initiator_draw_speed)
+medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= cta_volume, transfer_type="liquid",flush=3, draw_speed=cta_draw_speed)
 
 # wait for heat plate to reach x degree (defined earlier)
-    # still needs to be implemented
+while medusa.get_hotplate_temperature("Reaction_Vial") < polymerization_temp-2:
+    time.sleep(2)
 
 
 # Lower vial into heat plate
-move_actuator("COM12", "1000")
-LongerPeristalticPump(com_port="COM15", address=1)
+medusa.write_serial("COM12", "1000")
 
+iteration_counter = 0
 # Wait for NMR feedback regarding conversion before change to next step
-
-    # Every 5 minutes
+while polymerization_conversion < 80:
+  iteration_counter += 1
         # Pump 3 mL from reaction vial to NMR
-medusa.transfer_volumetric(source="Reaction_Vial", destination="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
+  medusa.transfer_volumetric(source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
         # Take NMR spectrum and evaluate signal at ca. 5.5 ppm with regards to signal intensity of same signal at beginning
         # Pump 3 mL from NMR back to reaction vial and flush rest into vial with argon
-medusa.transfer_volumetric(source="NMR", destination="Reaction_Vial", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")      
-
-    # Every ca. 30 minutes
+  medusa.transfer_volumetric(source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")   
+        #wait for 5 minutes   
+  time.sleep(300)
+  #after 5 iterations of the previous loop, the NMR is reshimmed
+  if iteration_counter % 6 == 0:
         # pump deuterated solvent to NMR
-medusa.transfer_volumetric(source="Deuterated_Solvent", destination="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
+    medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
         # shim NMR on deuterated solvent
             # different process, needs to be implemented still
-        # pump deuterated solvent back
-medusa.transfer_volumetric(source="NMR", destination="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
 
-# When 80% conversion reached
+        # pump deuterated solvent back
+    medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=5, transfer_type="liquid")
+
+
     # Stop heatplate
 medusa.heat_stir("Reaction_Vial", temperature=0)
     # Also remove vial from heatplate with linear actuator
-move_actuator("COM12", "2000")
+medusa.write_serial("COM12", "2000")
 
     # Start peristaltic pumps   
-polymer_pump.set_pump(on=True, direction=True, rpm=0.7)
-solvent_pump.set_pump(on=True, direction=False, rpm=0.7)
+medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0.7)
 
-    # Every 5 minutes
+iteration_counter = 0
+while dialysis_conversion < 90:
+  iteration_counter += 1
         # Pump 3 mL from reaction vial to NMR and evaluate "conversion in comparison to last NMR from polzmerization"
-medusa.transfer_volumetric(source="Reaction_Vial", destination="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
+  medusa.transfer_volumetric(source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
         # Take NMR spectrum and evaluate signal at ca. 5.5 ppm with regards to signal intensity of same signal at beginning
         # Pump 3 mL from NMR back to reaction vial and flush rest into vial with argon
-medusa.transfer_volumetric(source="NMR", destination="Reaction_Vial", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
+  medusa.transfer_volumetric(source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump", volume=5, transfer_type="liquid")
+  #wait for 5 minutes
+  time.sleep(300)
 
-    # Every ca. 30 minutes
+  #after 6 iterations of the previous loop, the NMR is reshimmed
+  if iteration_counter % 6 == 0:
         # pump deuterated solvent to NMR
-medusa.transfer_volumetric(source="Deuterated_Solvent", destination="NMR", pump_id="Analytical_Pump", volume=3,transfer_type="liquid")
+    medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
         # shim NMR on deuterated solvent
             # different process, needs to be implemented still
+
         # pump deuterated solvent back
-medusa.transfer_volumetric(source="NMR", destination="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3,transfer_type="liquid")
+    medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=5, transfer_type="liquid")
+
+    
 
 
 #when 90% conversion reached
-    # pump peristaltic pump tubing empty for polymer pump in different direction
-polymer_pump.set_pump(on=True, direction=False, rpm=0.7)
-solvent_pump.set_pump(on=False, direction=False, rpm=0.7)
-#wait for 10 minutes
+    # pump peristaltic pump tubing empty for polymer pump in different direction and stop eluent pump
+medusa.transfer_continuous(source="Reaction_Vial", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0.7)
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
+    #wait for 10 min to pump fully empty
 time.sleep(600)
-#turn off polymer pump
-polymer_pump.set_pump(on=False, direction=False, rpm=0.7)
+
+#turn off eluent pump
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
+
    
 
 #add functionalization step
 #start flow through UV_VIs
 #flow will go on until stopped by other command (use of async or threading)
-medusa.transfer_volumetric(source="Reaction_Vial", destination="UV_VIS", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", flush=3, draw_speed=Functionalization_draw_speed, dispense_speed=1)
+medusa.transfer_volumetric(source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", flush=3, draw_speed=Functionalization_draw_speed, dispense_speed=1)
 
 
 #add UV_VIS measurement and evaluation (in the beginning without addition and then continously)
@@ -176,7 +185,7 @@ medusa.transfer_volumetric(source="Reaction_Vial", destination="UV_VIS", pump_id
 
     #open gas valve and pump 10 mL of argon to reaction vial through the UV_VIS cell
 set_valve("COM12","GAS_ON")
-medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", destination="UV_VIS", pump_id="Analytical_Pump", volume= 10, transfer_type="gas", dispense_speed=10, flush=3)
+medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= 10, transfer_type="gas", dispense_speed=10, flush=3)
     #close gas valve
 set_valve("COM12","GAS_OFF")
 
@@ -189,35 +198,35 @@ set_valve("COM12","GAS_OFF")
  #set solenoid valve accordingly
 set_valve("COM12","PRECIP_ON")
  #pump 25 mL of methanol to the precipitation module
- medusa.transfer_volumetric(source="Methanol_Vessel", destination="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
+ medusa.transfer_volumetric(source="Methanol_Vessel", target="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
  #close solenoid valve and open gas valve to bubble argon through bottom
  set_valve("COM12","PRECIP_OFF")
  set_valve("COM12","GAS_ON")
 
 #add the polymer to the precipitation vessels upper port
-medusa.transfer_volumetric(source="Reaction_Vial", destination="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", draw_speed=10, dispense_speed=5, flush=3)
+medusa.transfer_volumetric(source="Reaction_Vial", target="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", draw_speed=10, dispense_speed=5, flush=3)
 set_valve("COM12","GAS_OFF")
 #wait for some minutes while bubbling (5 min)
 time.sleep(300)
 
 #remove supernatant from precipitation vessel
 set_valve("COM12","PRECIP_ON")
-medusa.transfer_volumetric(source="Precipitation_Vessel_Solenoid", destination="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", draw_speed=10, dispense_speed=20)
+medusa.transfer_volumetric(source="Precipitation_Vessel_Solenoid", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", draw_speed=10, dispense_speed=20)
 #
 #wash the polymer with methanol
 set_valve("COM12","GAS_ON")
-medusa.transfer_volumetric(source="Methanol_Vessel", destination="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
+medusa.transfer_volumetric(source="Methanol_Vessel", target="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
 set_valve("COM12","GAS_OFF")
 #change solenoid position to bubble gas through bottom
 set_valve("COM12","PRECIP_OFF")
 
 #remove the supernatant from the precipitation vessel
 set_valve("COM12","PRECIP_ON")
-medusa.transfer_volumetric(source="Precipitation_Vessel_Solenoid", destination="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", draw_speed=10, dispense_speed=20)
+medusa.transfer_volumetric(source="Precipitation_Vessel_Solenoid", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", draw_speed=10, dispense_speed=20)
 set_valve("COM12","PRECIP_OFF")
 #dry polymer by purging argon trhough it from below and above
 set_valve("COM12","GAS_ON")
-medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", destination="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 100, dispense_speed=25, transfer_type="gas", flush=3)
+medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 100, dispense_speed=25, transfer_type="gas", flush=3)
 
 
 
@@ -227,30 +236,30 @@ medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", destination="Precipita
 set_valve("COM12","GAS_ON")	
 medusa.heat_stir("Reaction_Vial", temperature= 20, rpm= 300)
   #flush the UV_VIS cell
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", destination="UV_VIS", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3, draw_speed=10, dispense_speed=3)
+medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="UV_VIS", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3, draw_speed=10, dispense_speed=3)
   #flush purge solvent to the waste vessel
-medusa.transfer_volumetric(source="UV_VIS", destination="Waste_Vessel", pump_id="Analytical_Pump", volume= 5, transfer_type="liquid", flush=3, draw_speed=3, dispense_speed=10)
+medusa.transfer_volumetric(source="UV_VIS", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 5, transfer_type="liquid", flush=3, draw_speed=3, dispense_speed=10)
   #also remove solvent from reaction vial
-medusa.transfer_volumetric(source="Reaction_Vial", destination="Waste_Vessel", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3)
+medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3)
   #flush the Solvent_Monomer_Modification_Pump flowpath
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", destination="Reaction_Vial", pump_id="Solvent_Monomer_Modification_Pump", volume= 20, transfer_type="liquid", flush=3)
+medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Solvent_Monomer_Modification_Pump", volume= 20, transfer_type="liquid", flush=3)
   #flush purge solvent to the waste vessel
-medusa.transfer_volumetric(source="Reaction_Vial", destination="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 30, transfer_type="liquid", flush=3)
+medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 30, transfer_type="liquid", flush=3)
    #flush the Precipitation_Pump flowpath
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", destination="Reaction_Vial", pump_id="Precipitation_Pump", volume= 20, transfer_type="liquid", flush=3)
+medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Precipitation_Pump", volume= 20, transfer_type="liquid", flush=3)
   #flush purge solvent to the waste vessel
-medusa.transfer_volumetric(source="Reaction_Vial", destination="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", flush=3)
+medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", flush=3)
   #fill reaction_vial with purge solvent
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", destination="Reaction_Vial", pump_id="Initiator_CTA_Pump", volume= 20, transfer_type="liquid", flush=3)
+medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Initiator_CTA_Pump", volume= 20, transfer_type="liquid", flush=3)
   #flush purge solvent to the waste vessel
-medusa.transfer_volumetric(source="Reaction_Vial", destination="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 30, transfer_type="liquid", flush=3)
+medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 30, transfer_type="liquid", flush=3)
   #close gas valve
 set_valve("COM12","GAS_OFF")
   #dry the reaction vial
 medusa.heat_stir("Reaction_Vial", temperature= 80, rpm= 0)
   #wait until vial is at 80 °C (get property)
   #pump 200 mL of argon to dry rest of vial
-medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", destination="Reaction_Vial", pump_id="Precipitation_Pump", volume= 200, dispense_speed=25, transfer_type="gas", flush=3)
+medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Reaction_Vial", pump_id="Precipitation_Pump", volume= 200, dispense_speed=25, transfer_type="gas", flush=3)
   #get temperature of heatplate
   #let heatplate cool down
 medusa.heat_stir("Reaction_Vial", temperature= 25, rpm= 0)
@@ -267,7 +276,7 @@ set_valve("COM12","GAS_OFF")
 
 
 #pump 25 mL of methanol to the precipitation module
-medusa.transfer_volumetric(source="Methanol_Vessel", destination="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
+medusa.transfer_volumetric(source="Methanol_Vessel", target="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
 
 
 
