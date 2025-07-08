@@ -20,24 +20,27 @@ spec = CCSSpectrometer(
 integration_time = 0.003
 
 #function to take a spectrum and save it
-def take_spectrum(baseline = False):
+def take_spectrum(baseline = False, t0 = False):
     spectrum = spec.measure_spectrum(integration_time)
     wavelengths = spec.get_wavelength_data()
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     filename = f"UV_VIS_spectrum_{timestamp}.txt"
-    save_spectrum(wavelengths, spectrum, filename, baseline, timestamp)
+    save_spectrum(wavelengths, spectrum, timestamp, filename, baseline, t0)
     return spectrum, wavelengths, filename
 
 
 #function to save the spectrum to corresponding folder
-def save_spectrum(wavelengths, spectrum, filename=None, baseline, timestamp):
+def save_spectrum(wavelengths, spectrum, timestamp, filename=None, baseline = False, t0 = False):
     # Get the project root (assuming this script is in Auto_Polymerization/src/UV_VIS/)
     project_root = Path(__file__).resolve().parents[3]
     spectra_folder = project_root / "users" / "data" / "UV_VIS_data"
     spectra_folder.mkdir(parents=True, exist_ok=True)
     
-    if reference == True:
-        filename = f"UV_VIS_reference_spectrum_{timestamp}.txt"
+    if baseline == True:
+        filename = f"UV_VIS_baseline_spectrum_{timestamp}.txt"
+
+    if t0 == True:
+        filename = f"UV_VIS_t0_spectrum_{timestamp}.txt"
 
     if filename is None:
         filename = f"UV_VIS_spectrum_{timestamp}.txt"
@@ -49,6 +52,33 @@ def save_spectrum(wavelengths, spectrum, filename=None, baseline, timestamp):
 
     print(f"Spectrum saved to {file_path}")
     return file_path
+
+def subtract_baseline(spectrum, baseline_spectrum):
+    #search in data folder for the baseline spectrum
+    project_root = Path(__file__).resolve().parents[3]
+    baseline_folder = project_root / "users" / "data" / "UV_VIS_data"
+    #search in baseline_folder for the baseline spectrum by the substring "baseline"
+    baseline_files = [f for f in os.listdir(baseline_folder) if "baseline" in f]
+    #load the baseline spectrum
+    baseline_spectrum = np.loadtxt(baseline_folder / baseline_files[0])
+    #for the spectrum, subtract intensity of  the baseline spectrum at a certain wavelength from the intensity of the spectrum at the same wavelength
+    #find the index of the wavelength in the baseline spectrum (using numpy operations)
+    index = np.where(baseline_spectrum[:, 0] == spectrum[i, 0])
+   
+    else:
+        print(f"Wavelength {spectrum[i, 0]} not found in baseline spectrum")
+
+
+    """
+    for i in range(len(spectrum)):
+        index = np.where(baseline_spectrum[:, 0] == spectrum[i, 0])
+        if len(index) > 0:
+            spectrum[i] = spectrum[i] - baseline_spectrum[index, 1]
+        else:
+            print(f"Wavelength {spectrum[i, 0]} not found in baseline spectrum")
+"""
+
+
 
 def calculate_absorbance(spectrum, reference_spectrum):
 

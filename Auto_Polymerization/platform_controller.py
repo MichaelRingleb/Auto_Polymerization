@@ -25,7 +25,7 @@ from medusa import Medusa, MedusaDesigner
 import time
 import matterlab_nmr as nmr
 import matterlab_spectrometers as spectrometer
-import uv_vis_utils as uv_vis
+import src.UV_VIS.uv_vis_utils as uv_vis
 #spectrometers still missing
 
 
@@ -177,11 +177,23 @@ medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel
 #add functionalization step
 #degas reaction vial
 medusa.write_serial("COM12","GAS_ON")
-medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3, dispense_speed=3)
+medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 30, transfer_type="liquid", flush=3, dispense_speed=3)
 medusa.write_serial("COM12","GAS_OFF")
+
+
+#add NMR solvent to the UV_VIS cell
+medusa.transfer_volumetric(source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= 0.7, transfer_type="liquid", draw_speed=1.5, dispense_speed=0.5)
 
 #first measurement of UV_VIS and use this as the baseline spectrum
 uv_vis.take_spectrum(baseline = True)
+
+#remove NMR solvent from UV_VIS cell
+medusa.transfer_volumetric(source="UV_VIS", target="NMR_Solvent_Vessel", pump_id="Analytical_Pump", volume= 1.5, transfer_type="liquid",  draw_speed= 1, dispense_speed=4)
+
+#start flow through UV_VIS and measure the t0 spectrum
+#flow will go on until stopped by other command (use of async or threading)
+medusa.transfer_volumetric(source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", draw_speed=Functionalization_draw_speed, dispense_speed=1)
+uv_vis.take_spectrum(t0 = True)
 
 
 #add functionalization reagent and flush into reaction vial
@@ -189,17 +201,11 @@ medusa.transfer_volumetric(source="Modification_Vessel", target="Reaction_Vial",
 
 
 
-#start flow through UV_VIS
-#first add nmr solvent to the UV_VIS cell and measure background spectrum
-medusa.transfer_volumetric(source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= 0.7, transfer_type="liquid", flush=3, draw_speed=0.5, dispense_speed=0.5)
 
-  #measure background spectrum
 
-  #remove nmr solvent from UV_VIS cell
-medusa.transfer_volumetric(source="UV_VIS", target="NMR_Solvent_Vessel", pump_id="Analytical_Pump", volume= 1.5, transfer_type="liquid", flush=3, draw_speed=1, dispense_speed=4)
 
-#flow will go on until stopped by other command (use of async or threading)
-medusa.transfer_volumetric(source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", flush=3, draw_speed=Functionalization_draw_speed, dispense_speed=1)
+
+
 
 
 #after first functionalization step, the UV_VIS cell is full
