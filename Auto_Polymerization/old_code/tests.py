@@ -1,3 +1,5 @@
+#test for direct control of the different devices using the matterlab drivers without medusa as an "agent"
+
 import re
 import sys
 import os

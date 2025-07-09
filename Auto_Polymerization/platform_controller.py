@@ -169,8 +169,8 @@ medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel
     #wait for 10 min to pump fully empty
 time.sleep(600)
 
-#turn off eluent pump
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
+#turn off polymer pump
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0)
 
    
 
@@ -207,6 +207,7 @@ functionalization_iteration = 0
 max_functionalization_iterations = 200  # 10 hours maximum (3 min intervals)
 
 while not reaction_complete and functionalization_iteration < max_functionalization_iterations:
+    medusa.transfer_volumetric(source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", draw_speed=Functionalization_draw_speed, dispense_speed=1)
     functionalization_iteration += 1
     logger.info(f"Functionalization monitoring iteration {functionalization_iteration}/{max_functionalization_iterations}")
     
@@ -224,6 +225,7 @@ while not reaction_complete and functionalization_iteration < max_functionalizat
     # Take next UV_VIS measurement and calculate conversion
     spectrum, wavelengths, filename, conversion, reaction_complete = uv_vis.take_spectrum(calculate_conversion=True)
 
+
 if functionalization_iteration >= max_functionalization_iterations:
     logger.warning(f"Functionalization monitoring stopped after {max_functionalization_iterations} iterations")
     if conversion is not None:
@@ -234,25 +236,7 @@ else:
         logger.info(f"Final conversion: {conversion:.2f}%")
 
 
-
-
-
-#after first functionalization step, the UV_VIS cell is full
-#take first UV_VIS measurement
-
-#then add functionalization reagent
-
-
-
-
-
-
-
-
-#add UV_VIS measurement and evaluation (in the beginning without addition and then continously)
-
-
-#once UV_VIS measurement is done 
+#once functionalization is finished: 
 
     #open gas valve and pump 10 mL of argon to reaction vial through the UV_VIS cell
 medusa.write_serial("COM12","GAS_ON")
@@ -261,8 +245,18 @@ medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="UV_VIS", pump_
 medusa.write_serial("COM12","GAS_OFF")
 
 #another round of dialysis (with peristaltic pumps)
-
-
+# Start peristaltic pumps   
+medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0.7)
+#wait for 5 h 
+time.sleep(18000)
+# pump peristaltic pump tubing empty for polymer pump in different direction and stop eluent pump
+medusa.transfer_continuous(source="Reaction_Vial", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0.7)
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
+    #wait for 10 min to pump fully empty
+time.sleep(600)
+    #turn off polymer pump
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0)
 
 
 #pump 25 mL of methanol to the precipitation module
