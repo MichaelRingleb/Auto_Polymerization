@@ -32,8 +32,10 @@ pip install matterlab_pumps
 pip install matterlab_serial_device
 
 Spectrometers
-NMR(Nanalysis Benchtop): https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices/nmr install into local environment (git clone repo to e.g. repos folder, then switch to develop branch and then git install -e .)
-UV_Vis (Thorlabs CSS200): https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices/spectrometer install into local environment (git clone repo, switch to develop branch, git install -e .)
+NMR(Nanalysis Benchtop): https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices/nmr install into local environment (git clone repo to e.g. repos folder, then cd to the installation folder of the package, then switch to develop branch and then git install .)
+UV_Vis (Thorlabs CSS200): https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices/spectrometer install into local environment (git clone repo, then cd to the installation folder of the package,  switch to develop branch, git install .)
+
+if access is not public: write Han Hao at University of Toronto
 
 
 
