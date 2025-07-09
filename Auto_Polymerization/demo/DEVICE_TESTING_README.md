@@ -53,7 +53,25 @@ This provides a comprehensive menu-driven interface for all device testing.
 #### Peristaltic Pumps
 - **Function**: `test_peristaltic_pump()`
 - **Devices**: `Polymer_Peri_Pump`, `Solvent_Peri_Pump`
-- **Test**: Runs pump for a specified duration (default 10 seconds)
+- **Test**: Comprehensive flow rate and direction testing
+- **Features**: 
+  - Forward and reverse flow testing
+  - Multiple flow rates (0.2, 0.5, 0.8, 1.5 mL/min)
+  - Rapid start/stop cycles
+  - Duration-based testing (default 10 seconds)
+- **Safety**: User confirmation required
+
+#### Specific Peristaltic Pump Tests
+- **Function**: `test_polymer_peristaltic_pump()`
+- **Device**: `Polymer_Peri_Pump`
+- **Test**: Recirculation test from Reaction_Vial to Reaction_Vial
+- **Duration**: 8 seconds
+- **Safety**: User confirmation required
+
+- **Function**: `test_solvent_peristaltic_pump()`
+- **Device**: `Solvent_Peri_Pump`
+- **Test**: Flow test from Elution_Solvent_Vessel to Waste_Vessel
+- **Duration**: 8 seconds
 - **Safety**: User confirmation required
 
 ### 2. Valves
@@ -77,10 +95,29 @@ This provides a comprehensive menu-driven interface for all device testing.
 - **Safety**: User confirmation required
 
 ### 4. Heating and Stirring
+
+#### Combined Heating and Stirring
 - **Function**: `test_heating_stirring()`
 - **Device**: Hotplate for reaction vial
 - **Test**: Heats to test temperature (25°C) and stirs at test RPM (100)
-- **Monitoring**: Reads temperature for 30 seconds
+- **Monitoring**: Reads temperature and RPM for 30 seconds
+- **Features**: Tests temperature ramp and stirring speed changes
+- **Safety**: User confirmation required
+
+#### Heat Plate Only
+- **Function**: `test_heat_plate_only()`
+- **Device**: Hotplate for reaction vial
+- **Test**: Tests heating functionality without stirring
+- **Features**: Tests multiple temperature setpoints (25°C, 30°C, 40°C)
+- **Monitoring**: Reads temperature for 20 seconds
+- **Safety**: User confirmation required
+
+#### Stirring Only
+- **Function**: `test_stirring_only()`
+- **Device**: Hotplate for reaction vial
+- **Test**: Tests stirring functionality without heating
+- **Features**: Tests multiple RPM setpoints (50, 100, 150, 300 RPM)
+- **Monitoring**: Reads RPM for 15 seconds
 - **Safety**: User confirmation required
 
 ### 5. UV-VIS Spectrometer
@@ -142,6 +179,22 @@ result = controller.test_syringe_pump(
 )
 
 print(f"Test result: {result['success']}")
+
+# Test heat plate only
+result = controller.test_heat_plate_only()
+print(f"Heat plate test result: {result['success']}")
+
+# Test stirring only
+result = controller.test_stirring_only()
+print(f"Stirring test result: {result['success']}")
+
+# Test polymer peristaltic pump
+result = controller.test_polymer_peristaltic_pump()
+print(f"Polymer peristaltic pump test result: {result['success']}")
+
+# Test solvent peristaltic pump
+result = controller.test_solvent_peristaltic_pump()
+print(f"Solvent peristaltic pump test result: {result['success']}")
 ```
 
 ### Running All Tests
@@ -151,6 +204,31 @@ print(f"Test result: {result['success']}")
 results = controller.run_all_tests()
 print(f"Tests passed: {results['successful_tests']}/{results['total_tests']}")
 ```
+
+## Enhanced Testing Capabilities
+
+### Heat Plate Testing
+The enhanced heat plate testing includes three distinct test modes:
+
+1. **Combined Heating and Stirring**: Tests both heating and stirring simultaneously with temperature and RPM monitoring
+2. **Heat Plate Only**: Tests heating functionality without stirring, including multiple temperature setpoints
+3. **Stirring Only**: Tests stirring functionality without heating, including multiple RPM setpoints
+
+### Peristaltic Pump Testing
+The enhanced peristaltic pump testing includes:
+
+1. **Comprehensive Flow Testing**: Tests forward and reverse flow directions
+2. **Multiple Flow Rates**: Tests various flow rates (0.2, 0.5, 0.8, 1.5 mL/min)
+3. **Rapid Cycling**: Tests rapid start/stop cycles to verify pump responsiveness
+4. **Specific Pump Tests**: Dedicated tests for Polymer_Peri_Pump and Solvent_Peri_Pump
+
+### Test Results
+All tests return detailed results including:
+- Success/failure status
+- Test parameters used
+- Monitoring data (temperatures, RPMs, flow rates)
+- Tests performed
+- Error details if applicable
 
 ## Troubleshooting
 
@@ -250,8 +328,39 @@ If you encounter issues:
 3. Verify hardware connections and power
 4. Ensure all dependencies are properly installed
 
+## Medusa Diagnostic for Developers
+
+If you want to identify and report medusa issues to the development team:
+
+```bash
+cd demo
+python run_medusa_diagnostic.py
+```
+
+This comprehensive diagnostic tool will:
+
+1. **Test medusa availability** and version information
+2. **Validate layout files** and JSON structure
+3. **Test medusa initialization** and graph creation
+4. **Analyze graph structure** and connectivity
+5. **Test SerialDevice functionality** and identify issues
+6. **Test pump connectivity** and operations
+7. **Test UV-VIS integration** and error handling
+8. **Generate detailed reports** for developers
+
+**Output Files:**
+- `medusa_diagnostic_report_[timestamp].json` - Detailed technical data
+- `medusa_developer_report_[timestamp].md` - Developer-friendly markdown report
+
+**Use Cases:**
+- Report bugs to the medusa development team
+- Verify medusa installation and configuration
+- Debug complex integration issues
+- Provide reproducible test cases for developers
+
 ## Version History
 
+- **v1.1**: Added medusa diagnostic tools for developer reporting
 - **v1.0**: Initial release with comprehensive device testing framework
 - Includes all major device types from the platform
 - Safety features and user confirmations

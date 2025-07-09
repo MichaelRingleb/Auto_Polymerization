@@ -210,7 +210,7 @@ class DeviceTestController:
     def test_peristaltic_pump(self, pump_id: str, source: str, target: str,
                              duration: int = 10) -> Dict[str, Any]:
         """
-        Test a peristaltic pump.
+        Test a peristaltic pump with comprehensive flow rate and direction testing.
         
         Args:
             pump_id (str): ID of the pump to test
@@ -234,7 +234,17 @@ class DeviceTestController:
         assert self.medusa is not None
         
         try:
-            # Start continuous transfer
+            test_results = {
+                "pump_id": pump_id,
+                "source": source,
+                "target": target,
+                "tests_performed": [],
+                "flow_rates_tested": [],
+                "directions_tested": []
+            }
+            
+            # Test 1: Basic forward flow
+            logger.info(f"Test 1: Starting forward flow at {self.test_transfer_rate} mL/min...")
             self.medusa.transfer_continuous(
                 source=source,
                 target=target,
@@ -255,20 +265,132 @@ class DeviceTestController:
                 transfer_rate=0
             )
             
+            test_results["tests_performed"].append("forward_flow")
+            test_results["flow_rates_tested"].append(self.test_transfer_rate)
+            test_results["directions_tested"].append("forward")
+            
+            # Test 2: Reverse flow
+            logger.info(f"Test 2: Starting reverse flow at {self.test_transfer_rate} mL/min...")
+            self.medusa.transfer_continuous(
+                source=target,
+                target=source,
+                pump_id=pump_id,
+                direction_CW=False,
+                transfer_rate=self.test_transfer_rate
+            )
+            
+            logger.info(f"Reverse flow running for {duration//2} seconds...")
+            time.sleep(duration // 2)
+            
+            # Stop the pump
+            self.medusa.transfer_continuous(
+                source=target,
+                target=source,
+                pump_id=pump_id,
+                direction_CW=False,
+                transfer_rate=0
+            )
+            
+            test_results["tests_performed"].append("reverse_flow")
+            test_results["directions_tested"].append("reverse")
+            
+            # Test 3: Different flow rates
+            flow_rates = [0.2, 0.8, 1.5]
+            for rate in flow_rates:
+                logger.info(f"Test 3: Testing flow rate {rate} mL/min...")
+                self.medusa.transfer_continuous(
+                    source=source,
+                    target=target,
+                    pump_id=pump_id,
+                    direction_CW=True,
+                    transfer_rate=rate
+                )
+                
+                logger.info(f"Running at {rate} mL/min for 5 seconds...")
+                time.sleep(5)
+                
+                # Stop the pump
+                self.medusa.transfer_continuous(
+                    source=source,
+                    target=target,
+                    pump_id=pump_id,
+                    direction_CW=False,
+                    transfer_rate=0
+                )
+                
+                test_results["flow_rates_tested"].append(rate)
+            
+            test_results["tests_performed"].append("variable_flow_rates")
+            
+            # Test 4: Rapid start/stop cycles
+            logger.info("Test 4: Testing rapid start/stop cycles...")
+            for i in range(3):
+                logger.info(f"Cycle {i+1}/3: Start pump...")
+                self.medusa.transfer_continuous(
+                    source=source,
+                    target=target,
+                    pump_id=pump_id,
+                    direction_CW=True,
+                    transfer_rate=0.5
+                )
+                time.sleep(2)
+                
+                logger.info(f"Cycle {i+1}/3: Stop pump...")
+                self.medusa.transfer_continuous(
+                    source=source,
+                    target=target,
+                    pump_id=pump_id,
+                    direction_CW=False,
+                    transfer_rate=0
+                )
+                time.sleep(1)
+            
+            test_results["tests_performed"].append("rapid_cycles")
+            
             logger.info("Peristaltic pump test completed")
             
             return {
                 "success": True,
-                "pump_id": pump_id,
+                **test_results,
                 "duration": duration,
-                "transfer_rate": self.test_transfer_rate,
-                "source": source,
-                "target": target
+                "transfer_rate": self.test_transfer_rate
             }
             
         except Exception as e:
             logger.error(f"Peristaltic pump test failed: {e}")
             return {"success": False, "error": str(e), "pump_id": pump_id}
+    
+    def test_polymer_peristaltic_pump(self) -> Dict[str, Any]:
+        """
+        Test the polymer peristaltic pump specifically.
+        
+        Returns:
+            Dict[str, Any]: Test results
+        """
+        logger.info("Testing Polymer Peristaltic Pump")
+        
+        return self.test_peristaltic_pump(
+            pump_id="Polymer_Peri_Pump",
+            source="Reaction_Vial",
+            target="Reaction_Vial",  # Recirculation test
+            duration=8
+        )
+    
+    def test_solvent_peristaltic_pump(self) -> Dict[str, Any]:
+        """
+        Test the solvent peristaltic pump specifically.
+        
+        Returns:
+            Dict[str, Any]: Test results
+        """
+        logger.info("Testing Solvent Peristaltic Pump")
+        
+        return self.test_peristaltic_pump(
+            pump_id="Solvent_Peri_Pump",
+            source="Elution_Solvent_Vessel",
+            target="Waste_Vessel",
+            duration=8
+        )
     
     def test_gas_valve(self) -> Dict[str, Any]:
         """
@@ -395,7 +517,7 @@ class DeviceTestController:
     
     def test_heating_stirring(self, vessel: str = "Reaction_Vial") -> Dict[str, Any]:
         """
-        Test heating and stirring system.
+        Test heating and stirring system with comprehensive temperature monitoring.
         
         Args:
             vessel (str): Vessel to test
@@ -415,7 +537,7 @@ class DeviceTestController:
         assert self.medusa is not None
         
         try:
-            # Start heating and stirring
+            # Test 1: Start heating and stirring
             logger.info(f"Starting heating to {self.test_temperature}°C and stirring at {self.test_rpm} RPM...")
             self.medusa.heat_stir(
                 vessel=vessel,
@@ -423,22 +545,50 @@ class DeviceTestController:
                 rpm=self.test_rpm
             )
             
-            # Monitor temperature for 30 seconds
+            # Test 2: Monitor temperature for 30 seconds
             logger.info("Monitoring temperature for 30 seconds...")
             start_time = time.time()
             temperatures = []
+            stirring_status = []
             
             while time.time() - start_time < 30:
                 try:
                     temp = self.medusa.get_hotplate_temperature(vessel)
                     temperatures.append(temp)
                     logger.info(f"Current temperature: {temp}°C")
+                    
+                    # Check stirring status (if available)
+                    try:
+                        rpm = self.medusa.get_hotplate_rpm(vessel)
+                        stirring_status.append(rpm)
+                        logger.info(f"Current RPM: {rpm}")
+                    except Exception as e:
+                        logger.debug(f"Could not read RPM: {e}")
+                    
                     time.sleep(5)
                 except Exception as e:
                     logger.warning(f"Could not read temperature: {e}")
                     break
             
-            # Stop heating and stirring
+            # Test 3: Test temperature ramp (if supported)
+            logger.info("Testing temperature ramp to 35°C...")
+            self.medusa.heat_stir(
+                vessel=vessel,
+                temperature=35,
+                rpm=self.test_rpm
+            )
+            time.sleep(10)
+            
+            # Test 4: Test stirring speed change
+            logger.info("Testing stirring speed change to 200 RPM...")
+            self.medusa.heat_stir(
+                vessel=vessel,
+                temperature=35,
+                rpm=200
+            )
+            time.sleep(10)
+            
+            # Test 5: Stop heating and stirring
             logger.info("Stopping heating and stirring...")
             self.medusa.heat_stir(vessel=vessel, temperature=0, rpm=0)
             
@@ -450,11 +600,183 @@ class DeviceTestController:
                 "target_temperature": self.test_temperature,
                 "target_rpm": self.test_rpm,
                 "temperature_readings": temperatures,
-                "monitoring_duration": 30
+                "stirring_readings": stirring_status,
+                "monitoring_duration": 30,
+                "tests_performed": [
+                    "heating_startup",
+                    "temperature_monitoring", 
+                    "temperature_ramp",
+                    "stirring_speed_change",
+                    "system_shutdown"
+                ]
             }
             
         except Exception as e:
             logger.error(f"Heating and stirring test failed: {e}")
+            return {"success": False, "error": str(e), "vessel": vessel}
+    
+    def test_heat_plate_only(self, vessel: str = "Reaction_Vial") -> Dict[str, Any]:
+        """
+        Test heat plate functionality without stirring.
+        
+        Args:
+            vessel (str): Vessel to test
+            
+        Returns:
+            Dict[str, Any]: Test results
+        """
+        logger.info(f"Testing heat plate only for {vessel}")
+        
+        if not self.user_confirmation(f"Proceed with heat plate test for {vessel}?"):
+            return {"success": False, "reason": "User cancelled"}
+        
+        if not self._check_medusa_initialized():
+            return {"success": False, "error": "Medusa not initialized"}
+        
+        # Type assertion to help the type checker
+        assert self.medusa is not None
+        
+        try:
+            # Test 1: Start heating only (no stirring)
+            logger.info(f"Starting heating to {self.test_temperature}°C (no stirring)...")
+            self.medusa.heat_stir(
+                vessel=vessel,
+                temperature=self.test_temperature,
+                rpm=0
+            )
+            
+            # Test 2: Monitor temperature
+            logger.info("Monitoring temperature for 20 seconds...")
+            start_time = time.time()
+            temperatures = []
+            
+            while time.time() - start_time < 20:
+                try:
+                    temp = self.medusa.get_hotplate_temperature(vessel)
+                    temperatures.append(temp)
+                    logger.info(f"Current temperature: {temp}°C")
+                    time.sleep(5)
+                except Exception as e:
+                    logger.warning(f"Could not read temperature: {e}")
+                    break
+            
+            # Test 3: Test different temperature setpoints
+            test_temps = [30, 40, 25]
+            for temp in test_temps:
+                logger.info(f"Testing temperature setpoint: {temp}°C")
+                self.medusa.heat_stir(vessel=vessel, temperature=temp, rpm=0)
+                time.sleep(8)
+                
+                try:
+                    current_temp = self.medusa.get_hotplate_temperature(vessel)
+                    logger.info(f"Temperature reached: {current_temp}°C")
+                except Exception as e:
+                    logger.warning(f"Could not read temperature: {e}")
+            
+            # Test 4: Stop heating
+            logger.info("Stopping heating...")
+            self.medusa.heat_stir(vessel=vessel, temperature=0, rpm=0)
+            
+            logger.info("Heat plate test completed")
+            
+            return {
+                "success": True,
+                "vessel": vessel,
+                "test_temperatures": test_temps,
+                "temperature_readings": temperatures,
+                "monitoring_duration": 20,
+                "tests_performed": [
+                    "heating_only_startup",
+                    "temperature_monitoring",
+                    "multiple_temperature_setpoints",
+                    "system_shutdown"
+                ]
+            }
+            
+        except Exception as e:
+            logger.error(f"Heat plate test failed: {e}")
+            return {"success": False, "error": str(e), "vessel": vessel}
+    
+    def test_stirring_only(self, vessel: str = "Reaction_Vial") -> Dict[str, Any]:
+        """
+        Test stirring functionality without heating.
+        
+        Args:
+            vessel (str): Vessel to test
+            
+        Returns:
+            Dict[str, Any]: Test results
+        """
+        logger.info(f"Testing stirring only for {vessel}")
+        
+        if not self.user_confirmation(f"Proceed with stirring test for {vessel}?"):
+            return {"success": False, "reason": "User cancelled"}
+        
+        if not self._check_medusa_initialized():
+            return {"success": False, "error": "Medusa not initialized"}
+        
+        # Type assertion to help the type checker
+        assert self.medusa is not None
+        
+        try:
+            # Test 1: Start stirring only (no heating)
+            logger.info(f"Starting stirring at {self.test_rpm} RPM (no heating)...")
+            self.medusa.heat_stir(
+                vessel=vessel,
+                temperature=0,
+                rpm=self.test_rpm
+            )
+            
+            # Test 2: Monitor stirring for 15 seconds
+            logger.info("Monitoring stirring for 15 seconds...")
+            start_time = time.time()
+            stirring_readings = []
+            
+            while time.time() - start_time < 15:
+                try:
+                    rpm = self.medusa.get_hotplate_rpm(vessel)
+                    stirring_readings.append(rpm)
+                    logger.info(f"Current RPM: {rpm}")
+                    time.sleep(3)
+                except Exception as e:
+                    logger.warning(f"Could not read RPM: {e}")
+                    break
+            
+            # Test 3: Test different stirring speeds
+            test_rpms = [150, 300, 50, 100]
+            for rpm in test_rpms:
+                logger.info(f"Testing stirring speed: {rpm} RPM")
+                self.medusa.heat_stir(vessel=vessel, temperature=0, rpm=rpm)
+                time.sleep(5)
+                
+                try:
+                    current_rpm = self.medusa.get_hotplate_rpm(vessel)
+                    logger.info(f"RPM reached: {current_rpm}")
+                except Exception as e:
+                    logger.warning(f"Could not read RPM: {e}")
+            
+            # Test 4: Stop stirring
+            logger.info("Stopping stirring...")
+            self.medusa.heat_stir(vessel=vessel, temperature=0, rpm=0)
+            
+            logger.info("Stirring test completed")
+            
+            return {
+                "success": True,
+                "vessel": vessel,
+                "test_rpms": test_rpms,
+                "stirring_readings": stirring_readings,
+                "monitoring_duration": 15,
+                "tests_performed": [
+                    "stirring_only_startup",
+                    "rpm_monitoring",
+                    "multiple_rpm_setpoints",
+                    "system_shutdown"
+                ]
+            }
+            
+        except Exception as e:
+            logger.error(f"Stirring test failed: {e}")
             return {"success": False, "error": str(e), "vessel": vessel}
     
     def test_uv_vis_spectrometer(self) -> Dict[str, Any]:
@@ -513,16 +835,20 @@ class DeviceTestController:
             logger.info("Step 1: Testing gas valve...")
             workflow_results["gas_valve"] = self.test_gas_valve()
             
-            # 2. Test heating and stirring
-            logger.info("Step 2: Testing heating and stirring...")
-            workflow_results["heating_stirring"] = self.test_heating_stirring()
+            # 2. Test heat plate only
+            logger.info("Step 2: Testing heat plate only...")
+            workflow_results["heat_plate_only"] = self.test_heat_plate_only()
             
-            # 3. Test linear actuator
-            logger.info("Step 3: Testing linear actuator...")
+            # 3. Test stirring only
+            logger.info("Step 3: Testing stirring only...")
+            workflow_results["stirring_only"] = self.test_stirring_only()
+            
+            # 4. Test linear actuator
+            logger.info("Step 4: Testing linear actuator...")
             workflow_results["linear_actuator"] = self.test_linear_actuator()
             
-            # 4. Test syringe pump
-            logger.info("Step 4: Testing syringe pump...")
+            # 5. Test syringe pump
+            logger.info("Step 5: Testing syringe pump...")
             workflow_results["syringe_pump"] = self.test_syringe_pump(
                 "Solvent_Monomer_Modification_Pump",
                 "Solvent_Vessel",
@@ -530,13 +856,21 @@ class DeviceTestController:
                 volume=0.5
             )
             
-            # 5. Test UV-VIS spectrometer
-            logger.info("Step 5: Testing UV-VIS spectrometer...")
+            # 6. Test UV-VIS spectrometer
+            logger.info("Step 6: Testing UV-VIS spectrometer...")
             workflow_results["uv_vis"] = self.test_uv_vis_spectrometer()
             
-            # 6. Test solenoid valve
-            logger.info("Step 6: Testing solenoid valve...")
+            # 7. Test solenoid valve
+            logger.info("Step 7: Testing solenoid valve...")
             workflow_results["solenoid_valve"] = self.test_solenoid_valve()
+            
+            # 8. Test polymer peristaltic pump
+            logger.info("Step 8: Testing polymer peristaltic pump...")
+            workflow_results["polymer_peristaltic_pump"] = self.test_polymer_peristaltic_pump()
+            
+            # 9. Test solvent peristaltic pump
+            logger.info("Step 9: Testing solvent peristaltic pump...")
+            workflow_results["solvent_peristaltic_pump"] = self.test_solvent_peristaltic_pump()
             
             # Calculate overall success
             successful_tests = sum(1 for result in workflow_results.values() if result.get("success", False))
@@ -557,7 +891,7 @@ class DeviceTestController:
     
     def run_all_tests(self) -> Dict[str, Any]:
         """
-        Run all individual device tests.
+        Run all individual device tests including enhanced heat plate and peristaltic pump tests.
         
         Returns:
             Dict[str, Any]: Results of all tests
@@ -575,10 +909,13 @@ class DeviceTestController:
             ("solenoid_valve", self.test_solenoid_valve),
             ("linear_actuator", self.test_linear_actuator),
             ("heating_stirring", lambda: self.test_heating_stirring()),
+            ("heat_plate_only", lambda: self.test_heat_plate_only()),
+            ("stirring_only", lambda: self.test_stirring_only()),
             ("uv_vis_spectrometer", self.test_uv_vis_spectrometer),
             ("syringe_pump_solvent", lambda: self.test_syringe_pump("Solvent_Monomer_Modification_Pump", "Solvent_Vessel", "Waste_Vessel")),
             ("syringe_pump_initiator", lambda: self.test_syringe_pump("Initiator_CTA_Pump", "Initiator_Vessel", "Waste_Vessel")),
-            ("peristaltic_pump_polymer", lambda: self.test_peristaltic_pump("Polymer_Peri_Pump", "Reaction_Vial", "Reaction_Vial", duration=5)),
+            ("polymer_peristaltic_pump", self.test_polymer_peristaltic_pump),
+            ("solvent_peristaltic_pump", self.test_solvent_peristaltic_pump),
         ]
         
         for test_name, test_func in test_functions:
@@ -642,9 +979,13 @@ def main():
         print("   b) Solenoid valve")
         print("   c) Linear actuator")
         print("   d) Heating and stirring")
-        print("   e) UV-VIS spectrometer")
-        print("   f) Syringe pump")
-        print("   g) Peristaltic pump")
+        print("   e) Heat plate only")
+        print("   f) Stirring only")
+        print("   g) UV-VIS spectrometer")
+        print("   h) Syringe pump")
+        print("   i) Peristaltic pump (generic)")
+        print("   j) Polymer peristaltic pump")
+        print("   k) Solvent peristaltic pump")
         print("4. Exit")
         
         choice = input("\nSelect option (1-4): ").strip()
@@ -658,7 +999,7 @@ def main():
             print(f"\nWorkflow simulation completed: {results['successful_tests']}/{results['total_tests']} passed")
             
         elif choice == "3":
-            device_choice = input("Select device (a-g): ").strip().lower()
+            device_choice = input("Select device (a-k): ").strip().lower()
             
             if device_choice == "a":
                 controller.test_gas_valve()
@@ -669,17 +1010,25 @@ def main():
             elif device_choice == "d":
                 controller.test_heating_stirring()
             elif device_choice == "e":
-                controller.test_uv_vis_spectrometer()
+                controller.test_heat_plate_only()
             elif device_choice == "f":
+                controller.test_stirring_only()
+            elif device_choice == "g":
+                controller.test_uv_vis_spectrometer()
+            elif device_choice == "h":
                 pump_id = input("Enter pump ID: ").strip()
                 source = input("Enter source vessel: ").strip()
                 target = input("Enter target vessel: ").strip()
                 controller.test_syringe_pump(pump_id, source, target)
-            elif device_choice == "g":
+            elif device_choice == "i":
                 pump_id = input("Enter pump ID: ").strip()
                 source = input("Enter source vessel: ").strip()
                 target = input("Enter target vessel: ").strip()
                 controller.test_peristaltic_pump(pump_id, source, target)
+            elif device_choice == "j":
+                controller.test_polymer_peristaltic_pump()
+            elif device_choice == "k":
+                controller.test_solvent_peristaltic_pump()
             else:
                 print("Invalid device choice.")
                 

@@ -50,8 +50,11 @@ def demo_individual_tests():
     print("\nDemo will test the following devices:")
     print("1. Gas valve (open/close cycle)")
     print("2. Linear actuator (position changes)")
-    print("3. UV-VIS spectrometer (reference spectrum)")
-    print("4. Syringe pump (small transfer)")
+    print("3. Heat plate only (temperature control)")
+    print("4. Stirring only (RPM control)")
+    print("5. UV-VIS spectrometer (reference spectrum)")
+    print("6. Syringe pump (small transfer)")
+    print("7. Polymer peristaltic pump (recirculation)")
     
     proceed = input("\nProceed with demo? (y/N): ").strip().lower()
     if proceed not in ['y', 'yes']:
@@ -72,30 +75,51 @@ def demo_individual_tests():
     result2 = controller.test_linear_actuator()
     print(f"Result: {'PASS' if result2['success'] else 'FAIL'}")
     
-    # Test 3: UV-VIS spectrometer
+    # Test 3: Heat plate only
     print("\n" + "-" * 40)
-    print("TEST 3: UV-VIS Spectrometer")
+    print("TEST 3: Heat Plate Only")
     print("-" * 40)
-    result3 = controller.test_uv_vis_spectrometer()
+    result3 = controller.test_heat_plate_only()
     print(f"Result: {'PASS' if result3['success'] else 'FAIL'}")
     
-    # Test 4: Syringe pump (with safe parameters)
+    # Test 4: Stirring only
     print("\n" + "-" * 40)
-    print("TEST 4: Syringe Pump")
+    print("TEST 4: Stirring Only")
     print("-" * 40)
-    result4 = controller.test_syringe_pump(
+    result4 = controller.test_stirring_only()
+    print(f"Result: {'PASS' if result4['success'] else 'FAIL'}")
+    
+    # Test 5: UV-VIS spectrometer
+    print("\n" + "-" * 40)
+    print("TEST 5: UV-VIS Spectrometer")
+    print("-" * 40)
+    result5 = controller.test_uv_vis_spectrometer()
+    print(f"Result: {'PASS' if result5['success'] else 'FAIL'}")
+    
+    # Test 6: Syringe pump (with safe parameters)
+    print("\n" + "-" * 40)
+    print("TEST 6: Syringe Pump")
+    print("-" * 40)
+    result6 = controller.test_syringe_pump(
         pump_id="Solvent_Monomer_Modification_Pump",
         source="Solvent_Vessel",
         target="Waste_Vessel",
         volume=0.5  # Small volume for safety
     )
-    print(f"Result: {'PASS' if result4['success'] else 'FAIL'}")
+    print(f"Result: {'PASS' if result6['success'] else 'FAIL'}")
+    
+    # Test 7: Polymer peristaltic pump
+    print("\n" + "-" * 40)
+    print("TEST 7: Polymer Peristaltic Pump")
+    print("-" * 40)
+    result7 = controller.test_polymer_peristaltic_pump()
+    print(f"Result: {'PASS' if result7['success'] else 'FAIL'}")
     
     # Summary
     print("\n" + "=" * 60)
     print("DEMO SUMMARY")
     print("=" * 60)
-    results = [result1, result2, result3, result4]
+    results = [result1, result2, result3, result4, result5, result6, result7]
     passed = sum(1 for r in results if r['success'])
     total = len(results)
     print(f"Tests passed: {passed}/{total}")
@@ -129,11 +153,14 @@ def demo_workflow_simulation():
     
     print("\nThis demo will simulate a complete workflow:")
     print("- Gas valve control")
-    print("- Heating and stirring")
+    print("- Heat plate only (temperature control)")
+    print("- Stirring only (RPM control)")
     print("- Linear actuator positioning")
     print("- Volumetric pump transfer")
     print("- UV-VIS measurement")
     print("- Solenoid valve control")
+    print("- Polymer peristaltic pump (recirculation)")
+    print("- Solvent peristaltic pump (flow)")
     
     proceed = input("\nProceed with workflow simulation? (y/N): ").strip().lower()
     if proceed not in ['y', 'yes']:
