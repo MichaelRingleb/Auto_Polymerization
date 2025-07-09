@@ -63,6 +63,38 @@ Functionalization_temp = 20  # Temperature for functionalization step
 Functionanilzation_volume = 2 # Volume for functionalization step
 Functionalization_draw_speed = Functionanilzation_volume / 2  # draw speed in mL/min
 
+#some test code to check the functionality of the different devices
+medusa.write_serial("COM12", "1000")
+time.sleep(10)
+medusa.write_serial("COM12", "2000")
+medusa.write_serial("COM12", "GAS_ON")
+time.sleep(10)
+medusa.write_serial("COM12", "GAS_OFF")
+medusa.write_serial("COM12", "PRECIP_ON")
+time.sleep(10)
+medusa.write_serial("COM12", "PRECIP_OFF")
+
+medusa.heat_stir(vessel="Reaction_Vial", temperature= polymerization_temp, rpm= set_rpm)
+time.sleep(10)
+medusa.heat_stir(vessel="Reaction_Vial", temperature= 0, rpm= 0)
+
+medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
+medusa.transfer_continous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0.7)
+time.sleep(10)
+medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0)
+medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
+
+take_spectrum(reference=True)
+take_spectrum(t0=True)
+
+medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 2, transfer_type="liquid", flush=1)
+medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", flush=1)
+medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 2, transfer_type="liquid", flush=1)
+medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 2, transfer_type="liquid", flush=1)
+#end of test section
+exit()
+
+
 
 #take the reaction vial out of the heatplate
 medusa.write_serial("COM12", "2000")  # Move the reaction vial out of the heatplate
@@ -102,6 +134,7 @@ medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="
 # wait for heat plate to reach x degree (defined earlier)
 while medusa.get_hotplate_temperature("Reaction_Vial") < polymerization_temp-2:
     time.sleep(2)
+    medusa.get_hotplate_rpm("Reaction_Vial")
 
 
 # Lower vial into heat plate
@@ -340,25 +373,6 @@ medusa.write_serial("COM12","GAS_OFF")
 
 
 
-#pump 25 mL of methanol to the precipitation module
-medusa.transfer_volumetric(source="Methanol_Vessel", target="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
-
-
-
-
-
-
-
-
-#pump 25 mL of methanol to the precipitation module#
-
-
-
-
-
-
-
-#clean all the flow paths
 
 
 
