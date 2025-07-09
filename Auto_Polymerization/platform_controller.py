@@ -197,7 +197,7 @@ spectrum, wavelengths, filename, conversion = uv_vis.take_spectrum(t0=True)
 
 
 #add functionalization reagent and flush into reaction vial
-medusa.transfer_volumetric(source="Modification_Vessel", target="Reaction_Vial", pump_id="Functionalization_Pump", volume= Functionanilzation_volume, transfer_type="liquid", flush=3, draw_speed=Functionalization_draw_speed, dispense_speed=2
+medusa.transfer_volumetric(source="Modification_Vessel", target="Reaction_Vial", pump_id="Functionalization_Pump", volume= Functionanilzation_volume, transfer_type="liquid", flush=3, draw_speed=Functionalization_draw_speed, dispense_speed=2)
 
 #take UV_VIS measurement and calculate conversion
 spectrum, wavelengths, filename, conversion = uv_vis.take_spectrum(calculate_conversion=True)
