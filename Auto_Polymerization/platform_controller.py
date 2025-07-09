@@ -185,7 +185,7 @@ medusa.write_serial("COM12","GAS_OFF")
 medusa.transfer_volumetric(source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= 0.7, transfer_type="liquid", draw_speed=1.5, dispense_speed=0.5)
 
 #first measurement of UV_VIS and use this as the baseline spectrum
-uv_vis.take_spectrum(baseline = True)
+spectrum, wavelengths, filename, conversion = uv_vis.take_spectrum(baseline=True)
 
 #remove NMR solvent from UV_VIS cell
 medusa.transfer_volumetric(source="UV_VIS", target="NMR_Solvent_Vessel", pump_id="Analytical_Pump", volume= 1.5, transfer_type="liquid",  draw_speed= 1, dispense_speed=4)
@@ -193,16 +193,14 @@ medusa.transfer_volumetric(source="UV_VIS", target="NMR_Solvent_Vessel", pump_id
 #start flow through UV_VIS and measure the t0 spectrum
 #flow will go on until stopped by other command (use of async or threading)
 medusa.transfer_volumetric(source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", draw_speed=Functionalization_draw_speed, dispense_speed=1)
-uv_vis.take_spectrum(t0 = True)
+spectrum, wavelengths, filename, conversion = uv_vis.take_spectrum(t0=True)
 
 
 #add functionalization reagent and flush into reaction vial
-medusa.transfer_volumetric(source="Modification_Vessel", target="Reaction_Vial", pump_id="Functionalization_Pump", volume= Functionanilzation_volume, transfer_type="liquid", flush=3, draw_speed=Functionalization_draw_speed, dispense_speed=2)
+medusa.transfer_volumetric(source="Modification_Vessel", target="Reaction_Vial", pump_id="Functionalization_Pump", volume= Functionanilzation_volume, transfer_type="liquid", flush=3, draw_speed=Functionalization_draw_speed, dispense_speed=2
 
-
-
-
-
+#take UV_VIS measurement and calculate conversion
+spectrum, wavelengths, filename, conversion = uv_vis.take_spectrum(calculate_conversion=True)
 
 
 
