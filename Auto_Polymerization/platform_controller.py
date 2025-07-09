@@ -185,7 +185,7 @@ medusa.write_serial("COM12","GAS_OFF")
 medusa.transfer_volumetric(source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= 0.7, transfer_type="liquid", draw_speed=1.5, dispense_speed=0.5)
 
 #first measurement of UV_VIS and use this as the reference spectrum
-spectrum, wavelengths, filename, conversion = uv_vis.take_spectrum(reference=True)
+uv_vis.take_spectrum(reference=True)
 
 #remove NMR solvent from UV_VIS cell
 medusa.transfer_volumetric(source="UV_VIS", target="NMR_Solvent_Vessel", pump_id="Analytical_Pump", volume= 1.5, transfer_type="liquid",  draw_speed= 1, dispense_speed=4)
@@ -193,14 +193,45 @@ medusa.transfer_volumetric(source="UV_VIS", target="NMR_Solvent_Vessel", pump_id
 #start flow through UV_VIS and measure the t0 spectrum
 #flow will go on until stopped by other command (use of async or threading)
 medusa.transfer_volumetric(source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", draw_speed=Functionalization_draw_speed, dispense_speed=1)
-spectrum, wavelengths, filename, conversion = uv_vis.take_spectrum(t0=True)
+uv_vis.take_spectrum(t0=True)
 
 
 #add functionalization reagent and flush into reaction vial
 medusa.transfer_volumetric(source="Modification_Vessel", target="Reaction_Vial", pump_id="Functionalization_Pump", volume= Functionanilzation_volume, transfer_type="liquid", flush=3, draw_speed=Functionalization_draw_speed, dispense_speed=2)
 
 #take UV_VIS measurement and calculate conversion
-spectrum, wavelengths, filename, conversion = uv_vis.take_spectrum(calculate_conversion=True)
+spectrum, wavelengths, filename, conversion, reaction_complete = uv_vis.take_spectrum(calculate_conversion=True)
+
+# Monitor functionalization reaction until completion
+functionalization_iteration = 0
+max_functionalization_iterations = 200  # 10 hours maximum (3 min intervals)
+
+while not reaction_complete and functionalization_iteration < max_functionalization_iterations:
+    functionalization_iteration += 1
+    logger.info(f"Functionalization monitoring iteration {functionalization_iteration}/{max_functionalization_iterations}")
+    
+    if conversion is not None:
+        logger.info(f"Current conversion: {conversion:.2f}%")
+    
+    if reaction_complete:
+        logger.info("Functionalization reaction completed based on absorbance stability")
+        break
+    
+    # Wait before next measurement
+    logger.info("Waiting 3 minutes before next measurement...")
+    time.sleep(180)  # 3 minutes
+    
+    # Take next UV_VIS measurement and calculate conversion
+    spectrum, wavelengths, filename, conversion, reaction_complete = uv_vis.take_spectrum(calculate_conversion=True)
+
+if functionalization_iteration >= max_functionalization_iterations:
+    logger.warning(f"Functionalization monitoring stopped after {max_functionalization_iterations} iterations")
+    if conversion is not None:
+        logger.info(f"Final conversion achieved: {conversion:.2f}%")
+else:
+    logger.info(f"Functionalization completed successfully in {functionalization_iteration} iterations")
+    if conversion is not None:
+        logger.info(f"Final conversion: {conversion:.2f}%")
 
 
 
