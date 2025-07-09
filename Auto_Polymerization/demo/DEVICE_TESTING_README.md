@@ -175,6 +175,7 @@ print(f"Tests passed: {results['successful_tests']}/{results['total_tests']}")
    - Check COM port settings
    - Ensure Arduino/controller is connected
    - Verify serial commands are correct
+   - Run `python test_com_ports.py` to diagnose COM port issues
 
 ### Debug Mode
 
@@ -184,6 +185,27 @@ Enable detailed logging by modifying the logging level:
 logger.setLevel(logging.DEBUG)
 ```
 
+### COM Port Troubleshooting
+
+If you encounter Arduino initialization errors, run the diagnostic script:
+
+```bash
+cd demo
+python test_com_ports.py
+```
+
+This script will:
+1. List all available COM ports
+2. Test direct Arduino connection
+3. Test Medusa serial command functionality
+4. Provide troubleshooting tips
+
+**Common COM Port Issues:**
+- **Wrong COM port**: The Arduino might be on a different COM port than COM12
+- **Arduino not responding**: Check if the Arduino code is uploaded and running
+- **Driver issues**: Ensure Arduino drivers are properly installed
+- **USB cable**: Try a different USB cable or port
+
 ## File Structure
 
 ```
@@ -191,6 +213,7 @@ Auto_Polymerization/
 ├── demo/
 │   ├── device_test_controller.py      # Main testing framework
 │   ├── demo_device_test.py            # Demo script
+│   ├── test_com_ports.py              # COM port diagnostic tool
 │   ├── DEVICE_TESTING_README.md       # This file
 │   └── test_uv_vis_utils.py           # UV-VIS testing utilities
 ├── platform_controller.py             # Original workflow controller

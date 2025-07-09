@@ -81,6 +81,25 @@ class DeviceTestController:
         """
         try:
             logger.info(f"Initializing Medusa with layout: {self.layout_path}")
+            
+            # Check if layout file exists
+            if not self.layout_path.exists():
+                logger.error(f"Layout file not found: {self.layout_path}")
+                return False
+            
+            # Check if layout file is valid JSON
+            try:
+                import json
+                with open(self.layout_path, 'r') as f:
+                    json.load(f)
+                logger.info("Layout file is valid JSON")
+            except json.JSONDecodeError as e:
+                logger.error(f"Layout file is not valid JSON: {e}")
+                return False
+            
+            # List available COM ports for debugging
+            self.list_available_ports()
+            
             self.medusa = Medusa(
                 graph_layout=self.layout_path,
                 logger=logger
@@ -89,6 +108,9 @@ class DeviceTestController:
             return True
         except Exception as e:
             logger.error(f"Failed to initialize Medusa: {e}")
+            logger.error(f"Error type: {type(e).__name__}")
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
             return False
     
     def user_confirmation(self, message: str) -> bool:
@@ -115,6 +137,19 @@ class DeviceTestController:
             logger.error("Medusa is not initialized. Please call initialize_medusa() first.")
             return False
         return True
+    
+    def list_available_ports(self) -> None:
+        """List all available COM ports for debugging."""
+        try:
+            import serial.tools.list_ports
+            ports = serial.tools.list_ports.comports()
+            logger.info("Available COM ports:")
+            for port in ports:
+                logger.info(f"  {port.device}: {port.description}")
+        except ImportError:
+            logger.warning("pyserial not available, cannot list ports")
+        except Exception as e:
+            logger.error(f"Error listing ports: {e}")
     
     def test_syringe_pump(self, pump_id: str, source: str, target: str, 
                          volume: Optional[float] = None) -> Dict[str, Any]:
