@@ -184,8 +184,8 @@ medusa.write_serial("COM12","GAS_OFF")
 #add NMR solvent to the UV_VIS cell
 medusa.transfer_volumetric(source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= 0.7, transfer_type="liquid", draw_speed=1.5, dispense_speed=0.5)
 
-#first measurement of UV_VIS and use this as the baseline spectrum
-spectrum, wavelengths, filename, conversion = uv_vis.take_spectrum(baseline=True)
+#first measurement of UV_VIS and use this as the reference spectrum
+spectrum, wavelengths, filename, conversion = uv_vis.take_spectrum(reference=True)
 
 #remove NMR solvent from UV_VIS cell
 medusa.transfer_volumetric(source="UV_VIS", target="NMR_Solvent_Vessel", pump_id="Analytical_Pump", volume= 1.5, transfer_type="liquid",  draw_speed= 1, dispense_speed=4)
