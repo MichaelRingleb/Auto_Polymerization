@@ -1,4 +1,6 @@
-nda3\envs\autopoly\python.exe' 'c:\Users\AAG Group\.vscode\extensions\ms-python.debugpy-2025.8.0-win32-x64\bundled\libs\debugpy\launcher' '29010' '--' 'D:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\tests\test_minimal_workflow.py' 
+(autopoly) PS D:\Documents\autopoly\Auto_Polymerization>  d:; cd 'd:\Documents\autopoly\Auto_Polymerization'; & 'c:\Users\AAG Group\miniconda3\envs\autopoly\python.exe' 'c:\Users\AAG Group\.vscode\extensions\ms-python.debugpy-2025.8.0-win32-x64\bundled\libs\debugpy\launcher' '28989' '--' 'd:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\tests\test_minimal_workflow.py' 
+Failed to initialize Medusa: [Errno 2] No such file or directory: '..\\users\\config\\fluidic_design_autopoly.json'
+(autopoly) PS D:\Documents\autopoly\Auto_Polymerization>  d:; cd 'd:\Documents\autopoly\Auto_Polymerization'; & 'c:\Users\AAG Group\miniconda3\envs\autopoly\python.exe' 'c:\Users\AAG Group\.vscode\extensions\ms-python.debugpy-2025.8.0-win32-x64\bundled\libs\debugpy\launcher' '29010' '--' 'D:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\tests\test_minimal_workflow.py' 
 Start initializing pump 1
 Top speed of plunger on pump on 1 is 384
 Valve num of pump on 1 is 5
@@ -167,6 +169,224 @@ C:\Program Files\IVI Foundation\VISA\Win64\Bin\TLCCS_64.dll
 INFO:src.UV_VIS.uv_vis_utils:Spectrum saved to D:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\users\data\UV_VIS_data\2025-07-10_13-52-25_UV_VIS_reference_spectrum.txt
 INFO:src.UV_VIS.uv_vis_utils:Reference spectrum saved as 2025-07-10_13-52-25_UV_VIS_reference_spectrum.txt
 UV-VIS reference spectrum taken: 2025-07-10_13-52-25_UV_VIS_reference_spectrum.txt
+Spectrum shape: (3648,)
+
+Testing SerialDevice commands (Gas, Precipitation, Linear Actuator)...
+Testing: Gas valve ON (COM12, GAS_ON)
+Gas valve ON command failed: 'COM12'
+Testing: Gas valve OFF (COM12, GAS_OFF)
+Gas valve OFF command failed: 'COM12'
+Testing: Precipitation valve ON (COM12, PRECIP_ON)
+Precipitation valve ON command failed: 'COM12'
+Testing: Precipitation valve OFF (COM12, PRECIP_OFF)
+Precipitation valve OFF command failed: 'COM12'
+Testing: Linear actuator to position 1000 (COM12, 1000)
+Linear actuator to position 1000 command failed: 'COM12'
+Testing: Linear actuator to position 2000 (COM12, 2000)
+Linear actuator to position 2000 command failed: 'COM12'
+Done.
+(autopoly) PS D:\Documents\autopoly\Auto_Polymerization>  d:; cd 'd:\Documents\autopoly\Auto_Polymerization'; & 'c:\Users\AAG Group\miniconda3\envs\autopoly\python.exe' 'c:\Users\AAG Group\.vscode\extensions\ms-python.debugpy-2025.8.0-win32-x64\bundled\libs\debugpy\launcher' '29188' '--' 'D:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\tests\test_minimal_workflow.py' 
+Start initializing pump 1
+Top speed of plunger on pump on 1 is 384
+(autopoly) PS D:\Documents\autopoly\Auto_Polymerization>  d:; cd 'd:\Documents\autopoly\Auto_Polymerization'; & 'c:\Users\AAG Group\miniconda3\envs\autopoly\python.exe' 'c:\Users\AAG Group\.vscode\extensions\ms-python.debugpy-2025.8.0-win32-x64\bundled\libs\debugpy\launcher' '29203' '--' 'D:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\tests\test_minimal_workflow.py' 
+Start initializing pump 1
+Top speed of plunger on pump on 1 is 384
+Valve num of pump on 1 is 5
+Initialize valve of pump on 1 succeed.
+Home plunger of pump on 1 succeed.
+Pump on 1 has been initialized
+Start initializing pump 4
+Top speed of plunger on pump on 4 is 384
+Valve num of pump on 4 is 5
+Initialize valve of pump on 4 succeed.
+Home plunger of pump on 4 succeed.
+Pump on 4 has been initialized
+Start initializing pump 2
+Top speed of plunger on pump on 2 is 384
+Valve num of pump on 2 is 5
+Initialize valve of pump on 2 succeed.
+Home plunger of pump on 2 succeed.
+Pump on 2 has been initialized
+Start initializing pump 3
+Top speed of plunger on pump on 3 is 384
+Valve num of pump on 3 is 5
+Initialize valve of pump on 3 succeed.
+Home plunger of pump on 3 succeed.
+Pump on 3 has been initialized
+INFO:root:Target temperature set to 0.0.
+INFO:root:Stop heating.
+INFO:root:Target rpm set to 0.
+INFO:root:Stop stirring.
+Failed to initialize Medusa: could not open port '12': FileNotFoundError(2, 'The system cannot find the file specified.', None, 2)
+(autopoly) PS D:\Documents\autopoly\Auto_Polymerization>  d:; cd 'd:\Documents\autopoly\Auto_Polymerization'; & 'c:\Users\AAG Group\miniconda3\envs\autopoly\python.exe' 'c:\Users\AAG Group\.vscode\extensions\ms-python.debugpy-2025.8.0-win32-x64\bundled\libs\debugpy\launcher' '29307' '--' 'd:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\tests\test_minimal_workflow.py' 
+Start initializing pump 1
+Top speed of plunger on pump on 1 is 384
+Valve num of pump on 1 is 5
+Initialize valve of pump on 1 succeed.
+Home plunger of pump on 1 succeed.
+Pump on 1 has been initialized
+Start initializing pump 4
+Top speed of plunger on pump on 4 is 384
+Valve num of pump on 4 is 5
+Initialize valve of pump on 4 succeed.
+Home plunger of pump on 4 succeed.
+Pump on 4 has been initialized
+Start initializing pump 2
+Top speed of plunger on pump on 2 is 384
+Valve num of pump on 2 is 5
+Initialize valve of pump on 2 succeed.
+Home plunger of pump on 2 succeed.
+Pump on 2 has been initialized
+Start initializing pump 3
+Top speed of plunger on pump on 3 is 384
+Valve num of pump on 3 is 5
+Initialize valve of pump on 3 succeed.
+Home plunger of pump on 3 succeed.
+Pump on 3 has been initialized
+INFO:root:Target temperature set to 0.0.
+INFO:root:Stop heating.
+INFO:root:Target rpm set to 0.
+INFO:root:Stop stirring.
+WARNING:medusa_test:Overwriting edge from Polymer_Peri_Pump to Reaction_Vial
+WARNING:medusa_test:Overwriting edge from Reaction_Vial to Polymer_Peri_Pump
+INFO:medusa_test:Instantiated a graph with 27 nodes and 70 edges
+INFO:medusa_test:Loading default settings from package resources: medusa.defaults/GraphDefaults.json
+INFO:medusa_test:Default 'pump' matched category 'Pump'. Using node 'Analytical_Pump'.
+INFO:medusa_test:Default 'gas_reservoir' matched name substring 'Gas'. Using node 'Gas_Reservoir_Vessel'.
+INFO:medusa_test:Default 'waste' matched name substring 'Waste'. Using node 'Waste_Vessel'.
+Medusa initialized successfully.
+Testing heat/stir...
+INFO:root:Target rpm set to 100.
+INFO:root:Start stirring.
+INFO:root:Target temperature set to 25.0.
+INFO:root:Start heating.
+INFO:medusa_test:Completed: Set heat/stir on vessel ['Reaction_Vial'] using hotplate Hotplate.
+INFO:root:Temperature reading on probe is 24.2.
+INFO:root:RPM reading is 80.
+INFO:medusa_test:Current Temperature 24.2, rpm 80 retrived from hotplate Hotplate connecting to Reaction_Vial.
+Hotplate temperature: 24.2
+INFO:root:Temperature reading on probe is 24.2.
+INFO:root:RPM reading is 80.
+INFO:medusa_test:Current Temperature 24.2, rpm 80 retrived from hotplate Hotplate connecting to Reaction_Vial.
+Hotplate RPM: 80
+INFO:root:Target rpm set to 0.
+INFO:root:Stop stirring.
+INFO:root:Target temperature set to 0.0.
+INFO:root:Stop heating.
+INFO:medusa_test:Completed: Set heat/stir on vessel ['Reaction_Vial'] using hotplate Hotplate.
+Testing simple pump transfer...
+INFO:medusa_test:Transfer 2 mL from Purge_Solvent_Vessel_1 to Waste_Vessel...
+Pump 3 plunger moved to 29000.
+Top speed of plunger on pump on 3 is 384
+Valve num of pump on 3 is 5
+Valve num of pump on 3 is 5
+Pump 3 valve moved to 5.
+Pump 3 plunger moved to -11000.
+Top speed of plunger on pump on 3 is 384
+INFO:medusa_test:Flushing tubing to Waste_Vessel with Gas_Reservoir_Vessel
+Pump 3 plunger moved to 29000.
+Top speed of plunger on pump on 3 is 384
+Valve num of pump on 3 is 5
+Valve num of pump on 3 is 5
+Pump 3 valve moved to 5.
+Pump 3 plunger moved to -11000.
+Top speed of plunger on pump on 3 is 384
+WARNING:medusa_test:Rinse solvent, waste, or gas reservoir not defined in defaults. Skipping rinse.
+INFO:medusa_test:Transfer of 2 mL of liquid from Purge_Solvent_Vessel_1 to Waste_Vessel completed.
+Pump transfer successful.
+Testing peristaltic pump (Polymer_Peri_Pump)...
+Peristaltic pump test failed: No cycle found with Reaction_Vial and Reaction_Vial
+
+Testing volumetric transfer for all pumps...
+Testing Analytical_Pump: Purge_Solvent_Vessel_2 → Waste_Vessel
+INFO:medusa_test:Transfer 1.0 mL from Purge_Solvent_Vessel_2 to Waste_Vessel...
+Pump 1 plunger moved to 6000.
+Top speed of plunger on pump on 1 is 384
+Valve num of pump on 1 is 5
+Valve num of pump on 1 is 5
+Pump 1 valve moved to 5.
+Pump 1 plunger moved to -14000.
+Top speed of plunger on pump on 1 is 384
+INFO:medusa_test:Flushing tubing to Waste_Vessel with Gas_Reservoir_Vessel
+Pump 1 plunger moved to 6000.
+Top speed of plunger on pump on 1 is 384
+Valve num of pump on 1 is 5
+Valve num of pump on 1 is 5
+Pump 1 valve moved to 5.
+Pump 1 plunger moved to -14000.
+Top speed of plunger on pump on 1 is 384
+WARNING:medusa_test:Rinse solvent, waste, or gas reservoir not defined in defaults. Skipping rinse.
+INFO:medusa_test:Transfer of 1.0 mL of liquid from Purge_Solvent_Vessel_2 to Waste_Vessel completed.
+Analytical_Pump transfer successful.
+Testing Initiator_CTA_Pump: Purge_Solvent_Vessel_1 → Waste_Vessel
+INFO:medusa_test:Transfer 1.0 mL from Purge_Solvent_Vessel_1 to Waste_Vessel...
+Pump 4 plunger moved to 6000.
+Top speed of plunger on pump on 4 is 384
+Valve num of pump on 4 is 5
+Valve num of pump on 4 is 5
+Pump 4 valve moved to 5.
+Pump 4 plunger moved to -14000.
+Top speed of plunger on pump on 4 is 384
+INFO:medusa_test:Flushing tubing to Waste_Vessel with Gas_Reservoir_Vessel
+Pump 4 plunger moved to 6000.
+Top speed of plunger on pump on 4 is 384
+Valve num of pump on 4 is 5
+Valve num of pump on 4 is 5
+Pump 4 valve moved to 5.
+Pump 4 plunger moved to -14000.
+Top speed of plunger on pump on 4 is 384
+WARNING:medusa_test:Rinse solvent, waste, or gas reservoir not defined in defaults. Skipping rinse.
+INFO:medusa_test:Transfer of 1.0 mL of liquid from Purge_Solvent_Vessel_1 to Waste_Vessel completed.
+Initiator_CTA_Pump transfer successful.
+Testing Precipitation_Pump: Purge_Solvent_Vessel_1 → Waste_Vessel
+INFO:medusa_test:Transfer 1.0 mL from Purge_Solvent_Vessel_1 to Waste_Vessel...
+Pump 2 plunger moved to 6000.
+Top speed of plunger on pump on 2 is 384
+Valve num of pump on 2 is 5
+Valve num of pump on 2 is 5
+Pump 2 valve moved to 5.
+Pump 2 plunger moved to -14000.
+Top speed of plunger on pump on 2 is 384
+INFO:medusa_test:Flushing tubing to Waste_Vessel with Gas_Reservoir_Vessel
+Pump 2 plunger moved to 6000.
+Top speed of plunger on pump on 2 is 384
+Valve num of pump on 2 is 5
+Valve num of pump on 2 is 5
+Pump 2 valve moved to 5.
+Pump 2 plunger moved to -14000.
+Top speed of plunger on pump on 2 is 384
+WARNING:medusa_test:Rinse solvent, waste, or gas reservoir not defined in defaults. Skipping rinse.
+INFO:medusa_test:Transfer of 1.0 mL of liquid from Purge_Solvent_Vessel_1 to Waste_Vessel completed.
+Precipitation_Pump transfer successful.
+Testing Solvent_Monomer_Modification_Pump: Purge_Solvent_Vessel_1 → Waste_Vessel
+INFO:medusa_test:Transfer 1.0 mL from Purge_Solvent_Vessel_1 to Waste_Vessel...
+Pump 3 plunger moved to 9000.
+Top speed of plunger on pump on 3 is 384
+Valve num of pump on 3 is 5
+Valve num of pump on 3 is 5
+Pump 3 valve moved to 5.
+Pump 3 plunger moved to -11000.
+Top speed of plunger on pump on 3 is 384
+INFO:medusa_test:Flushing tubing to Waste_Vessel with Gas_Reservoir_Vessel
+Pump 3 plunger moved to 9000.
+Top speed of plunger on pump on 3 is 384
+Valve num of pump on 3 is 5
+Valve num of pump on 3 is 5
+Pump 3 valve moved to 5.
+Pump 3 plunger moved to -11000.
+Top speed of plunger on pump on 3 is 384
+WARNING:medusa_test:Rinse solvent, waste, or gas reservoir not defined in defaults. Skipping rinse.
+INFO:medusa_test:Transfer of 1.0 mL of liquid from Purge_Solvent_Vessel_1 to Waste_Vessel completed.
+Solvent_Monomer_Modification_Pump transfer successful.
+Testing Polymer_Peri_Pump: Reaction_Vial → Reaction_Vial
+Polymer_Peri_Pump transfer failed: 'LongerPeristalticPump' object has no attribute 'syringe_volume'
+Testing Solvent_Peri_Pump: Elution_Solvent_Vessel → Waste_Vessel
+Solvent_Peri_Pump transfer failed: 'LongerPeristalticPump' object has no attribute 'syringe_volume'
+Testing UV-VIS spectrometer...
+C:\Program Files\IVI Foundation\VISA\Win64\Bin\TLCCS_64.dll
+INFO:src.UV_VIS.uv_vis_utils:Spectrum saved to D:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\users\data\UV_VIS_data\2025-07-10_14-47-35_UV_VIS_reference_spectrum.txt
+INFO:src.UV_VIS.uv_vis_utils:Reference spectrum saved as 2025-07-10_14-47-35_UV_VIS_reference_spectrum.txt
+UV-VIS reference spectrum taken: 2025-07-10_14-47-35_UV_VIS_reference_spectrum.txt
 Spectrum shape: (3648,)
 
 Testing SerialDevice commands (Gas, Precipitation, Linear Actuator)...

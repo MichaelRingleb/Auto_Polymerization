@@ -241,7 +241,7 @@
       "type": "SerialDevice",
       "name": "Gas_Valve",
       "settings": {
-        "com_port": "12",
+        "com_port": "COM12",
         "address": 0
       }
     },
@@ -286,7 +286,7 @@
       "type": "SerialDevice",
       "name": "Precipitation_Valve",
       "settings": {
-        "com_port": "12",
+        "com_port": "COM12",
         "address": 0
       }
     },
@@ -294,7 +294,7 @@
       "type": "SerialDevice",
       "name": "Linear_Actuator",
       "settings": {
-        "com_port": "12",
+        "com_port": "COM12",
         "address": 0
       }
     }

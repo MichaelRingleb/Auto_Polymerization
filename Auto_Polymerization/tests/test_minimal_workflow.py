@@ -35,7 +35,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("medusa_test")
 
 def main():
-    layout_path = r"D:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\users\config\fluidic_design_autopoly.json"  # Adjust if needed
+    layout_path = r"D:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\users\config\fluidic_design_autopoly copy.json"  # Adjust if needed
 
     try:
         medusa = Medusa(
