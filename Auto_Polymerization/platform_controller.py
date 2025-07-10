@@ -63,42 +63,6 @@ Functionalization_temp = 20  # Temperature for functionalization step
 Functionanilzation_volume = 2 # Volume for functionalization step
 Functionalization_draw_speed = Functionanilzation_volume / 2  # draw speed in mL/min
 
-#some test code to check the functionality of the different devices
-#medusa.write_serial("COM12", "1000") 
-#time.sleep(10)
-# medusa.write_serial("COM12", "2000")
-# medusa.write_serial("COM12", "GAS_ON")
-# time.sleep(10)
-# medusa.write_serial("COM12", "GAS_OFF")
-# medusa.write_serial("COM12", "PRECIP_ON")
-# time.sleep(10)
-# medusa.write_serial("COM12", "PRECIP_OFF")
-
-medusa.heat_stir(vessel="Reaction_Vial", temperature= polymerization_temp, rpm= set_rpm) # does not work at the moment (thermal connection exists but is not found)
-medusa.get_hotplate_temperature("Reaction_Vial")
-medusa.get_hotplate_rpm("Reaction_Vial")
-time.sleep(10)
-medusa.heat_stir(vessel="Reaction_Vial", temperature= 0, rpm= 0)
-
-#medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
-#medusa.transfer_continous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0.7)
-#time.sleep(10)
-#medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0)
-#medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
-
-#uv_vis.take_spectrum(reference=True)   
-#uv_vis.take_spectrum(t0=True)          
-
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 2, transfer_type="liquid", flush=1)
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", flush=1)
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 2, transfer_type="liquid", flush=1)
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 2, transfer_type="liquid", flush=1)
-#end of test section
-
-#current status (9.7.25): only uv vis is working
-exit()
-
-
 
 #take the reaction vial out of the heatplate
 medusa.write_serial("COM12", "2000")  # Move the reaction vial out of the heatplate

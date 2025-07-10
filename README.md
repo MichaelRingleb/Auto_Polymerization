@@ -7,25 +7,25 @@ This repository contains the **Auto_Polymerization platform** for automated poly
 
 ## 🚀 Quick Start
 
-### Device Testing
+### Device & Workflow Testing
 
-For testing real devices in your Auto_Polymerization platform, see the demo folder:
-
-```bash
-cd Auto_Polymerization/demo
-python demo_device_test.py
-```
-
-This will guide you through testing individual devices with safe parameters.
-
-For comprehensive device testing:
+To quickly check your hardware and workflow integration, use the minimal workflow test:
 
 ```bash
-cd Auto_Polymerization/demo
-python device_test_controller.py
+cd Auto_Polymerization/tests
+python test_minimal_workflow.py
 ```
 
-📖 See [`Auto_Polymerization/demo/DEVICE_TESTING_README.md`](Auto_Polymerization/demo/DEVICE_TESTING_README.md) for detailed documentation.
+This script will:
+- Test heat/stir and temperature/RPM readout
+- Perform a simple volumetric pump transfer
+- Test all syringe and peristaltic pumps with a volumetric transfer
+- Test UV-VIS spectrometer (reference spectrum)
+- Test SerialDevice commands (gas valve, precipitation valve, linear actuator)
+
+**You can also run this script from the `demo/` folder.**
+
+---
 
 ## 📦 Required Packages and Setup
 
@@ -111,11 +111,10 @@ DLL_FILE = Path(r"C:\Program Files\IVI Foundation\VISA\Win64\Bin\TLCCS_64.dll")
 
 ```
 Auto_Polymerization/
-├── 📂 demo/                          # Device testing and demo scripts
-│   ├── 🔧 device_test_controller.py  # Main testing framework
-│   ├── 🎯 demo_device_test.py        # User-friendly demo script
-│   ├── 📖 DEVICE_TESTING_README.md   # Device testing documentation
-│   └── 🔬 test_uv_vis_utils.py       # UV-VIS testing utilities
+├── 📂 demo/                          # Demo and minimal workflow test scripts
+│   └── 🧪 test_minimal_workflow.py    # Minimal workflow and device test
+├── 📂 tests/                         # Test scripts
+│   └── 🧪 test_minimal_workflow.py    # Minimal workflow and device test
 ├── 📂 src/                           # Source code modules
 │   ├── 🔬 UV_VIS/                    # UV-VIS spectroscopy utilities
 │   ├── 💧 liquid_transfers/          # Liquid transfer modules
@@ -129,29 +128,36 @@ Auto_Polymerization/
 └── 🎮 platform_controller.py         # Main workflow controller
 ```
 
+---
+
+## 🚦 Recommended Workflow
+
+1. **Install dependencies** as described below
+2. **Configure your hardware** using the setup files in `users/setup/`
+3. **Test your devices and workflow** using `test_minimal_workflow.py` in `tests/` or `demo/`
+4. **Run experiments** using `platform_controller.py`
+
+---
+
 ## 🧩 Main Components
 
 | Component | Description | Location |
 |-----------|-------------|----------|
 | **🎮 Platform Controller** | Main workflow orchestration | `platform_controller.py` |
-| **🔧 Device Testing** | Comprehensive device testing framework | `demo/` |
+| **🧪 Minimal Workflow Test** | End-to-end device and workflow test | `tests/test_minimal_workflow.py` |
 | **🔬 UV-VIS Utilities** | Spectroscopy data acquisition and analysis | `src/UV_VIS/` |
 | **⚙️ Workflow Modules** | Individual workflow steps | `workflow_steps/` |
 
-## 🚀 Getting Started
-
-1. **📦 Install dependencies** from as described above
-2. **⚙️ Configure your hardware** using the setup files in `users/setup/`
-3. **🔧 Test your devices** using the demo scripts in `demo/`
-4. **🧪 Run experiments** using `platform_controller.py`
+---
 
 ## 📚 Documentation
 
 | Topic | Location |
 |-------|----------|
-| **🔧 Device Testing** | [`Auto_Polymerization/demo/DEVICE_TESTING_README.md`](Auto_Polymerization/demo/DEVICE_TESTING_README.md) |
 | **🔬 UV-VIS Utilities** | [`Auto_Polymerization/src/UV_VIS/uv_vis_utils.py`](Auto_Polymerization/src/UV_VIS/uv_vis_utils.py) |
 | **⚙️ Workflow Steps** | Individual modules in `workflow_steps/` |
+
+---
 
 ## 🔧 Development
 
@@ -171,10 +177,10 @@ Changes to the source code will be picked up immediately.
 
 For issues and questions:
 
-1. **🔧 Check the device testing documentation** in `Auto_Polymerization/demo/`
-2. **📖 Review the troubleshooting sections** in the README files
-3. **🔌 Verify hardware connections** and configuration
-4. **🐛 Open an issue** on GitHub or contact the maintainers
+1. **Run the minimal workflow test** in `tests/` or `demo/`
+2. **Check the troubleshooting sections** in the README
+3. **Verify hardware connections** and configuration
+4. **Open an issue** on GitHub or contact the maintainers
 
 ---
 
