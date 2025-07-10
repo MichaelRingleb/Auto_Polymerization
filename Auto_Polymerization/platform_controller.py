@@ -42,18 +42,23 @@ medusa = Medusa(
 )
 
 #test code to check the functionality of the different devices
-medusa.write_serial("COM12", "b"1000\n")
+medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=20)
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = True, transfer_rate=20)
 time.sleep(10)
-medusa.write_serial("COM12", "b"1000\n")
-time.sleep(10)
-medusa.write_serial("COM12", "b"GAS_ON\n")
-time.sleep(10)
-medusa.write_serial("COM12", "b"GAS_OFF\n")
-time.sleep(10)
-medusa.write_serial("COM12", "b"PRECIP_ON\n")
-time.sleep(10)
-medusa.write_serial("COM12", "b"PRECIP_OFF\n")
+medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=20)
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=20)
 
+medusa.write_serial("Linear_Actuator", b"2000\n")
+time.sleep(10)
+medusa.write_serial("Linear_Actuator", b"1000\n")
+time.sleep(10)
+medusa.write_serial("Gas_Valve", b"GAS_ON\n")
+time.sleep(10)
+medusa.write_serial("Gas_Valve", b"GAS_OFF\n")
+time.sleep(10)
+medusa.write_serial("Precipitation_Valve", b"PRECIP_ON\n")
+time.sleep(10)
+medusa.write_serial("Precipitation_Valve", b"PRECIP_OFF\n")
 
 medusa.heat_stir(vessel="Reaction_Vial", temperature= 20, rpm= 200)
 medusa.get_hotplate_temperature("Reaction_Vial")
@@ -72,14 +77,9 @@ medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel
 medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
 
 
-medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0.7)
-time.sleep(10)
-medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.0)
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0.0)
 
 
-exit*()
+exit()
 """
 #ideally put into its own module, but for now just import here
 # Definition of added volumes and reaction temperature by user before reaction:
@@ -173,8 +173,8 @@ medusa.heat_stir("Reaction_Vial", temperature=0)
 medusa.write_serial("COM12", "2000")
 
     # Start peristaltic pumps   
-medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0.7)
+medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0.7)
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = True, transfer_rate=0.7)
 
 iteration_counter = 0
 while dialysis_conversion < 90:
@@ -202,13 +202,13 @@ while dialysis_conversion < 90:
 
 #when 90% conversion reached
     # pump peristaltic pump tubing empty for polymer pump in different direction and stop eluent pump
-medusa.transfer_continuous(source="Reaction_Vial", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0.7)
+medusa.transfer_continuous(source="Reaction_Vial", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
 medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
     #wait for 10 min to pump fully empty
 time.sleep(600)
 
 #turn off polymer pump
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0)
+medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0)
 
    
 
