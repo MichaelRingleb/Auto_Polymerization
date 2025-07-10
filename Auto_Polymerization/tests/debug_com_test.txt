@@ -1,0 +1,25 @@
+(autopoly) PS D:\Documents\autopoly\Auto_Polymerization>  d:; cd 'd:\Documents\autopoly\Auto_Polymerization'; & 'c:\Users\AAG Group\miniconda3\envs\autopoly\python.exe' 'c:\Users\AAG Group\.vscode\extensions\ms-python.debugpy-2025.8.0-win32-x64\bundled\libs\debugpy\launcher' '29361' '--' 'D:\Documents\autopoly\Auto_Polymerization\test_serial_debug.py' 
+=== Serial Communication Debug Test ===
+
+Testing direct Arduino communication...
+Available COM ports:
+  COM7: USB Serial Port (COM7)
+  COM14: Prolific PL2303GT USB Serial COM Port (COM14)
+  COM13: USB Serial Port (COM13)
+  COM16: USB-Enhanced-SERIAL CH343 (COM16)
+  COM12: USB Serial Device (COM12)
+  COM3: Intel(R) Active Management Technology - SOL (COM3)
+  COM15: USB Serial Port (COM15)
+
+Trying direct connection to COM12...
+Sending: STATUS
+Response: Precipitation Relay: OFF
+
+Testing Medusa write_serial...
+Medusa write_serial failed: 'name'
+
+=== Results ===
+Direct Arduino communication: ✓
+Medusa write_serial: ✗
+
+The issue is in Medusa's write_serial implementation, not the Arduino.
