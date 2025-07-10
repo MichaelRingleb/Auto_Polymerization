@@ -74,11 +74,11 @@ Functionalization_draw_speed = Functionanilzation_volume / 2  # draw speed in mL
 # time.sleep(10)
 # medusa.write_serial("COM12", "PRECIP_OFF")
 
-#medusa.heat_stir(vessel="Reaction_Vial", temperature= polymerization_temp, rpm= set_rpm) # does not work at the moment (thermal connection exists but is not found)
-#medusa.get_hotplate_temperature("Reaction_Vial")
-#medusa.get_hotplate_rpm("Reaction_Vial")
-#time.sleep(10)
-#medusa.heat_stir(vessel="Reaction_Vial", temperature= 0, rpm= 0)
+medusa.heat_stir(vessel="Reaction_Vial", temperature= polymerization_temp, rpm= set_rpm) # does not work at the moment (thermal connection exists but is not found)
+medusa.get_hotplate_temperature("Reaction_Vial")
+medusa.get_hotplate_rpm("Reaction_Vial")
+time.sleep(10)
+medusa.heat_stir(vessel="Reaction_Vial", temperature= 0, rpm= 0)
 
 #medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
 #medusa.transfer_continous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0.7)
