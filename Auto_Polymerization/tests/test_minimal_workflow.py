@@ -61,6 +61,7 @@ def main():
         medusa.heat_stir(vessel="Reaction_Vial", temperature=0, rpm=0)
     except Exception as e:
         print(f"Heat/stir test failed: {e}")
+    time.sleep(5)
 
     print("Testing simple pump transfer...")
     try:
@@ -74,6 +75,7 @@ def main():
         print("Pump transfer successful.")
     except Exception as e:
         print(f"Pump transfer failed: {e}")
+    time.sleep(5)
 
     print("Testing peristaltic pump (Polymer_Peri_Pump)...")
     try:
@@ -96,6 +98,7 @@ def main():
         print("Peristaltic pump stopped.")
     except Exception as e:
         print(f"Peristaltic pump test failed: {e}")
+    time.sleep(5)
 
     # Test all syringe and peristaltic pumps with a volumetric transfer
     print("\nTesting volumetric transfer for all pumps...")
@@ -122,6 +125,7 @@ def main():
             print(f"{pump_id} transfer successful.")
         except Exception as e:
             print(f"{pump_id} transfer failed: {e}")
+    time.sleep(5)
 
     print("Testing UV-VIS spectrometer...")
     if UV_VIS_AVAILABLE:
@@ -136,6 +140,7 @@ def main():
             print(f"UV-VIS test failed: {e}")
     else:
         print("UV-VIS utils not available. Skipping UV-VIS test.")
+    time.sleep(5)
 
     print("\nTesting SerialDevice commands (Gas, Precipitation, Linear Actuator)...")
     serial_tests = [
@@ -154,6 +159,7 @@ def main():
             time.sleep(10)  # Increased wait time for hardware response
         except Exception as e:
             print(f"{desc} command failed: {e}")
+    time.sleep(5)
 
     print("Done.")
 
