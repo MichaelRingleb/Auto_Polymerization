@@ -64,7 +64,7 @@ Functionanilzation_volume = 2 # Volume for functionalization step
 Functionalization_draw_speed = Functionanilzation_volume / 2  # draw speed in mL/min
 
 #some test code to check the functionality of the different devices
-#medusa.write_serial("COM12", "1000") #does not yet work 
+#medusa.write_serial("COM12", "1000") 
 #time.sleep(10)
 # medusa.write_serial("COM12", "2000")
 # medusa.write_serial("COM12", "GAS_ON")
@@ -86,10 +86,10 @@ Functionalization_draw_speed = Functionanilzation_volume / 2  # draw speed in mL
 #medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0)
 #medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
 
-#uv_vis.take_spectrum(reference=True)   works
-#uv_vis.take_spectrum(t0=True)          works 
+#uv_vis.take_spectrum(reference=True)   
+#uv_vis.take_spectrum(t0=True)          
 
-#medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 2, transfer_type="liquid", flush=1)
+medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 2, transfer_type="liquid", flush=1)
 medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", flush=1)
 medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 2, transfer_type="liquid", flush=1)
 medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 2, transfer_type="liquid", flush=1)
