@@ -35,7 +35,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("medusa_test")
 
 def main():
-    layout_path = "../users/config/fluidic_design_autopoly.json"  # Adjust if needed
+    layout_path = r"D:\Documents\autopoly\Auto_Polymerization\Auto_Polymerization\users\config\fluidic_design_autopoly.json"  # Adjust if needed
 
     try:
         medusa = Medusa(
@@ -69,8 +69,7 @@ def main():
             target="Waste_Vessel",
             pump_id="Solvent_Monomer_Modification_Pump",
             volume=2,
-            transfer_type="liquid",
-            flush=1
+            transfer_type="liquid"
         )
         print("Pump transfer successful.")
     except Exception as e:
@@ -118,8 +117,7 @@ def main():
                 target=target,
                 pump_id=pump_id,
                 volume=1.0,
-                transfer_type="liquid",
-                flush=1
+                transfer_type="liquid"
             )
             print(f"{pump_id} transfer successful.")
         except Exception as e:
