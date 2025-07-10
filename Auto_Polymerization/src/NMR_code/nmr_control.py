@@ -1,9 +1,0 @@
-#controls the NMR measurements
-
-
-
-
-
-
-
-
