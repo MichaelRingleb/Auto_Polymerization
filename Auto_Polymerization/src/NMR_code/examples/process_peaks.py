@@ -177,9 +177,9 @@ def process_spectra_auto(directory, monomer_range, std_range, snr_thresh=5, nois
 
 
 if __name__ == "__main__":
-    folder = "YOUR_FOLDER_PATH"  # ⬅️ Change this to your spectra folder
-    monomer_search_range = (0.8, 1.6)
-    internal_std_range = (-0.2, 0.6)
+    folder = "D:\Aspuru-Guzik Lab Dropbox\Lab Manager Aspuru-Guzik\PythonScript\Han\NanalysisNMR\nmr\examples"  # ⬅️ Change this to your spectra folder
+    monomer_search_range = (5.5, 6.5)
+    internal_std_range = (6.5, 8)
     snr_threshold = 5
 
     process_spectra_auto(
