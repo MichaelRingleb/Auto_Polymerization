@@ -104,14 +104,22 @@ Functionanilzation_volume = 2 # Volume for functionalization step
 Functionalization_draw_speed = Functionanilzation_volume / 2  # draw speed in mL/min
 
 
+#in the beginning pump shim sample to NMR and run a shim(2) for two times while in parallel, reaction vial is filled with solvent and other stuff
+medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid",draw_speed=6, dispense_speed=6)
+nmr.shim(2)
+nmr.shim(2)
+#transfer back to shim sample vessel
+medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3, transfer_type="liquid", draw_speed=6, dispense_speed=6)
+
+
 #take the reaction vial out of the heatplate
-medusa.write_serial("COM12", "2000")  # Move the reaction vial out of the heatplate
+medusa.write_serial("Linear_Actuator", "2000")  # Move the reaction vial out of the heatplate
 
 # preheat heatplate
 medusa.heat_stir(vessel="Reaction_Vial", temperature= polymerization_temp, rpm= set_rpm)
 
 # open gas valve (in default mode, gas flow will be blocked)
-medusa.write_serial("COM12","GAS_ON")
+medusa.write_serial("GAS_VALVE","GAS_ON")
 
 # prime tubing (from vial to waste)
 medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
@@ -121,16 +129,7 @@ medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pum
 medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
 
 # shut gas valve 
-medusa.write_serial("COM12","GAS_OFF")
-
-
-#lock and shim NMR
-    # pump deuterated solvent to NMR
-medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3.5, transfer_type="liquid")
-    # lock and shim NMR on deuterated solvent
-        # different process, needs to be implemented still
-    # pump deuterated solvent back
-medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3.5, transfer_type="liquid")
+medusa.write_serial("GAS_VALVE","GAS_OFF")
 
 
 # fill reaction vial with things for reaction and flush it to the vial 
@@ -139,6 +138,7 @@ medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_
 medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= initiator_volume, transfer_type="liquid",flush=3, draw_speed=initiator_draw_speed)
 medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= cta_volume, transfer_type="liquid",flush=3, draw_speed=cta_draw_speed)
 
+
 # wait for heat plate to reach x degree (defined earlier)
 while medusa.get_hotplate_temperature("Reaction_Vial") < polymerization_temp-2:
     time.sleep(2)
@@ -146,7 +146,7 @@ while medusa.get_hotplate_temperature("Reaction_Vial") < polymerization_temp-2:
 
 
 # Lower vial into heat plate
-medusa.write_serial("COM12", "1000")
+medusa.write_serial("Linear_Actuator", "1000")
 
 iteration_counter = 0
 # Wait for NMR feedback regarding conversion before change to next step
@@ -155,20 +155,36 @@ while polymerization_conversion < 80:
         # Pump 3 mL from reaction vial to NMR
   medusa.transfer_volumetric(source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
         # Take NMR spectrum and evaluate signal at ca. 5.5 ppm with regards to signal intensity of same signal at beginning
+
+  nmr.set_hardlock_exp(num_scans=32, 
+                     solvent=HSolv.DMSO, 
+                     spectrum_center=5, 
+                     spectrum_width=12
+                     )
+  nmr.run()
+  nmr.proc_1D()   
+  nmr.save_data(base_path, "")  #filename should be timestamp + iteration_counter value
+  #furthermore apply the integration of the signal of the Monomer and the standard and the corresponding ratio and also set this into relation to the values from the t0 sample
+  #afterwards
+
+
         # Pump 3 mL from NMR back to reaction vial and flush rest into vial with argon
-  medusa.transfer_volumetric(source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")   
+  medusa.transfer_volumetric(source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump", volume=3.1, transfer_type="liquid", draw_speed=4, dispense_speed=6)   
         #wait for 5 minutes   
-  time.sleep(300)
+
   #after 5 iterations of the previous loop, the NMR is reshimmed
-  if iteration_counter % 6 == 0:
+  if iteration_counter % 3 == 0:
         # pump deuterated solvent to NMR
-    medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
+    medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid", draw_speed=6, dispense_speed=6)
         # shim NMR on deuterated solvent
             # different process, needs to be implemented still
 
         # pump deuterated solvent back
-    medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=5, transfer_type="liquid")
+    medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3.5, transfer_type="liquid", draw_speed=6, dispense_speed=6)
 
+#if conversion is reached, stop the reaction
+if polymerization_conversion >= 80:
+    break
 
     # Stop heatplate
 medusa.heat_stir("Reaction_Vial", temperature=0)

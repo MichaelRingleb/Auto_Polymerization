@@ -1,0 +1,126 @@
+NMR Analysis Summary
+============================================================
+Group: 0.2M_MMA,0.1M_Anisol_16scans_no_deutero_DMSO
+------------------------------------------------------------
+Filename: 0.2M_MMA,0.1M_Anisol_16scans_no_deutero_DMSO_test
+  Baseline noise std: 5.4747
+  Monomer integral: 53.0851 (method: simpson + simpson)
+  Std integral: 30.3415 (method: simpson)
+  Integral ratio (Monomer/Std): 1.7495856083435541
+----------------------------------------
+Filename: 0.2M_MMA,0.1M_Anisol_16scans_no_deutero_DMSO_test_2
+  Baseline noise std: 5.8964
+  Monomer integral: 29.0871 (method: none + simpson)
+  Std integral: 31.9769 (method: simpson)
+  Integral ratio (Monomer/Std): 0.9096271392753994
+----------------------------------------
+
+Group: 0.2M_MMA,0.1M_Anisol_1scan_no_deutero_DMSO
+------------------------------------------------------------
+Filename: 0.2M_MMA,0.1M_Anisol_1scan_no_deutero_DMSO_test
+  Baseline noise std: 18.7658
+  Monomer integral: 85.6485 (method: simpson + simpson)
+  Std integral: 29.8762 (method: simpson)
+  Integral ratio (Monomer/Std): 2.8667834612303973
+----------------------------------------
+
+Group: 0.2M_MMA,0.1M_Anisol_1scans_no_deutero_DMSO_tes_2t
+------------------------------------------------------------
+Filename: 0.2M_MMA,0.1M_Anisol_1scans_no_deutero_DMSO_tes_2t
+  Baseline noise std: 34.4233
+  Monomer integral: 64.7983 (method: simpson + simpson)
+  Std integral: 6.1069 (method: simpson)
+  Integral ratio (Monomer/Std): 10.610755696423173
+----------------------------------------
+
+Group: 0.2M_MMA,0.1M_Anisol_32scans_no_deutero_DMSO
+------------------------------------------------------------
+Filename: 0.2M_MMA,0.1M_Anisol_32scans_no_deutero_DMSO_test
+  Baseline noise std: 4.3591
+  Monomer integral: 51.0159 (method: simpson + simpson)
+  Std integral: 0.0000 (method: none)
+  Integral ratio (Monomer/Std): None
+----------------------------------------
+Filename: 0.2M_MMA,0.1M_Anisol_32scans_no_deutero_DMSO_test_2
+  Baseline noise std: 3.4342
+  Monomer integral: 31.9946 (method: simpson + simpson)
+  Std integral: 22.1186 (method: simpson)
+  Integral ratio (Monomer/Std): 1.446502489713666
+----------------------------------------
+
+Group: 0.2M_MMA,0.1M_Anisol_64scans_no_deutero_DMSO
+------------------------------------------------------------
+Filename: 0.2M_MMA,0.1M_Anisol_64scans_no_deutero_DMSO_test
+  Baseline noise std: 2.3765
+  Monomer integral: 0.0000 (method: none + none)
+  Std integral: 0.0000 (method: none)
+  Integral ratio (Monomer/Std): None
+----------------------------------------
+Filename: 0.2M_MMA,0.1M_Anisol_64scans_no_deutero_DMSO_test_2
+  Baseline noise std: 2.4848
+  Monomer integral: 0.0000 (method: none + none)
+  Std integral: 0.0000 (method: none)
+  Integral ratio (Monomer/Std): None
+----------------------------------------
+
+Group: 0.2M_MMA,0.2M_Anisol_16scans_no_deutero_DMSO
+------------------------------------------------------------
+Filename: 0.2M_MMA,0.2M_Anisol_16scans_no_deutero_DMSO_test
+  Baseline noise std: 6.0880
+  Monomer integral: 58.2841 (method: simpson + simpson)
+  Std integral: 0.0000 (method: none)
+  Integral ratio (Monomer/Std): None
+----------------------------------------
+Filename: 0.2M_MMA,0.2M_Anisol_16scans_no_deutero_DMSO_test_2
+  Baseline noise std: 4.6881
+  Monomer integral: 46.5539 (method: simpson + simpson)
+  Std integral: 0.0000 (method: none)
+  Integral ratio (Monomer/Std): None
+----------------------------------------
+
+Group: 0.2M_MMA,0.2M_Anisol_1scans_no_deutero_DMSO
+------------------------------------------------------------
+Filename: 0.2M_MMA,0.2M_Anisol_1scans_no_deutero_DMSO_test
+  Baseline noise std: 20.4274
+  Monomer integral: 45.8082 (method: simpson + simpson)
+  Std integral: 46.1934 (method: simpson)
+  Integral ratio (Monomer/Std): 0.9916617327340347
+----------------------------------------
+Filename: 0.2M_MMA,0.2M_Anisol_1scans_no_deutero_DMSO_test_2
+  Baseline noise std: 42.5985
+  Monomer integral: 65.0093 (method: simpson + simpson)
+  Std integral: 52.7104 (method: simpson)
+  Integral ratio (Monomer/Std): 1.233329338897629
+----------------------------------------
+
+Group: 0.2M_MMA,0.2M_Anisol_32scans_no_deutero_DMSO
+------------------------------------------------------------
+Filename: 0.2M_MMA,0.2M_Anisol_32scans_no_deutero_DMSO_test
+  Baseline noise std: 3.2318
+  Monomer integral: 14.1959 (method: simpson + none)
+  Std integral: 0.0000 (method: none)
+  Integral ratio (Monomer/Std): None
+----------------------------------------
+Filename: 0.2M_MMA,0.2M_Anisol_32scans_no_deutero_DMSO_test_2
+  Baseline noise std: 3.2351
+  Monomer integral: 13.3107 (method: simpson + none)
+  Std integral: 0.0000 (method: none)
+  Integral ratio (Monomer/Std): None
+----------------------------------------
+
+Group: 0.2M_MMA,0.2M_Anisol_64scans_no_deutero_DMSO
+------------------------------------------------------------
+Filename: 0.2M_MMA,0.2M_Anisol_64scans_no_deutero_DMSO_test
+  Baseline noise std: 2.5456
+  Monomer integral: 27.4566 (method: simpson + simpson)
+  Std integral: 0.0000 (method: none)
+  Integral ratio (Monomer/Std): None
+----------------------------------------
+Filename: 0.2M_MMA,0.2M_Anisol_64scans_no_deutero_DMSO_test_2
+  Baseline noise std: 3.4261
+  Monomer integral: 40.9112 (method: simpson + simpson)
+  Std integral: 0.0000 (method: none)
+  Integral ratio (Monomer/Std): None
+----------------------------------------
+
+End of summary
