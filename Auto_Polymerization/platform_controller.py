@@ -11,11 +11,11 @@ import time
 import matterlab_spectrometers as spectrometer
 import src.UV_VIS.uv_vis_utils as uv_vis
 import src.NMR.nmr_utils as nmr_utils
-
+import src.workflow_steps.0_preparation
 
 
 #Setup logging for Medusa liquid transfers
-logger = logging.getLogger("test")
+logger = logging.getLogger("platform_controller")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
@@ -31,54 +31,19 @@ def find_layout_json(config_folder='Auto_Polymerization/users/config/'):
             return layout
     raise FileNotFoundError("No .json file found in the config folder.")
 
-# Usage example:
+#Instantiate Medusa object
 layout = find_layout_json() 
 medusa = Medusa(
     graph_layout=layout,
     logger=logger     
 )
 
-
-
-#test code to check the functionality of the different devices
-medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=20)
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = True, transfer_rate=20)
-time.sleep(10)
-medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0)
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
-
-medusa.heat_stir(vessel="Reaction_Vial", temperature= 20, rpm= 200)
-medusa.get_hotplate_temperature("Reaction_Vial")
-medusa.get_hotplate_rpm("Reaction_Vial")
-time.sleep(10)
-medusa.heat_stir(vessel="Reaction_Vial", temperature= 0, rpm= 0)
-time.sleep(10)
-medusa.get_hotplate_temperature("Reaction_Vial")
-medusa.get_hotplate_rpm("Reaction_Vial")
-time.sleep(10)
-
-medusa.write_serial("Linear_Actuator", b"2000\n")
-time.sleep(10)
-medusa.write_serial("Linear_Actuator", b"1000\n")
-time.sleep(10)
-medusa.write_serial("Gas_Valve", b"GAS_ON\n")
-time.sleep(10)
-medusa.write_serial("Gas_Valve", b"GAS_OFF\n")
-time.sleep(10)
-medusa.write_serial("Precipitation_Valve", b"PRECIP_ON\n")
-time.sleep(10)
-medusa.write_serial("Precipitation_Valve", b"PRECIP_OFF\n")
-
-
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
+#instantiate nmr object
+nmr = NMR60Pro()
 
 
 
 
-exit()
 """
 #ideally put into its own module, but for now just import here
 # Definition of added volumes and reaction temperature by user before reaction:
@@ -92,48 +57,78 @@ initiator_draw_speed = initiator_volume / 2  # draw speed in mL/min
 cta_volume= 4
 cta_draw_speed = cta_volume / 2  # draw speed in mL/min
 polymerization_temp= 20
-set_rpm = 200
+set_rpm = 600
 
+degas_time = 1200 #time in seconds for degassing
 
 Functionalization_temp = 20  # Temperature for functionalization step
 Functionanilzation_volume = 2 # Volume for functionalization step
 Functionalization_draw_speed = Functionanilzation_volume / 2  # draw speed in mL/min
+#
+
+def run_preparation_workflow(
+    medusa, nmr, polymerization_temp, set_rpm, shim_kwargs=None, prime_volume=3, run_minimal_test=False
+):
+    """
+    Central unit to put together individual workflow steps into a complete workflow.
+    This function orchestrates the preparation phase of a polymerization reaction.
+    It includes degassing, priming, and flushing of reaction vials.
+    """
+    if run_minimal_test:
+        from Auto_Polymerization.tests.test_minimal_workflow import run_minimal_workflow_test
+        run_minimal_workflow_test()
+
+    #0. run the minimal workflow test to check if the workflow works
+    sadadads
+
+    #1. in the beginning pump shim sample to NMR and run a shim(2) for two times while in parallel, reaction vial is filled with solvent and other stuff
+    medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid",draw_speed=6, dispense_speed=6)
+    nmr.shim(2)
+    nmr.shim(2)
+    #2. transfer back to shim sample vessel
+    medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3, transfer_type="liquid", draw_speed=6, dispense_speed=6)
+
+    #in parallel:
+
+    #1. take the reaction vial out of the heatplate
+    medusa.write_serial("Linear_Actuator", "2000")  # Move the reaction vial out of the heatplate
+
+    #2. preheat heatplate
+    medusa.heat_stir(vessel="Reaction_Vial", temperature= polymerization_temp, rpm= set_rpm)
+
+    #3. open gas valve (in default mode, gas flow will be blocked)
+    medusa.write_serial("GAS_VALVE","GAS_ON")
+
+    #4. prime tubing (from vial to waste)
+    medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 3, transfer_type="liquid")
+    medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 3, transfer_type="liquid")
+    medusa.transfer_volumetric(source="Modification_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 3, transfer_type="liquid")
+    medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 3, transfer_type="liquid")
+    medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 3, transfer_type="liquid")
+
+    # 5.shut gas valve 
+    medusa.write_serial("GAS_VALVE","GAS_OFF")
 
 
-#in the beginning pump shim sample to NMR and run a shim(2) for two times while in parallel, reaction vial is filled with solvent and other stuff
-medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid",draw_speed=6, dispense_speed=6)
-nmr.shim(2)
-nmr.shim(2)
-#transfer back to shim sample vessel
-medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3, transfer_type="liquid", draw_speed=6, dispense_speed=6)
 
 
-#take the reaction vial out of the heatplate
-medusa.write_serial("Linear_Actuator", "2000")  # Move the reaction vial out of the heatplate
+#at this point the preparation module should stop and the polymerization module should start
 
-# preheat heatplate
-medusa.heat_stir(vessel="Reaction_Vial", temperature= polymerization_temp, rpm= set_rpm)
 
-# open gas valve (in default mode, gas flow will be blocked)
+#open gas valve again (for flush steps)
 medusa.write_serial("GAS_VALVE","GAS_ON")
+#fill reaction vial with things for reaction and flush it to the vial 
+medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= solvent_volume, transfer_type="liquid", flush=2, draw_speed=solvent_draw_speed)
+medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= monomer_volume, transfer_type="liquid", flush=2, draw_speed=monomer_draw_speed)
+medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= initiator_volume, transfer_type="liquid",flush=2, draw_speed=initiator_draw_speed)
+medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= cta_volume, transfer_type="liquid",flush=2, draw_speed=cta_draw_speed)
 
-# prime tubing (from vial to waste)
-medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Modification_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
-medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 1, transfer_type="liquid")
+#degass reaction mixture for 20 min
+time.sleep(degas_time)
 
-# shut gas valve 
+
+#close gas valve again
 medusa.write_serial("GAS_VALVE","GAS_OFF")
-
-
-# fill reaction vial with things for reaction and flush it to the vial 
-medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= solvent_volume, transfer_type="liquid", flush=3, draw_speed=solvent_draw_speed)
-medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= monomer_volume, transfer_type="liquid", flush=3, draw_speed=monomer_draw_speed)
-medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= initiator_volume, transfer_type="liquid",flush=3, draw_speed=initiator_draw_speed)
-medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= cta_volume, transfer_type="liquid",flush=3, draw_speed=cta_draw_speed)
-
 
 # wait for heat plate to reach x degree (defined earlier)
 while medusa.get_hotplate_temperature("Reaction_Vial") < polymerization_temp-2:
@@ -141,7 +136,7 @@ while medusa.get_hotplate_temperature("Reaction_Vial") < polymerization_temp-2:
     medusa.get_hotplate_rpm("Reaction_Vial")
 
 
-# Lower vial into heat plate
+# THEN; Lower vial into heat plate
 medusa.write_serial("Linear_Actuator", "1000")
 
 iteration_counter = 0

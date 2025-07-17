@@ -22,7 +22,7 @@ Design Philosophy:
 - Overlap prevention: Detects and skips peaks with >90% overlapping integration regions
 - Simpson's rule: Uses numerical integration for accurate area calculation
 
-Author: Auto_Polymerization Team
+Author: Auto_Polymerization Team (with help of cursor ai)
 Version: 0.1
 """
 
