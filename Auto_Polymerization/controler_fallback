@@ -6,16 +6,6 @@
 Version of the controller which worked and where I can come back to if I need get to the last stable version
 
 
-"""
-import yaml
-import os
-
-base_dir = os.path.dirname(__file__)
-config_path = os.path.join(base_dir, "config.yaml")
-
-with open(config_path, "r") as f:
-    config = yaml.safe_load(f)
-"""
 from re import M
 import sys
 import os
@@ -34,8 +24,21 @@ logger = logging.getLogger("test")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
+#loading of json file for layout of the medusa setup (typically stored  in config folder)
+def find_layout_json(config_folder='Auto_Polymerization/src/users/config/'):
+    """
+    Search for the first .json file in the config folder and return its path.
+    Raises FileNotFoundError if no .json file is found.
+    """
+    for fname in os.listdir(config_folder):
+        if fname.endswith('.json'):
+            layout = os.path.join(config_folder, fname)
+            print(f"Found layout JSON: {layout}")
+            return layout
+    raise FileNotFoundError("No .json file found in the config folder.")
 
-layout = input("Design .json path\n") 
+# Usage example:
+layout = find_layout_json() 
 medusa = Medusa(
     graph_layout=layout,
     logger=logger     

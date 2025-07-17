@@ -1,21 +1,6 @@
 #central unit to put together individual workflow steps into a complete workflow
 
 #imports the different workflow steps from the modules in the workflow_steps folder 
-
-
-
-
-
-"""
-import yaml
-import os
-
-base_dir = os.path.dirname(__file__)
-config_path = os.path.join(base_dir, "config.yaml")
-
-with open(config_path, "r") as f:
-    config = yaml.safe_load(f)
-"""
 from re import M
 import sys
 import os
@@ -23,10 +8,10 @@ import logging
 from pathlib import Path
 from medusa import Medusa, MedusaDesigner
 import time
-import matterlab_nmr as nmr
 import matterlab_spectrometers as spectrometer
 import src.UV_VIS.uv_vis_utils as uv_vis
-#spectrometers still missing
+import src.NMR.nmr_utils as nmr_utils
+
 
 
 #Setup logging for Medusa liquid transfers
@@ -34,12 +19,26 @@ logger = logging.getLogger("test")
 logger.setLevel(logging.DEBUG)
 logger.addHandler(logging.StreamHandler())
 
+def find_layout_json(config_folder='Auto_Polymerization/users/config/'):
+    """
+    Search for the first .json file in the config folder and return its path.
+    Raises FileNotFoundError if no .json file is found.
+    """
+    for fname in os.listdir(config_folder):
+        if fname.endswith('.json'):
+            layout = os.path.join(config_folder, fname)
+            print(f"Found layout JSON: {layout}")
+            return layout
+    raise FileNotFoundError("No .json file found in the config folder.")
 
-layout = input("Design .json path\n") 
+# Usage example:
+layout = find_layout_json() 
 medusa = Medusa(
     graph_layout=layout,
     logger=logger     
 )
+
+
 
 #test code to check the functionality of the different devices
 medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=20)
@@ -57,7 +56,6 @@ time.sleep(10)
 medusa.get_hotplate_temperature("Reaction_Vial")
 medusa.get_hotplate_rpm("Reaction_Vial")
 time.sleep(10)
-exit()
 
 medusa.write_serial("Linear_Actuator", b"2000\n")
 time.sleep(10)
@@ -70,8 +68,6 @@ time.sleep(10)
 medusa.write_serial("Precipitation_Valve", b"PRECIP_ON\n")
 time.sleep(10)
 medusa.write_serial("Precipitation_Valve", b"PRECIP_OFF\n")
-
-
 
 
 medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 1, transfer_type="liquid")
@@ -184,7 +180,8 @@ while polymerization_conversion < 80:
 
 #if conversion is reached, stop the reaction
 if polymerization_conversion >= 80:
-    break
+    #stop the loop
+    i = 1
 
     # Stop heatplate
 medusa.heat_stir("Reaction_Vial", temperature=0)

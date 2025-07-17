@@ -23,9 +23,10 @@ Design Philosophy:
 - Simpson's rule: Uses numerical integration for accurate area calculation
 
 Author: Auto_Polymerization Team
-Version: 2.0
+Version: 0.1
 """
 
+# --- Imports ---
 import os
 import numpy as np
 from scipy.signal import find_peaks
@@ -36,6 +37,51 @@ try:
 except ImportError:
     Baseline = None
     print("pybaselines not installed. Please install with 'pip install pybaselines'.")
+from pathlib import Path
+from datetime import datetime
+from matterlab_nmr import NMR60Pro, DSolv, HSolv
+
+# --- Hardware Control Utilities ---
+
+
+def run_shimming(level=1):
+    """
+    Run shimming with the specified level (default: 1).
+    This function calls the NMR60Pro hardware to perform shimming, which optimizes the magnetic field homogeneity.
+    The 'level' parameter controls the number of shim parameters (e.g., 1=3, 2=8, 3=30),
+    but the exact meaning depends on the hardware/firmware. Requires a connected NMR instrument.
+    """
+    nmr = NMR60Pro()
+    nmr.shim(level)  # type: ignore
+    print(f"Shimming complete with level {level}.")
+
+
+def acquire_nmr_spectrum():
+    """
+    Acquire and save an NMR spectrum using hardlock experiment settings.
+    This function configures the NMR60Pro for a hardlock experiment (no deuterated solvent lock),
+    runs the acquisition, processes the 1D spectrum, and saves both the spectrum and raw data
+    to Auto_Polymerization/users/data/NMR_data/<timestamp>.*
+    Requires a connected NMR instrument and appropriate sample in the magnet.
+    """
+    nmr = NMR60Pro()
+    nmr.set_hardlock_exp(
+        num_scans=32,
+        solvent=HSolv.DMSO,
+        spectrum_center=5,
+        spectrum_width=12
+    )
+    nmr.run()
+    nmr.proc_1D()
+    save_path = Path('Auto_Polymerization/users/data/NMR_data')
+    save_path.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    nmr.save_spectrum(save_path, timestamp)
+    nmr.save_data(save_path, timestamp)
+    print(f"NMR data saved to {save_path / timestamp}")
+
+
+
 
 def _create_annotation_text(x, y, text, color='black', fontsize=11, fontweight='bold', 
                            bbox_style='round,pad=0.3', bbox_alpha=0.9, zorder=10):
@@ -64,36 +110,179 @@ def _create_annotation_text(x, y, text, color='black', fontsize=11, fontweight='
                    bbox=dict(boxstyle=bbox_style, facecolor='white', alpha=bbox_alpha), 
                    zorder=zorder)
 
+# --- Helper Functions ---
+
 def _expand_peak_boundaries(spec, peak_idx, threshold, direction='both'):
     """
-    Expand peak boundaries until signal drops below threshold.
-    
-    This function implements the core logic for finding integration boundaries
-    by expanding from a peak center until the signal intensity drops below
-    the noise threshold. Used for both monomer and standard peak integration.
-    
+    Expand peak boundaries from a given peak index until the signal drops below a threshold.
+    Used to determine integration limits for NMR peaks based on noise level.
+
     Parameters:
-        spec (np.ndarray): Spectrum intensity values
-        peak_idx (int): Index of peak center
-        threshold (float): Intensity threshold for boundary detection
-        direction (str): 'left', 'right', or 'both'
-    
+        spec (np.ndarray): Spectrum intensity values.
+        peak_idx (int): Index of peak center.
+        threshold (float): Intensity threshold for boundary detection (e.g., 3x noise).
+        direction (str): 'left', 'right', or 'both' (expand in one or both directions).
+
     Returns:
-        tuple: (left_bound, right_bound) indices
+        tuple: (left_bound, right_bound) indices in the spectrum array.
+    Note:
+        If the threshold is never crossed, the boundary will be at the spectrum edge.
     """
     left = peak_idx
     right = peak_idx
-    
+    # Expand left until below threshold or start of spectrum
     if direction in ['left', 'both']:
         while left > 0 and spec[left] > threshold:
             left -= 1
-    
+    # Expand right until below threshold or end of spectrum
     if direction in ['right', 'both']:
         while right < len(spec) - 1 and spec[right] > threshold:
             right += 1
-    
     return left, right
 
+# --- Core Analysis Functions ---
+
+def integrate_monomer_peaks_simpson(
+    ppm, spec_real, region, noise_std, snr_thresh=3, plot=False, annotate_peaks=None
+):
+    """
+    Integrate the two largest monomer peaks in a specified region using Simpson's rule.
+    Integration boundaries are determined by expanding from each peak until the signal drops below 3x the noise level.
+    Overlap between integration regions is checked to avoid double-counting.
+
+    Parameters:
+        ppm (np.ndarray): Chemical shift axis (ppm).
+        spec_real (np.ndarray): Real part of NMR spectrum.
+        region (tuple): (min_ppm, max_ppm) for monomer peak region.
+        noise_std (float): Standard deviation of baseline noise.
+        snr_thresh (float): Signal-to-noise ratio threshold for peak detection.
+        plot (bool): Whether to show debug plots.
+        annotate_peaks (list): List to store peak annotation data.
+
+    Returns:
+        tuple: (peak_ppm, peak_intensity, total_integral, bounds, method, fallbacks)
+            - peak_ppm: List of peak positions (ppm)
+            - peak_intensity: List of peak intensities
+            - total_integral: Sum of all peak integrals
+            - bounds: List of (left, right) integration boundaries
+            - method: Integration method used ('simpson')
+            - fallbacks: List of fallback methods used (empty for this method)
+    """
+    mask = (ppm >= region[0]) & (ppm <= region[1])
+    ppm_region = ppm[mask]
+    spec_region = spec_real[mask]
+    # Find all peaks above SNR threshold (robust to noise)
+    height_thresh = snr_thresh * noise_std
+    peaks, properties = find_peaks(spec_region, height=height_thresh)
+    if len(peaks) == 0:
+        print("[WARNING] No peaks found above threshold in monomer region")
+        return None, None, 0.0, None, None, None
+    # Sort peaks by intensity, descending
+    peak_heights = spec_region[peaks]
+    peak_indices = peaks[np.argsort(peak_heights)[::-1]]
+    # Take the two largest peaks (or all if less than 2)
+    n_peaks_to_integrate = min(2, len(peak_indices))
+    selected_peaks = peak_indices[:n_peaks_to_integrate]
+    full_indices = np.where(mask)[0]
+    integrals = []
+    bounds_list = []
+    methods = []
+    peak_ppms = []
+    peak_intensities = []
+    fallback_list = []
+    # Use 3x noise threshold for integration boundaries (empirically robust)
+    integration_threshold = 3 * noise_std
+    for i, peak_idx in enumerate(selected_peaks):
+        peak_ppm = ppm_region[peak_idx]
+        peak_intensity = spec_region[peak_idx]
+        peak_idx_full = full_indices[peak_idx]
+        # Expand left/right from peak until below threshold
+        left_bound = peak_idx
+        right_bound = peak_idx
+        for j in range(peak_idx, -1, -1):
+            if spec_region[j] <= integration_threshold:
+                left_bound = j
+                break
+        for j in range(peak_idx, len(spec_region)):
+            if spec_region[j] <= integration_threshold:
+                right_bound = j
+                break
+        # Convert to full spectrum indices
+        left_full_idx = full_indices[left_bound]
+        right_full_idx = full_indices[right_bound]
+        # Check for overlap with previously integrated peaks
+        # Overlap is defined as >90% of the current region overlapping with any previous region
+        # This avoids double-counting nearly identical peaks 
+        overlap_detected = False
+        for prev_bounds in bounds_list:
+            prev_left, prev_right = prev_bounds
+            overlap_left = max(left_full_idx, prev_left)
+            overlap_right = min(right_full_idx, prev_right)
+            if overlap_left < overlap_right:  # There is overlap
+                overlap_width = ppm[overlap_right] - ppm[overlap_left]
+                current_width = ppm[right_full_idx] - ppm[left_full_idx]
+                overlap_ratio = overlap_width / current_width
+                if overlap_ratio > 0.9:  # More than 90% overlap (nearly identical regions)
+                    print(f"[WARNING] Peak {i+1} at {peak_ppm:.3f} ppm has nearly identical integration region with previous peak (overlap ratio: {overlap_ratio:.2f}). Skipping to avoid double-counting.")
+                    overlap_detected = True
+                    break
+        if overlap_detected:
+            continue
+        # Ensure we have a valid integration region
+        if right_full_idx <= left_full_idx:
+            print(f"[WARNING] Integration region for peak at {peak_ppm:.3f} ppm is empty. Skipping.")
+            continue
+        # Extract integration region for integration
+        integration_ppm = ppm[left_full_idx:right_full_idx+1]
+        integration_intensity = spec_region[left_bound:right_bound+1]
+        # Use Simpson's rule for >=3 points, else fallback to trapezoidal
+        if len(integration_intensity) >= 3:
+            integral = float(simpson(integration_intensity, integration_ppm))
+            method = 'simpson'
+        else:
+            integral = float(np.trapezoid(integration_intensity, integration_ppm))
+            method = 'trapezoidal'
+        integrals.append(integral)
+        bounds_list.append((left_full_idx, right_full_idx))
+        methods.append(method)
+        peak_ppms.append(peak_ppm)
+        peak_intensities.append(peak_intensity)
+        fallback_list.append((method == 'trapezoidal', False))
+    if not integrals:
+        print("[WARNING] No valid integration regions found.")
+        return None, None, 0.0, None, None, None
+    # Sum integrals for total monomer signal
+    total_integral = sum(integrals)
+    # For plotting, annotate each peak
+    if annotate_peaks is not None:
+        annotate_peaks.clear()
+        for i, (pp, pi, integ, bds, mth) in enumerate(zip(peak_ppms, peak_intensities, integrals, bounds_list, methods)):
+            annotate_peaks.append({'ppm': pp, 'intensity': pi, 'integral': integ, 'bounds': bds, 'method': mth})
+    return peak_ppms, peak_intensities, total_integral, bounds_list, methods, fallback_list
+
+def find_peak_robust(
+    ppm, spec_real, region, noise_std, snr_thresh=3, plot=False, annotate_peaks=None
+):
+    """
+    Wrapper for integrate_monomer_peaks_simpson to maintain API consistency.
+    Finds and integrates the two largest peaks in the monomer region using Simpson's rule
+    with noise-based boundaries. Use this function for a consistent interface with other peak-finding routines.
+
+    Parameters:
+        ppm (np.ndarray): Chemical shift axis (ppm).
+        spec_real (np.ndarray): Real part of NMR spectrum.
+        region (tuple): (min_ppm, max_ppm) for monomer peak region.
+        noise_std (float): Standard deviation of baseline noise.
+        snr_thresh (float): Signal-to-noise ratio threshold for peak detection.
+        plot (bool): Whether to show debug plots.
+        annotate_peaks (list): List to store peak annotation data.
+
+    Returns:
+        tuple: (peak_ppm, peak_intensity, total_integral, bounds, method, fallbacks)
+    """
+    return integrate_monomer_peaks_simpson(
+        ppm, spec_real, region, noise_std, snr_thresh, plot, annotate_peaks
+    )
 
 
 def characterize_baseline(ppm, spec, noise_region, max_order=3, improvement_thresh=0.05):
@@ -145,219 +334,6 @@ def characterize_baseline(ppm, spec, noise_region, max_order=3, improvement_thre
             break
     baseline_fit = np.polyval(best_coeffs, x)
     return best_std, best_order, x, baseline_fit
-
-
-
-
-
-
-
-
-def integrate_monomer_peaks_simpson(
-    ppm, spec_real, region, noise_std, snr_thresh=3, plot=False, annotate_peaks=None
-):
-    """
-    Integrate monomer peaks using Simpson's rule with noise-based boundaries.
-    
-    This function implements the monomer peak integration strategy specifically designed
-    for polymerization monitoring. It finds the two largest peaks in the monomer region
-    and integrates them using Simpson's rule with boundaries determined by noise thresholds.
-    
-    Key Features:
-    - Noise-based peak detection: Uses SNR threshold for robust peak finding
-    - Simpson's rule integration: Provides accurate numerical integration
-    - Overlap detection: Prevents double-counting of identical integration regions
-    - Adaptive boundaries: Integration limits expand until 3× noise threshold
-    
-    Design Rationale:
-    - Two peaks: Monomers often have multiple peaks (e.g., cis/trans isomers)
-    - 3× noise threshold: Balances sensitivity with noise rejection
-    - 90% overlap threshold: Prevents double-counting while allowing distinct peaks
-    - Simpson's rule: More accurate than trapezoidal for smooth NMR peaks
-
-    Parameters:
-        ppm (np.ndarray): Chemical shift axis (ppm).
-        spec_real (np.ndarray): Real part of NMR spectrum.
-        region (tuple): (min_ppm, max_ppm) for monomer peak region.
-        noise_std (float): Standard deviation of baseline noise.
-        snr_thresh (float): Signal-to-noise ratio threshold for peak detection.
-        plot (bool): Whether to show debug plots.
-        annotate_peaks (list): List to store peak annotation data.
-
-    Returns:
-        tuple: (peak_ppm, peak_intensity, total_integral, bounds, method, fallbacks)
-            - peak_ppm: List of peak positions (ppm)
-            - peak_intensity: List of peak intensities
-            - total_integral: Sum of all peak integrals
-            - bounds: List of (left, right) integration boundaries
-            - method: Integration method used ('simpson')
-            - fallbacks: List of fallback methods used (empty for this method)
-    """
-    """
-    Find the two biggest peaks in the monomer region and integrate them using Simpson's method.
-    
-    Parameters:
-        ppm (np.ndarray): Chemical shift axis (ppm)
-        spec_real (np.ndarray): Real part of NMR spectrum
-        region (tuple): (min_ppm, max_ppm) monomer region
-        noise_std (float): Standard deviation of noise
-        snr_thresh (float): Signal-to-noise ratio threshold for peak detection
-        plot (bool): Whether to plot the integration regions
-        annotate_peaks (list, optional): List to store peak annotations
-        
-    Returns:
-        peak_ppms (list): List of peak positions in ppm
-        peak_intensities (list): List of peak intensities
-        total_integral (float): Total integrated area
-        bounds_list (list): List of integration bounds for each peak
-        methods (list): List of integration methods used
-        fallback_list (list): List of fallback flags
-    """
-    mask = (ppm >= region[0]) & (ppm <= region[1])
-    ppm_region = ppm[mask]
-    spec_region = spec_real[mask]
-    
-    # Find all peaks above threshold
-    height_thresh = snr_thresh * noise_std
-    peaks, properties = find_peaks(spec_region, height=height_thresh)
-    
-    if len(peaks) == 0:
-        print("[WARNING] No peaks found above threshold in monomer region")
-        return None, None, 0.0, None, None, None
-    
-    # Get peak heights and sort by intensity to find the two biggest
-    peak_heights = spec_region[peaks]
-    peak_indices = peaks[np.argsort(peak_heights)[::-1]]  # Sort by height, descending
-    
-    # Take the two biggest peaks (or all if less than 2)
-    n_peaks_to_integrate = min(2, len(peak_indices))
-    selected_peaks = peak_indices[:n_peaks_to_integrate]
-    
-    full_indices = np.where(mask)[0]
-    integrals = []
-    bounds_list = []
-    methods = []
-    peak_ppms = []
-    peak_intensities = []
-    fallback_list = []
-    
-    # 3x noise threshold for integration boundaries
-    integration_threshold = 3 * noise_std
-    
-    for i, peak_idx in enumerate(selected_peaks):
-        peak_ppm = ppm_region[peak_idx]
-        peak_intensity = spec_region[peak_idx]
-        peak_idx_full = full_indices[peak_idx]
-        
-        # Find integration boundaries by expanding left and right until 3x noise threshold
-        left_bound = peak_idx
-        right_bound = peak_idx
-        
-        # Expand left
-        for j in range(peak_idx, -1, -1):
-            if spec_region[j] <= integration_threshold:
-                left_bound = j
-                break
-        
-        # Expand right
-        for j in range(peak_idx, len(spec_region)):
-            if spec_region[j] <= integration_threshold:
-                right_bound = j
-                break
-        
-        # Convert to full spectrum indices
-        left_full_idx = full_indices[left_bound]
-        right_full_idx = full_indices[right_bound]
-        
-        # Check for overlap with previously integrated peaks
-        # This prevents double-counting when two peaks have nearly identical integration regions
-        # The 90% threshold allows for small differences while catching identical regions
-        # This is particularly important for monomers that may have overlapping peaks
-        overlap_detected = False
-        for prev_bounds in bounds_list:
-            prev_left, prev_right = prev_bounds
-            # Check if current region overlaps significantly with previous region
-            overlap_left = max(left_full_idx, prev_left)
-            overlap_right = min(right_full_idx, prev_right)
-            if overlap_left < overlap_right:  # There is overlap
-                overlap_width = ppm[overlap_right] - ppm[overlap_left]
-                current_width = ppm[right_full_idx] - ppm[left_full_idx]
-                overlap_ratio = overlap_width / current_width
-                if overlap_ratio > 0.9:  # More than 90% overlap (nearly identical regions)
-                    print(f"[WARNING] Peak {i+1} at {peak_ppm:.3f} ppm has nearly identical integration region with previous peak (overlap ratio: {overlap_ratio:.2f}). Skipping to avoid double-counting.")
-                    overlap_detected = True
-                    break
-        
-        if overlap_detected:
-            continue
-        
-        # Ensure we have a valid integration region
-        if right_full_idx <= left_full_idx:
-            print(f"[WARNING] Integration region for peak at {peak_ppm:.3f} ppm is empty. Skipping.")
-            continue
-        
-        # Extract integration region
-        integration_ppm = ppm[left_full_idx:right_full_idx+1]
-        integration_intensity = spec_region[left_bound:right_bound+1]
-        
-        # Integrate using Simpson's method
-        if len(integration_intensity) >= 3:
-            integral = float(simpson(integration_intensity, integration_ppm))
-            method = 'simpson'
-        else:
-            # Fallback to trapezoidal for small regions
-            integral = float(np.trapezoid(integration_intensity, integration_ppm))
-            method = 'trapezoidal'
-        
-        integrals.append(integral)
-        bounds_list.append((left_full_idx, right_full_idx))
-        methods.append(method)
-        peak_ppms.append(peak_ppm)
-        peak_intensities.append(peak_intensity)
-        fallback_list.append((method == 'trapezoidal', False))
-    
-    if not integrals:
-        print("[WARNING] No valid integration regions found.")
-        return None, None, 0.0, None, None, None
-    
-    # Sum integrals for total monomer signal
-    total_integral = sum(integrals)
-    
-    # For plotting, annotate each peak
-    if annotate_peaks is not None:
-        annotate_peaks.clear()
-        for i, (pp, pi, integ, bds, mth) in enumerate(zip(peak_ppms, peak_intensities, integrals, bounds_list, methods)):
-            annotate_peaks.append({'ppm': pp, 'intensity': pi, 'integral': integ, 'bounds': bds, 'method': mth})
-    
-    return peak_ppms, peak_intensities, total_integral, bounds_list, methods, fallback_list
-
-
-def find_peak_robust(
-    ppm, spec_real, region, noise_std, snr_thresh=3, plot=False, annotate_peaks=None
-):
-    """
-    Integrate monomer peaks using Simpson's rule with noise-based boundaries.
-    
-    This function is a wrapper around integrate_monomer_peaks_simpson for consistency
-    with the existing API. It finds the two largest peaks in the monomer region
-    and integrates them using Simpson's rule with boundaries determined by noise thresholds.
-    
-    Parameters:
-        ppm (np.ndarray): Chemical shift axis (ppm).
-        spec_real (np.ndarray): Real part of NMR spectrum.
-        region (tuple): (min_ppm, max_ppm) for monomer peak region.
-        noise_std (float): Standard deviation of baseline noise.
-        snr_thresh (float): Signal-to-noise ratio threshold for peak detection.
-        plot (bool): Whether to show debug plots.
-        annotate_peaks (list): List to store peak annotation data.
-    
-    Returns:
-        tuple: (peak_ppm, peak_intensity, total_integral, bounds, method, fallbacks)
-    """
-    return integrate_monomer_peaks_simpson(
-        ppm, spec_real, region, noise_std, snr_thresh, plot, annotate_peaks
-    )
-
 
 
 def analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
@@ -735,24 +711,14 @@ def analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
         'std_method': std_method
     }
 
+# --- Batch and Post-Processing Utilities ---
+
 def batch_analyze_nmr_folder(folder, monomer_region, std_region, noise_region, plot=True, save_plots=True):
     """
     Batch analyze all NMR spectra in a folder using the automated workflow.
-    
-    This function processes all NMR spectra in a folder, applying the complete analysis
-    workflow to each spectrum. It automatically detects and loads .npy files containing
-    ppm and spectrum data, then applies the full analysis pipeline.
-    
-    File Naming Convention:
-    - Expects files named: {base}_freq_ppm.npy and {base}_spec.npy
-    - Base name is extracted from the ppm file name
-    - Both files must exist for each spectrum to be processed
-    
-    Processing Strategy:
-    - Sorts files alphabetically for consistent processing order
-    - Processes each spectrum independently
-    - Saves analysis plots to the same folder as the data
-    - Returns results as a list of dictionaries for further analysis
+    Expects .npy files for both ppm and spectrum, named as {base}_freq_ppm.npy and {base}_spec.npy.
+    Results are saved in tabular format and plots are optionally saved for each spectrum.
+    Any missing or malformed files are skipped with a warning.
 
     Parameters:
         folder (str): Path to folder containing NMR .npy files.
@@ -796,6 +762,7 @@ def monomer_removal_dialysis(
     """
     Analyze monomer removal after dialysis by checking the height at the leftmost monomer peak position
     (as recorded in the integration txt) relative to the noise level in the NMR spectrum.
+    Outliers and missing files are skipped with a warning. The height/noise ratio is a proxy for residual monomer.
 
     Parameters:
         integration_txt_path (str): Path to nmr_integration_results.txt
@@ -809,7 +776,6 @@ def monomer_removal_dialysis(
     """
     import numpy as np
     import os
-
     results = []
     # Read integration results
     with open(integration_txt_path, 'r') as f:
@@ -877,6 +843,7 @@ def analyze_dialysis_conversion(
     """
     Analyze dialysis conversion by finding the median leftmost monomer peak position (from integration txt),
     searching for a peak near that position in a new spectrum, and reporting peak intensity and noise.
+    Outliers are removed using the IQR method. The result is written to a tabular text file.
 
     Parameters:
         integration_txt_path (str): Path to nmr_integration_results.txt
@@ -890,8 +857,7 @@ def analyze_dialysis_conversion(
     """
     import numpy as np
     import os
-
-    # 1. Read all leftmost monomer peak positions
+    # 1. Read all leftmost monomer peak positions from integration results
     leftmost_peaks = []
     with open(integration_txt_path, 'r') as f:
         header = f.readline()
@@ -909,7 +875,7 @@ def analyze_dialysis_conversion(
     if not leftmost_peaks:
         print("No valid leftmost monomer peak positions found in integration results.")
         return None
-    # 2. Remove outliers using IQR
+    # 2. Remove outliers using IQR (robust to extreme values)
     q1 = np.percentile(leftmost_peaks, 25)
     q3 = np.percentile(leftmost_peaks, 75)
     iqr = q3 - q1
@@ -918,9 +884,9 @@ def analyze_dialysis_conversion(
     filtered_peaks = [p for p in leftmost_peaks if lower <= p <= upper]
     if not filtered_peaks:
         filtered_peaks = leftmost_peaks  # fallback if all are outliers
-    # 3. Calculate median
+    # 3. Calculate median of filtered peaks
     median_peak = float(np.median(filtered_peaks))
-    # 4. Load new spectrum
+    # 4. Load new spectrum and search for a peak near the median position
     ppm_path = os.path.join(nmr_data_folder, spectrum_base + ppm_suffix)
     spec_path = os.path.join(nmr_data_folder, spectrum_base + spec_suffix)
     if not (os.path.exists(ppm_path) and os.path.exists(spec_path)):
@@ -959,9 +925,9 @@ def analyze_dialysis_conversion(
         print(f"No data in noise region for {spectrum_base}.")
         return None
     noise_level = np.std(spec_real[noise_mask])
-    # 7. Check if peak is above 2x noise
+    # 7. Check if peak is above 2x noise (significant)
     pass_fail = (peak_intensity > 2 * noise_level) if not np.isnan(peak_intensity) else False
-    # 8. Write results to output_txt
+    # 8. Write results to output_txt (tabular, append mode)
     output_path = os.path.join(nmr_data_folder, output_txt)
     file_exists = os.path.exists(output_path)
     with open(output_path, 'a') as f:
@@ -983,9 +949,10 @@ def analyze_dialysis_conversion(
         'Above_2x_Noise': pass_fail
     }
 
+# --- Main/Test Block ---
 if __name__ == "__main__":
     # Example: batch process all spectra in a folder
-    folder = r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\src\NMR_code\example_data_MMA_and_standard"
+    folder = r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\src\NMR\example_data_MMA_and_standard"
     monomer_region = (5, 6.5)
     std_region = (6.5, 8)
     noise_region = (9, 10)  # Set to a region with no peaks
