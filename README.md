@@ -49,7 +49,7 @@ pip install -e src/linear_actuator_and_valves/
 ### 📚 Core Dependencies
 
 ```bash
-pip install scipy numpy pandas matplotlib pyserial nmrglue requests pyyaml medusa-sdl pybaselines
+pip install scipy numpy pandas matplotlib pyserial nmrglue requests pyyaml medusa-sdl pybaselines lmfit
 ```
 
 ### 🔬 MatterLab Packages
@@ -93,6 +93,50 @@ https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices
 
 ### ⚙️ Configuration
 
+**User-Editable Configuration**
+
+All platform-wide settings (draw speeds, dispense speeds, default volumes, temperatures, etc.) are set in `users/config/platform_config.py`.
+Edit this file to change workflow parameters for your hardware and experiments.
+
+Example:
+```python
+draw_speeds = {
+    "solvent": 5,
+    "monomer": 5,
+    "initiator": 5,
+    "cta": 5,
+    "modification": 5,
+    "nmr": 3,
+    "uv_vis": 2
+}
+dispense_speeds = {
+    "solvent": 5,
+    "monomer": 5,
+    "initiator": 5,
+    "cta": 5,
+    "modification": 5,
+    "nmr": 3,
+    "uv_vis": 2
+}
+default_volumes = {
+    "solvent": 10,
+    "monomer": 4,
+    "initiator": 3,
+    "cta": 4,
+    "modification": 2,
+    "nmr": 3,
+    "uv_vis": 2
+}
+polymerization_temp = 20
+set_rpm = 600
+```
+
+The controller loads these values and passes them to all workflow modules. To change a speed or volume, simply edit `users/config/platform_config.py`:
+```python
+draw_speeds['solvent'] = 8
+default_volumes['monomer'] = 6
+```
+
 **CSS200 Spectrometer DLL:**
 Potentially you need to update the `DLL_FILE` value in `ccs_spectrometer.py` in the matterlab package:
 The correct file path is typically: 
@@ -103,9 +147,36 @@ DLL_FILE = Path(r"C:\Program Files\IVI Foundation\VISA\Win64\Bin\TLCCS_64.dll")
 1. Install Arduino IDE on your PC
 2. Upload the Arduino code from `users/setup/` to your Arduino board
 3. An overview of the hardware connections of the GPIO pins is given in "Arduino_contacts_overview_2025_06_27_bb.jpg"
+
 ## ⚠️ Important Notes
 
+- **Physical Setup:** For a successful experiment, correct hardware assembly is essential. See [🔧 Physical Setup & Hardware Guidance](#-physical-setup--hardware-guidance) below for detailed instructions and diagrams.
+- **Configuration:** Always review and update `users/config/platform_config.py` to match your hardware and experimental needs before running workflows.
+- **Device Safety:** Double-check all connections and fluid paths before starting any automated run.
 
+---
+
+## 🔧 Physical Setup & Hardware Guidance
+
+- **Setup Folder:**
+  All essential setup resources are in `users/setup/`.
+
+  - **Flow Paths:**
+    - `Flow paths.pptx` provides a comprehensive diagram of the fluidic connections between all pumps, valves, reactors, and analytical devices. Review this to ensure correct tubing and routing.
+  - **Arduino Wiring:**
+    - `Arduino_contacts_overview_2025_06_27_bb.jpg` shows the recommended GPIO pin assignments and wiring for relays, sensors, and actuators. Use this as a reference when connecting your Arduino and peripherals.
+  - **Firmware:**
+    - `Linear_motor_and_relays.ino` contains the Arduino sketch required for controlling the linear actuator and relay modules. Upload this to your Arduino using the Arduino IDE.
+
+- **Before Running Experiments:**
+  - Double-check all tubing, electrical connections, and device addresses.
+  - Ensure the Arduino firmware is uploaded and the correct COM port is set in your configuration.
+  - Review the flow path diagram to avoid cross-contamination or incorrect routing.
+
+- **Support:**
+  If you encounter issues with the hardware setup, consult the diagrams and images in `users/setup/` first. For further help, please open an issue or contact the project maintainers.
+
+---
 
 ## 📁 Project Structure
 
@@ -123,6 +194,7 @@ Auto_Polymerization/
 ├── 📂 workflow_steps/                # Workflow step modules
 ├── 📂 users/                         # User configuration and data
 │   ├── ⚙️ config/                    # Configuration files
+│   │   └── platform_config.py         # User-editable platform configuration (speeds, volumes, etc.)
 │   ├── 📊 data/                      # Data storage
 │   └── 🔧 setup/                     # Setup files
 ├── 📂 Data/                          # Experimental data
@@ -135,8 +207,9 @@ Auto_Polymerization/
 
 1. **Install dependencies** as described below
 2. **Configure your hardware** using the setup files in `users/setup/`
-3. **Test your devices and workflow** using `test_minimal_workflow.py` in `tests/` or `demo/`
-4. **Run experiments** using `platform_controller.py`
+3. **Edit `users/config/platform_config.py`** to set your workflow parameters (speeds, volumes, etc.)
+4. **Test your devices and workflow** using `test_minimal_workflow.py` in `tests/` 
+5. **Run experiments** using `platform_controller.py`
 
 ---
 
@@ -187,7 +260,6 @@ For issues and questions:
 ---
 
 also: pip install lmfit and pybaselines for nmr 
-
 
 
 

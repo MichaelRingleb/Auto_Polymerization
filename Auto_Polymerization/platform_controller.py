@@ -11,8 +11,10 @@ import time
 import matterlab_spectrometers as spectrometer
 import src.UV_VIS.uv_vis_utils as uv_vis
 import src.NMR.nmr_utils as nmr_utils
-import src.workflow_steps.0_preparation
-
+# Import preparation module (filename must start with an underscore for valid import)
+import src.workflow_steps._0_preparation as prep
+# Import user-editable platform configuration
+from users.config import platform_config as config
 
 #Setup logging for Medusa liquid transfers
 logger = logging.getLogger("platform_controller")
@@ -38,79 +40,39 @@ medusa = Medusa(
     logger=logger     
 )
 
-#instantiate nmr object
-nmr = NMR60Pro()
+# Use config values for workflow parameters
+# Supported keys for draw_speeds, dispense_speeds, and default_volumes include:
+# 'solvent', 'monomer', 'initiator', 'cta', 'modification', 'nmr', 'uv_vis'
+solvent_volume = config.default_volumes["solvent"]
+solvent_draw_speed = config.draw_speeds["solvent"]
+monomer_volume = config.default_volumes["monomer"]
+monomer_draw_speed = config.draw_speeds["monomer"]
+initiator_volume = config.default_volumes["initiator"]
+initiator_draw_speed = config.draw_speeds["initiator"]
+cta_volume = config.default_volumes["cta"]
+cta_draw_speed = config.draw_speeds["cta"]
+polymerization_temp = config.polymerization_temp
+set_rpm = config.set_rpm
+degas_time = config.degas_time
+functionalization_temp = config.functionalization_temp
+# functionalization_volume and functionalization_draw_speed can be added to config as needed
 
+# Use the draw_speeds and dispense_speeds dictionaries from config
+# Keys should match those used in the preparation module (solvent, monomer, modification, initiator, cta, nmr, uv_vis, etc.)
+draw_speeds = config.draw_speeds
+dispense_speeds = config.dispense_speeds
 
-
-
-"""
-#ideally put into its own module, but for now just import here
-# Definition of added volumes and reaction temperature by user before reaction:
-"""
-solvent_volume= 10 
-solvent_draw_speed = solvent_volume / 2  # draw speed in mL/min
-monomer_volume=4
-monomer_draw_speed = monomer_volume / 2  # draw speed in mL/min
-initiator_volume = 3
-initiator_draw_speed = initiator_volume / 2  # draw speed in mL/min
-cta_volume= 4
-cta_draw_speed = cta_volume / 2  # draw speed in mL/min
-polymerization_temp= 20
-set_rpm = 600
-
-degas_time = 1200 #time in seconds for degassing
-
-Functionalization_temp = 20  # Temperature for functionalization step
-Functionanilzation_volume = 2 # Volume for functionalization step
-Functionalization_draw_speed = Functionanilzation_volume / 2  # draw speed in mL/min
-#
-
-def run_preparation_workflow(
-    medusa, nmr, polymerization_temp, set_rpm, shim_kwargs=None, prime_volume=3, run_minimal_test=False
-):
-    """
-    Central unit to put together individual workflow steps into a complete workflow.
-    This function orchestrates the preparation phase of a polymerization reaction.
-    It includes degassing, priming, and flushing of reaction vials.
-    """
-    if run_minimal_test:
-        from Auto_Polymerization.tests.test_minimal_workflow import run_minimal_workflow_test
-        run_minimal_workflow_test()
-
-    #0. run the minimal workflow test to check if the workflow works
-    sadadads
-
-    #1. in the beginning pump shim sample to NMR and run a shim(2) for two times while in parallel, reaction vial is filled with solvent and other stuff
-    medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid",draw_speed=6, dispense_speed=6)
-    nmr.shim(2)
-    nmr.shim(2)
-    #2. transfer back to shim sample vessel
-    medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3, transfer_type="liquid", draw_speed=6, dispense_speed=6)
-
-    #in parallel:
-
-    #1. take the reaction vial out of the heatplate
-    medusa.write_serial("Linear_Actuator", "2000")  # Move the reaction vial out of the heatplate
-
-    #2. preheat heatplate
-    medusa.heat_stir(vessel="Reaction_Vial", temperature= polymerization_temp, rpm= set_rpm)
-
-    #3. open gas valve (in default mode, gas flow will be blocked)
-    medusa.write_serial("GAS_VALVE","GAS_ON")
-
-    #4. prime tubing (from vial to waste)
-    medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 3, transfer_type="liquid")
-    medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 3, transfer_type="liquid")
-    medusa.transfer_volumetric(source="Modification_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 3, transfer_type="liquid")
-    medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 3, transfer_type="liquid")
-    medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 3, transfer_type="liquid")
-
-    # 5.shut gas valve 
-    medusa.write_serial("GAS_VALVE","GAS_OFF")
-
-
-
+# Call the preparation workflow, passing draw_speeds, dispense_speeds, and config values
+prep.run_preparation_workflow(
+    medusa,
+    polymerization_temp,
+    set_rpm,
+    shim_kwargs=None,
+    prime_volume=3,
+    run_minimal_test=False,
+    draw_speeds=draw_speeds,
+    dispense_speeds=dispense_speeds
+)
 
 #at this point the preparation module should stop and the polymerization module should start
 
