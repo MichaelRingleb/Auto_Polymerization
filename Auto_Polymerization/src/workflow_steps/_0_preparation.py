@@ -9,7 +9,102 @@ All user-editable settings (draw_speeds, dispense_speeds, volumes, temperatures,
 Supported keys for draw_speeds and dispense_speeds include: 'solvent', 'monomer', 'initiator', 'cta', 'modification', 'nmr', 'uv_vis'.
 
 All functions are designed to be called from a workflow controller script.
+
+COM PORT RETRY LOGIC:
+This module includes robust error handling for COM port conflicts that can occur when multiple
+threads try to access the same serial port simultaneously. This is particularly important for
+syringe pumps that share the same COM port but have different addresses.
+
+The retry mechanism:
+- Catches SerialException with PermissionError for COM ports
+- Implements exponential backoff (2 minutes, 4 minutes, 5 minutes max)
+- Retries up to 3 times before giving up
+- Only retries COM port permission errors, not other serial issues
+- Provides clear logging of retry attempts and delays
+
+This approach allows the parallel preparation workflow (NMR shimming + other prep steps) to
+run without COM port conflicts, automatically waiting for transfers to complete before retrying.
 """
+import time
+from serial.serialutil import SerialException
+
+def retry_on_com_error(func, max_retries=3, initial_delay=120, max_delay=300):
+    """
+    Retry a function that might fail due to COM port errors.
+    
+    This function implements exponential backoff for COM port permission errors that can
+    occur when multiple threads try to access the same serial port simultaneously.
+    This is particularly useful for syringe pumps that share a COM port but have
+    different addresses.
+    
+    Args:
+        func: Function to retry (should be a callable that might raise SerialException)
+        max_retries: Maximum number of retry attempts (default: 3)
+        initial_delay: Initial delay in seconds before first retry (default: 120 = 2 minutes)
+        max_delay: Maximum delay in seconds (default: 300 = 5 minutes)
+    
+    Returns:
+        The result of func() if successful
+        
+    Raises:
+        SerialException: If the function fails after all retry attempts, or if the error
+                        is not a COM port permission error
+        
+    Example:
+        def my_transfer():
+            return medusa.transfer_volumetric(...)
+        
+        result = retry_on_com_error(my_transfer)
+    """
+    for attempt in range(max_retries + 1):  # +1 for the initial attempt
+        try:
+            return func()
+        except SerialException as e:
+            # Only retry COM port permission errors, not other serial issues
+            if "PermissionError" in str(e) and "COM" in str(e):
+                if attempt < max_retries:
+                    # Exponential backoff: delay doubles each retry, capped at max_delay
+                    delay = min(initial_delay * (2 ** attempt), max_delay)
+                    print(f"COM port error on attempt {attempt + 1}. Retrying in {delay} seconds...")
+                    time.sleep(delay)
+                    continue
+                else:
+                    print(f"Failed after {max_retries + 1} attempts. Last error: {e}")
+                    raise
+            else:
+                # Re-raise immediately if it's not a COM port permission error
+                raise
+
+def safe_transfer_volumetric(medusa, **kwargs):
+    """
+    Wrapper for medusa.transfer_volumetric with COM port retry logic.
+    
+    This function wraps medusa.transfer_volumetric calls with retry logic to handle
+    COM port conflicts that can occur during parallel execution of preparation steps.
+    It automatically retries failed transfers with exponential backoff.
+    
+    Args:
+        medusa: Medusa instance for liquid handling
+        **kwargs: All arguments to pass to medusa.transfer_volumetric
+        
+    Returns:
+        The result of medusa.transfer_volumetric if successful
+        
+    Raises:
+        SerialException: If the transfer fails after all retry attempts
+        
+    Example:
+        # Instead of:
+        # medusa.transfer_volumetric(source="A", target="B", volume=5)
+        
+        # Use:
+        safe_transfer_volumetric(medusa, source="A", target="B", volume=5)
+    """
+    def transfer_func():
+        return medusa.transfer_volumetric(**kwargs)
+    
+    return retry_on_com_error(transfer_func)
+
 # Example usage:
 # from users.config import platform_config as config
 # draw_speeds = config.draw_speeds
@@ -24,6 +119,10 @@ All functions are designed to be called from a workflow controller script.
 def shim_nmr_sample(medusa, volume=3, pump_id="Analytical_Pump", source="Deuterated_Solvent", target="NMR", shim_level=2, shim_repeats=2, draw_speed=6, dispense_speed=6):
     """
     Transfer deuterated solvent to NMR, perform shimming, and return solvent to the original vessel.
+    
+    This function uses safe_transfer_volumetric to handle potential COM port conflicts
+    during the NMR shimming process, which runs in parallel with other preparation steps.
+    
     Args:
         medusa: Medusa instance for liquid handling
         volume: Volume to transfer (default 3)
@@ -37,12 +136,14 @@ def shim_nmr_sample(medusa, volume=3, pump_id="Analytical_Pump", source="Deutera
     """
     import src.NMR.nmr_utils as nmr
     medusa.logger.info("Transferring deuterated solvent to NMR for shimming...")
-    medusa.transfer_volumetric(source=source, target=target, pump_id=pump_id, volume=volume, transfer_type="liquid", draw_speed=draw_speed, dispense_speed=dispense_speed)
+    # Use safe_transfer_volumetric to handle COM port conflicts
+    safe_transfer_volumetric(medusa, source=source, target=target, pump_id=pump_id, volume=volume, transfer_type="liquid", draw_speed=draw_speed, dispense_speed=dispense_speed)
     for _ in range(shim_repeats):
         nmr.run_shimming(shim_level)
         medusa.logger.info(f"NMR shimming (level {shim_level}) complete.")
     medusa.logger.info("Transferring solvent back to deuterated solvent vessel...")
-    medusa.transfer_volumetric(source=target, target=source, pump_id=pump_id, volume=volume, transfer_type="liquid", draw_speed=draw_speed, dispense_speed=dispense_speed)
+    # Use safe_transfer_volumetric to handle COM port conflicts
+    safe_transfer_volumetric(medusa, source=target, target=source, pump_id=pump_id, volume=volume, transfer_type="liquid", draw_speed=draw_speed, dispense_speed=dispense_speed)
 
 
 def prepare_reaction_vial_and_heatplate(medusa, polymerization_temp, set_rpm):
@@ -72,6 +173,12 @@ def open_gas_valve(medusa):
 def prime_tubing(medusa, volume=3, draw_speeds=None, dispense_speeds=None):
     """
     Prime tubing from each vessel to waste using the appropriate pumps.
+    
+    This function performs multiple sequential transfers to prime the tubing from
+    different vessels. Each transfer uses safe_transfer_volumetric to handle potential
+    COM port conflicts that can occur when this function runs in parallel with
+    NMR shimming (both using syringe pumps on the same COM port).
+    
     Args:
         medusa: Medusa instance
         volume: Volume to prime from each vessel (default 3)
@@ -80,17 +187,23 @@ def prime_tubing(medusa, volume=3, draw_speeds=None, dispense_speeds=None):
     Notes:
         Uses .get() for each component, so missing keys will use a default value of 3.
         Adds flush=1 to each transfer for effective priming.
+        All transfers use safe_transfer_volumetric with retry logic for COM port errors.
+        The retry mechanism ensures that if COM port conflicts occur (e.g., with NMR shimming),
+        the transfers will automatically wait and retry with exponential backoff.
     """
     if draw_speeds is None:
         draw_speeds = {}
     if dispense_speeds is None:
         dispense_speeds = {}
     medusa.logger.info("Priming tubing from solvent, monomer, modification, initiator, and CTA vessels to waste...")
-    medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("solvent", 3), dispense_speed=dispense_speeds.get("solvent", 3), flush=1)
-    medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("monomer", 3), dispense_speed=dispense_speeds.get("monomer", 3), flush=1)
-    medusa.transfer_volumetric(source="Modification_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("modification", 3), dispense_speed=dispense_speeds.get("modification", 3), flush=1)
-    medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("initiator", 3), dispense_speed=dispense_speeds.get("initiator", 3), flush=1)
-    medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("cta", 3), dispense_speed=dispense_speeds.get("cta", 3), flush=1)
+    
+    # Use safe_transfer_volumetric for all transfers with retry logic
+    # This handles COM port conflicts that can occur when running in parallel with NMR shimming
+    safe_transfer_volumetric(medusa, source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("solvent", 3), dispense_speed=dispense_speeds.get("solvent", 3), flush=1)
+    safe_transfer_volumetric(medusa, source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("monomer", 3), dispense_speed=dispense_speeds.get("monomer", 3), flush=1)
+    safe_transfer_volumetric(medusa, source="Modification_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("modification", 3), dispense_speed=dispense_speeds.get("modification", 3), flush=1)
+    safe_transfer_volumetric(medusa, source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("initiator", 3), dispense_speed=dispense_speeds.get("initiator", 3), flush=1)
+    safe_transfer_volumetric(medusa, source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("cta", 3), dispense_speed=dispense_speeds.get("cta", 3), flush=1)
 
 
 def close_gas_valve(medusa):
@@ -121,6 +234,16 @@ def run_preparation_workflow(
 
     Optionally runs the minimal workflow test at the start if run_minimal_test is True.
 
+    PARALLEL EXECUTION AND COM PORT HANDLING:
+    This function runs NMR shimming and other preparation steps in parallel using threading.
+    Both workflows use syringe pumps that may share the same COM port (e.g., COM7) but with
+    different addresses. To handle potential COM port conflicts, all transfer_volumetric
+    calls use safe_transfer_volumetric with retry logic.
+    
+    The retry mechanism ensures that if one thread is using the COM port, the other thread
+    will automatically wait and retry with exponential backoff (2 min, 4 min, 5 min max),
+    rather than crashing with a PermissionError.
+
     Args:
         medusa: Medusa instance
         polymerization_temp: Target temperature for polymerization
@@ -136,6 +259,12 @@ def run_preparation_workflow(
         and priming the tubings from the reaction component stock vials to the pumps.
         The minimal workflow test gives the user the chance to check the hardware before the actual workflow starts.
         All steps are executed in parallel using threading and both must finish before returning.
+        
+        COM PORT CONFLICT RESOLUTION:
+        - NMR shimming and tubing priming run in parallel
+        - Both use syringe pumps that may share the same COM port
+        - safe_transfer_volumetric handles conflicts with automatic retry
+        - No manual synchronization needed - the retry logic handles it automatically
     """
     import threading
     if run_minimal_test:
@@ -152,6 +281,7 @@ def run_preparation_workflow(
     # Define the two subworkflows as functions
     def nmr_shim_workflow():
         # Use draw_speeds and dispense_speeds for NMR shimming if provided
+        # This workflow uses safe_transfer_volumetric internally to handle COM port conflicts
         shim_nmr_sample(
             medusa,
             draw_speed=draw_speeds.get("nmr", 6),
@@ -160,12 +290,15 @@ def run_preparation_workflow(
         )
 
     def other_prep_workflow():
+        # This workflow uses safe_transfer_volumetric internally to handle COM port conflicts
         prepare_reaction_vial_and_heatplate(medusa, polymerization_temp, set_rpm)
         open_gas_valve(medusa)
         prime_tubing(medusa, volume=prime_volume, draw_speeds=draw_speeds, dispense_speeds=dispense_speeds)
         close_gas_valve(medusa)
 
     # Create threads for parallel execution
+    # Both threads may use syringe pumps on the same COM port, but safe_transfer_volumetric
+    # handles any conflicts with automatic retry logic
     t1 = threading.Thread(target=nmr_shim_workflow)
     t2 = threading.Thread(target=other_prep_workflow)
 
