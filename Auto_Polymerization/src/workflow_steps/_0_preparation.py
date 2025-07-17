@@ -66,7 +66,7 @@ def open_gas_valve(medusa):
         medusa: Medusa instance
     """
     medusa.logger.info("Opening gas valve...")
-    medusa.write_serial("GAS_VALVE", "GAS_ON")
+    medusa.write_serial("Gas_Valve", "GAS_ON")
 
 
 def prime_tubing(medusa, volume=3, draw_speeds=None, dispense_speeds=None):
@@ -100,7 +100,7 @@ def close_gas_valve(medusa):
         medusa: Medusa instance
     """
     medusa.logger.info("Closing gas valve...")
-    medusa.write_serial("GAS_VALVE", "GAS_OFF")
+    medusa.write_serial("Gas_Valve", "GAS_OFF")
 
 
 def run_preparation_workflow(
