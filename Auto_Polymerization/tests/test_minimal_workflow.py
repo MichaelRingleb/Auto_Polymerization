@@ -11,6 +11,10 @@ Usage:
     Run this script directly to execute all tests sequentially.
 """
 
+
+
+
+
 import sys
 import os
 import logging
@@ -19,6 +23,8 @@ from medusa import Medusa, MedusaDesigner
 import time
 import matterlab_nmr as nmr_spectrometer
 import matterlab_spectrometers as uv_vis_spectrometer
+# Add the project root to sys.path
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 import src.UV_VIS.uv_vis_utils as uv_vis
 import src.NMR.nmr_utils as nmr
 
