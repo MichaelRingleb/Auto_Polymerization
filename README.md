@@ -49,7 +49,7 @@ pip install -e src/linear_actuator_and_valves/
 ### 📚 Core Dependencies
 
 ```bash
-pip install scipy numpy pandas matplotlib pyserial nmrglue requests pyyaml medusa-sdl
+pip install scipy numpy pandas matplotlib pyserial nmrglue requests pyyaml medusa-sdl pybaselines
 ```
 
 ### 🔬 MatterLab Packages
@@ -118,6 +118,7 @@ Auto_Polymerization/
 ├── 📂 src/                           # Source code modules
 │   ├── 🔬 UV_VIS/                    # UV-VIS spectroscopy utilities
 │   ├── 💧 liquid_transfers/          # Liquid transfer modules
+│   ├── 🧲 NMR/                       # NMR analysis utilities and example data
 │   └── ⚙️ linear_actuator_and_valves/ # Hardware control modules
 ├── 📂 workflow_steps/                # Workflow step modules
 ├── 📂 users/                         # User configuration and data
@@ -146,6 +147,7 @@ Auto_Polymerization/
 | **🎮 Platform Controller** | Main workflow orchestration | `platform_controller.py` |
 | **🧪 Minimal Workflow Test** | End-to-end device and workflow test | `tests/test_minimal_workflow.py` |
 | **🔬 UV-VIS Utilities** | Spectroscopy data acquisition and analysis | `src/UV_VIS/` |
+| **🧲 NMR Utilities** | NMR spectrum analysis and batch processing | [`Auto_Polymerization/src/NMR/nmr_utils.py`](Auto_Polymerization/src/NMR/nmr_utils.py) |
 | **⚙️ Workflow Modules** | Individual workflow steps | `workflow_steps/` |
 
 ---
@@ -191,3 +193,19 @@ also: pip install lmfit and pybaselines for nmr
 
 **❓ Questions or issues?**  
 Please [open an issue](https://github.com/your-repo/issues) on GitHub or contact the maintainers.
+
+## 🧪 NMR Analysis Utilities
+
+The main NMR analysis utilities are located in `src/NMR/nmr_utils.py`.
+
+- Example data for NMR analysis is provided in `src/NMR/example_data_MMA_and_standard/` and related folders.
+- To batch analyze NMR spectra or test the analysis workflow, you can run the main/test block in `nmr_utils.py`:
+
+```bash
+cd Auto_Polymerization
+python -m src.NMR.nmr_utils
+```
+
+This will process all spectra in the example data folder and output integration results and plots.
+
+
