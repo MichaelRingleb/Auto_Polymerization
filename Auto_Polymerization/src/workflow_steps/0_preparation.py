@@ -57,7 +57,7 @@ def open_gas_valve(medusa):
     medusa.write_serial("GAS_VALVE", "GAS_ON")
 
 
-def prime_tubing(medusa, volume=3):
+def prime_tubing(medusa, volume=1):
     """
     Prime tubing from each vessel to waste using the appropriate pumps.
     Args:
