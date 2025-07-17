@@ -41,26 +41,24 @@ medusa = Medusa(
 )
 
 # Use config values for workflow parameters
-# Supported keys for draw_speeds, dispense_speeds, and default_volumes include:
-# 'solvent', 'monomer', 'initiator', 'cta', 'modification', 'nmr', 'uv_vis'
-solvent_volume = config.default_volumes["solvent"]
-solvent_draw_speed = config.draw_speeds["solvent"]
-monomer_volume = config.default_volumes["monomer"]
-monomer_draw_speed = config.draw_speeds["monomer"]
-initiator_volume = config.default_volumes["initiator"]
-initiator_draw_speed = config.draw_speeds["initiator"]
-cta_volume = config.default_volumes["cta"]
-cta_draw_speed = config.draw_speeds["cta"]
-polymerization_temp = config.polymerization_temp
-set_rpm = config.set_rpm
-degas_time = config.degas_time
-functionalization_temp = config.functionalization_temp
-# functionalization_volume and functionalization_draw_speed can be added to config as needed
+solvent_volume = config.default_volumes.get("solvent", 10)
+solvent_draw_speed = config.draw_speeds.get("solvent", 5)
+monomer_volume = config.default_volumes.get("monomer", 4)
+monomer_draw_speed = config.draw_speeds.get("monomer", 5)
+initiator_volume = config.default_volumes.get("initiator", 3)
+initiator_draw_speed = config.draw_speeds.get("initiator", 5)
+cta_volume = config.default_volumes.get("cta", 4)
+cta_draw_speed = config.draw_speeds.get("cta", 5)
+polymerization_temp = config.temperatures.get("polymerization", 20)
+set_rpm = config.target_rpm.get("polymerization", 600)
+degas_time = config.timings.get("degas_time", 1200)
+functionalization_temp = config.temperatures.get("functionalization", 20)
 
 # Use the draw_speeds and dispense_speeds dictionaries from config
-# Keys should match those used in the preparation module (solvent, monomer, modification, initiator, cta, nmr, uv_vis, etc.)
+# Keys should match those used in the workflow_steps modules (solvent, monomer, modification, initiator, cta, nmr, uv_vis, etc.)
 draw_speeds = config.draw_speeds
 dispense_speeds = config.dispense_speeds
+default_volumes = config.default_volumes
 
 # Call the preparation workflow, passing draw_speeds, dispense_speeds, and config values
 prep.run_preparation_workflow(
@@ -68,7 +66,7 @@ prep.run_preparation_workflow(
     polymerization_temp,
     set_rpm,
     shim_kwargs=None,
-    prime_volume=3,
+    prime_volume=default_volumes.get("prime", 3),
     run_minimal_test=False,
     draw_speeds=draw_speeds,
     dispense_speeds=dispense_speeds
@@ -193,13 +191,13 @@ medusa.write_serial("COM12","GAS_OFF")
 
 
 #add NMR solvent to the UV_VIS cell
-medusa.transfer_volumetric(source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= 0.7, transfer_type="liquid", draw_speed=1.5, dispense_speed=0.5)
+medusa.transfer_volumetric(source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= default_volumes.get(1), transfer_type="liquid", draw_speed=draw_speeds.get("uv_vis", 1.5), dispense_speed=dispense_speeds.get("uv_vis", 1))
 
 #first measurement of UV_VIS and use this as the reference spectrum
 uv_vis.take_spectrum(reference=True)
 
 #remove NMR solvent from UV_VIS cell
-medusa.transfer_volumetric(source="UV_VIS", target="NMR_Solvent_Vessel", pump_id="Analytical_Pump", volume= 1.5, transfer_type="liquid",  draw_speed= 1, dispense_speed=4)
+medusa.transfer_volumetric(source="UV_VIS", target="NMR_Solvent_Vessel", pump_id="Analytical_Pump", volume = 3, transfer_type="liquid",  draw_speed= draw_speeds.get("uv_vis", 1), dispense_speed=dispense_speeds.get("uv_vis", 4))
 
 #start flow through UV_VIS and measure the t0 spectrum
 #flow will go on until stopped by other command (use of async or threading)
