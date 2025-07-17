@@ -1,0 +1,10 @@
+Filename	Monomer_Start	Monomer_End	Monomer_Peak_Positions	Monomer_Integral	Standard_Start	Standard_End	Standard_Integral	Ratio(Monomer/Standard)
+0.2M_MMA,0.1M_Anisol_16scans_no_deutero_DMSO_test	5.00	6.50	5.604	88.490913	6.50	8.00	76.721419	1.153406
+0.2M_MMA,0.1M_Anisol_16scans_no_deutero_DMSO_test_2	5.00	6.50	5.598	87.465614	6.50	8.00	73.628047	1.187939
+0.2M_MMA,0.1M_Anisol_1scan_no_deutero_DMSO_test	5.00	6.50	5.616	98.318911	6.50	8.00	100.598750	0.977337
+0.2M_MMA,0.1M_Anisol_1scans_no_deutero_DMSO_tes_2t	5.00	6.50	5.604	90.147076	6.50	8.00	18.188226	4.956342
+0.2M_MMA,0.1M_Anisol_32scans_no_deutero_DMSO_test	5.00	6.50	5.956	86.172248	6.50	8.00	66.936991	1.287364
+0.2M_MMA,0.1M_Anisol_32scans_no_deutero_DMSO_test_2	5.00	6.50	5.956	84.412742	6.50	8.00	69.369280	1.216861
+0.2M_MMA,0.1M_Anisol_64scans_no_deutero_DMSO_test	5.00	6.50	5.956	86.121629	6.50	8.00	70.894517	1.214785
+0.2M_MMA,0.1M_Anisol_64scans_no_deutero_DMSO_test_2	5.00	6.50	5.956	82.940537	6.50	8.00	63.113732	1.314144
+0.2M_MMA,0.2M_Anisol_16scans_no_deutero_DMSO_test	5.00	6.50	5.980	87.103626	6.50	8.00	123.825831	0.703437

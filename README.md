@@ -184,5 +184,10 @@ For issues and questions:
 
 ---
 
+also: pip install lmfit and pybaselines for nmr 
+
+
+
+
 **❓ Questions or issues?**  
 Please [open an issue](https://github.com/your-repo/issues) on GitHub or contact the maintainers.
