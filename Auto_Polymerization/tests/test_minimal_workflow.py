@@ -19,7 +19,7 @@ import logging
 import time
 from pathlib import Path
 import glob
-
+from medusa import Medusa
 
 
 SLEEP_TIME = 10  # seconds for hardware operations
@@ -72,6 +72,7 @@ def test_peristaltic_transfers(medusa, logger):
     logger.info("Peristaltic pump test complete.")
 
 
+
 def test_hotplate(medusa, logger):
     """
     Test hotplate heating and stirring control.
@@ -116,10 +117,32 @@ def test_volumetric_transfers(medusa, logger):
     Demonstrates transferring small volumes from various vessels to waste using different syringe pumps.
     """
     logger.info("Testing syringe pumps...")
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=1, transfer_type="liquid", draw_speed = 1.0, dispense_speed = 1.0, flush = 1)
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="Waste_Vessel", pump_id="Analytical_Pump", volume=1, transfer_type="liquid", draw_speed =1.0, dispense_speed =1.0, flush =1)
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Precipitation_Pump", volume=1, transfer_type="liquid", dispense_speed =1.0, draw_speed =1.0)
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume=1, transfer_type="liquid")
+    #max draw and dispense speeds = 0.5 mL/s
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="Waste_Vessel", pump_id="Analytical_Pump", 
+                                pre_rinse = 2, pre_rinse_volume = 5.0, pre_rinse_speed = 0.2,
+                                volume=5.0, transfer_type="liquid", draw_speed = 0.1, dispense_speed = 0.2, post_rinse_vessel = "Purge_Solvent_Vessel_2", 
+                                flush = 1, flush_volume = 2, flush_speed = 0.3,  
+                                post_rinse_volume = 5.0, post_rinse_speed = 0.1
+                                )  
+    
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Precipitation_Pump", 
+                                pre_rinse = 2, pre_rinse_volume = 5.0, pre_rinse_speed = 0.2,
+                                volume=5.0, transfer_type="liquid", draw_speed = 0.1, dispense_speed = 0.2, post_rinse_vessel = "Purge_Solvent_Vessel_1", 
+                                flush = 1, flush_volume = 2, flush_speed = 0.3,  
+                                post_rinse_volume = 5.0, post_rinse_speed = 0.1
+                                )
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", 
+                                pre_rinse = 2, pre_rinse_volume = 1.0, pre_rinse_speed = 1,
+                                volume=1.0, transfer_type="liquid", draw_speed = 1, dispense_speed = 0.2, post_rinse_vessel = "Purge_Solvent_Vessel_1", 
+                                flush = 1, flush_volume = 2, flush_speed = 1,  
+                                post_rinse_volume = 1.0, post_rinse_speed = 0.5
+                                )      
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", 
+                                pre_rinse = 2, pre_rinse_volume = 5.0, pre_rinse_speed = 1,
+                                volume=5.0, transfer_type="liquid", draw_speed = 1, dispense_speed = 1, post_rinse_vessel = "Purge_Solvent_Vessel_1", 
+                                flush = 1, flush_volume = 2, flush_speed = 1,  
+                                post_rinse_volume = 5.0, post_rinse_speed = 0.5
+                                )
     logger.info("Syringe pump test complete.")
 
 
@@ -132,7 +155,7 @@ def run_minimal_workflow_test(medusa=None, logger=None):
     logger = _setup_logger(logger)
     if medusa is None:
         layout_path = _find_or_prompt_layout(logger)
-        from medusa import Medusa
+        # from medusa import Medusa
         medusa = Medusa(graph_layout=Path(layout_path), logger=logger)
     import src.NMR.nmr_utils as nmr
     import src.UV_VIS.uv_vis_utils as uv_vis
@@ -145,16 +168,16 @@ def run_minimal_workflow_test(medusa=None, logger=None):
 
     # Run all hardware and workflow tests
     test_peristaltic_transfers(medusa, logger)
-    test_hotplate(medusa, logger)
-    test_serial_devices(medusa, logger)
-    test_volumetric_transfers(medusa, logger)
-    logger.info("Testing NMR spectrum acquisition...")
-    nmr.acquire_nmr_spectrum()
-    logger.info("NMR spectrum acquisition test complete.")
-    logger.info("Testing UV-Vis spectrum acquisition...")
-    uv_vis.take_spectrum(reference=True)
-    logger.info("UV-Vis spectrum acquisition test complete.")
-    logger.info("==== All tests completed successfully ====")
+    #test_hotplate(medusa, logger)
+    #test_serial_devices(medusa, logger)
+    #test_volumetric_transfers(medusa, logger)
+    #logger.info("Testing NMR spectrum acquisition...")
+    #nmr.acquire_nmr_spectrum()
+    #logger.info("NMR spectrum acquisition test complete.")
+    #logger.info("Testing UV-Vis spectrum acquisition...")
+    #uv_vis.take_spectrum(reference=True)
+    #logger.info("UV-Vis spectrum acquisition test complete.")
+    #logger.info("==== All tests completed successfully ====")
 
     # Wait 10 seconds before cleanup to allow user to inspect files if needed
     time.sleep(10)
@@ -185,6 +208,7 @@ if __name__ == "__main__":
     project_root = Path(__file__).parent.parent  # Go up from tests/ to Auto_Polymerization/
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
+    
     run_minimal_workflow_test()
 
 

@@ -3,29 +3,29 @@
 
 # Draw speeds for each component (mL/min)
 draw_speeds = {
-    "solvent": 5,
-    "monomer": 5,
-    "initiator": 5,
-    "cta": 5,
-    "modification": 5,
-    "nmr": 3,
-    "uv_vis": 2,
-    "functionalization": 2,
-    "precipitation": 10,
-    "cleaning": 10,
+    "solvent": 0.08,
+    "monomer": 0.08,
+    "initiator": 0.08,
+    "cta": 0.08,
+    "modification": 0.08,
+    "nmr": 0.05,
+    "uv_vis": 0.03,
+    "functionalization": 0.03,
+    "precipitation": 0.16,
+    "cleaning": 0.16,
 }
 
 dispense_speeds = {
-    "solvent": 8,
-    "monomer": 8,
-    "initiator": 8,
-    "cta": 8,
-    "modification": 3,
-    "nmr": 3,
-    "uv_vis": 1,
-    "functionalization": 2,
-    "precipitation": 20,
-    "cleaning": 3,
+    "solvent": 0.13,
+    "monomer": 0.13,
+    "initiator": 0.13,
+    "cta": 0.13,
+    "modification": 0.05,
+    "nmr": 0.05,
+    "uv_vis": 0.016,
+    "functionalization": 0.032,
+    "precipitation": 0.33,
+    "cleaning": 0.05,
 }
 
 # Default volumes for different transfers / components
