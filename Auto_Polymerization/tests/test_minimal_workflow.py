@@ -116,9 +116,9 @@ def test_volumetric_transfers(medusa, logger):
     Demonstrates transferring small volumes from various vessels to waste using different syringe pumps.
     """
     logger.info("Testing syringe pumps...")
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=1, transfer_type="liquid")
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="Waste_Vessel", pump_id="Analytical_Pump", volume=1, transfer_type="liquid")
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Precipitation_Pump", volume=1, transfer_type="liquid")
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=1, transfer_type="liquid", draw_speed = 1.0, dispense_speed = 1.0, flush = 1)
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="Waste_Vessel", pump_id="Analytical_Pump", volume=1, transfer_type="liquid", draw_speed =1.0, dispense_speed =1.0, flush =1)
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Precipitation_Pump", volume=1, transfer_type="liquid", dispense_speed =1.0, draw_speed =1.0)
     medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume=1, transfer_type="liquid")
     logger.info("Syringe pump test complete.")
 
@@ -141,7 +141,7 @@ def run_minimal_workflow_test(medusa=None, logger=None):
     nmr_data_dir = 'Auto_Polymerization/users/data/NMR_data'
     uvvis_data_dir = 'Auto_Polymerization/users/data/UV_VIS_data'
     nmr_files_before = set(glob.glob(os.path.join(nmr_data_dir, '*')))
-    uvvis_files_before = set(glob.glob(os.path.join(uvvis_data_dir, '**', 'spectrum*.txt'), recursive=True))
+    uvvis_files_before = set(glob.glob(os.path.join(uvvis_data_dir, '*')))
 
     # Run all hardware and workflow tests
     test_peristaltic_transfers(medusa, logger)
@@ -161,7 +161,7 @@ def run_minimal_workflow_test(medusa=None, logger=None):
 
     # Cleanup: Delete only files created during this test run
     nmr_files_after = set(glob.glob(os.path.join(nmr_data_dir, '*')))
-    uvvis_files_after = set(glob.glob(os.path.join(uvvis_data_dir, '**', 'spectrum*.txt'), recursive=True))
+    uvvis_files_after = set(glob.glob(os.path.join(uvvis_data_dir, '*',)))
     nmr_new_files = nmr_files_after - nmr_files_before
     uvvis_new_files = uvvis_files_after - uvvis_files_before
 
