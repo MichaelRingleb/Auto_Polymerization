@@ -20,6 +20,8 @@ import time
 from pathlib import Path
 import glob
 
+
+
 SLEEP_TIME = 10  # seconds for hardware operations
 
 
@@ -179,6 +181,10 @@ def run_minimal_workflow_test(medusa=None, logger=None):
 
 
 if __name__ == "__main__":
+    # Add project root to path only when running as main script
+    project_root = Path(__file__).parent.parent  # Go up from tests/ to Auto_Polymerization/
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
     run_minimal_workflow_test()
 
 
