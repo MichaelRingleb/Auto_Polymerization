@@ -58,21 +58,37 @@ def retry_on_com_error(func, max_retries=3, initial_delay=120, max_delay=300):
     """
     for attempt in range(max_retries + 1):  # +1 for the initial attempt
         try:
-            return func()
+            if attempt == 0:
+                print(f"Attempting transfer (initial attempt)...")
+            else:
+                print(f"Attempting transfer (retry {attempt}/{max_retries})...")
+            
+            result = func()
+            
+            if attempt == 0:
+                print(f"Transfer completed successfully on first attempt!")
+            else:
+                print(f"Transfer completed successfully on retry {attempt}!")
+            
+            return result
+            
         except SerialException as e:
             # Only retry COM port permission errors, not other serial issues
             if "PermissionError" in str(e) and "COM" in str(e):
                 if attempt < max_retries:
                     # Exponential backoff: delay doubles each retry, capped at max_delay
                     delay = min(initial_delay * (2 ** attempt), max_delay)
-                    print(f"COM port error on attempt {attempt + 1}. Retrying in {delay} seconds...")
+                    print(f"❌ COM port error on attempt {attempt + 1}: {e}")
+                    print(f"⏳ Waiting {delay} seconds before retry {attempt + 1}/{max_retries}...")
                     time.sleep(delay)
                     continue
                 else:
-                    print(f"Failed after {max_retries + 1} attempts. Last error: {e}")
+                    print(f"❌ Failed after {max_retries + 1} attempts. Last error: {e}")
+                    print(f"💡 This might indicate a hardware issue or persistent COM port conflict.")
                     raise
             else:
                 # Re-raise immediately if it's not a COM port permission error
+                print(f"❌ Non-COM port serial error: {e}")
                 raise
 
 def safe_transfer_volumetric(medusa, **kwargs):
@@ -100,6 +116,13 @@ def safe_transfer_volumetric(medusa, **kwargs):
         # Use:
         safe_transfer_volumetric(medusa, source="A", target="B", volume=5)
     """
+    # Log the transfer details for debugging
+    source = kwargs.get('source', 'Unknown')
+    target = kwargs.get('target', 'Unknown')
+    volume = kwargs.get('volume', 'Unknown')
+    pump_id = kwargs.get('pump_id', 'Unknown')
+    print(f"🔄 Starting transfer: {volume}mL from {source} to {target} via {pump_id}")
+    
     def transfer_func():
         return medusa.transfer_volumetric(**kwargs)
     
@@ -116,7 +139,7 @@ def safe_transfer_volumetric(medusa, **kwargs):
 # If you add new components to the config, ensure to use the same keys in your workflow logic.
 
 
-def shim_nmr_sample(medusa, volume=3, pump_id="Analytical_Pump", source="Deuterated_Solvent", target="NMR", shim_level=2, shim_repeats=2, draw_speed=6, dispense_speed=6):
+def shim_nmr_sample(medusa, volume=3, pump_id="Analytical_Pump", source="Deuterated_Solvent", target="NMR", shim_level=2, shim_repeats=2, draw_speed=3, dispense_speed=3):
     """
     Transfer deuterated solvent to NMR, perform shimming, and return solvent to the original vessel.
     
