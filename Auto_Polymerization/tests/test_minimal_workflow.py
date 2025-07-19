@@ -168,16 +168,16 @@ def run_minimal_workflow_test(medusa=None, logger=None):
 
     # Run all hardware and workflow tests
     test_peristaltic_transfers(medusa, logger)
-    #test_hotplate(medusa, logger)
-    #test_serial_devices(medusa, logger)
-    #test_volumetric_transfers(medusa, logger)
-    #logger.info("Testing NMR spectrum acquisition...")
-    #nmr.acquire_nmr_spectrum()
-    #logger.info("NMR spectrum acquisition test complete.")
-    #logger.info("Testing UV-Vis spectrum acquisition...")
-    #uv_vis.take_spectrum(reference=True)
-    #logger.info("UV-Vis spectrum acquisition test complete.")
-    #logger.info("==== All tests completed successfully ====")
+    test_hotplate(medusa, logger)
+    test_serial_devices(medusa, logger)
+    test_volumetric_transfers(medusa, logger)
+    logger.info("Testing NMR spectrum acquisition...")
+    nmr.acquire_nmr_spectrum()
+    logger.info("NMR spectrum acquisition test complete.")
+    logger.info("Testing UV-Vis spectrum acquisition...")
+    uv_vis.take_spectrum(reference=True)
+    logger.info("UV-Vis spectrum acquisition test complete.")
+    logger.info("==== All tests completed successfully ====")
 
     # Wait 10 seconds before cleanup to allow user to inspect files if needed
     time.sleep(10)
