@@ -36,6 +36,9 @@ from src.liquid_transfers.liquid_transfers_utils import (
     to_nmr_liquid_transfer_shimming,
     from_nmr_liquid_transfer_shimming,
 )
+import importlib.util
+import sys
+import os
 
 # All calls to serial_communication_error_safe_transfer_volumetric now use the imported version.
 # Update any docstrings/comments to note the function is imported from liquid_transfers_utils.
@@ -202,8 +205,16 @@ def run_preparation_workflow(
     """
     import threading
     if run_minimal_test:
-        from Auto_Polymerization.tests.test_minimal_workflow import run_minimal_workflow_test
-        run_minimal_workflow_test(medusa)
+        # Dynamically import test_minimal_workflow from the correct path
+        test_path = os.path.join(os.path.dirname(__file__), '../../tests/test_minimal_workflow.py')
+        test_path = os.path.abspath(test_path)
+        spec = importlib.util.spec_from_file_location("test_minimal_workflow", test_path)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Could not load test_minimal_workflow module from {test_path}")
+        test_module = importlib.util.module_from_spec(spec)
+        sys.modules["test_minimal_workflow"] = test_module
+        spec.loader.exec_module(test_module)
+        test_module.run_minimal_workflow_test(medusa)
 
     if shim_kwargs is None:
         shim_kwargs = {}
