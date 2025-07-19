@@ -82,7 +82,7 @@ def uvvis_liquid_transfer(medusa):
         pump_id: Pump to use
         transfer_params: dict of transfer parameters (volume, draw_speed, etc.)
     """
-    params = config.uv_vis_transfer_parameters
+    params = config.uv_vis_transfer_params
     medusa.transfer_volumetric(
         source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump",
         transfer_type=params.get("transfer_type", "liquid"),
@@ -97,7 +97,7 @@ def to_nmr_liquid_transfer_shimming(medusa):
     """
     Transfer deuterated solvent from source to NMR for shimming, using shimming parameters from config.
     """
-    params = config.nmr_transfer_parameters["shimming"]
+    params = config.nmr_transfer_params["shimming"]
     serial_communication_error_safe_transfer_volumetric(
         medusa,
         source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump",
@@ -112,7 +112,7 @@ def from_nmr_liquid_transfer_shimming(medusa):
     """
     Transfer deuterated solvent from NMR back to target after shimming, using shimming parameters from config.
     """
-    params = config.nmr_transfer_parameters["shimming"]
+    params = config.nmr_transfer_params["shimming"]
     serial_communication_error_safe_transfer_volumetric(
         medusa,
         source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump",
@@ -127,7 +127,7 @@ def to_nmr_liquid_transfer_sampling(medusa):
     """
     Transfer sample from reaction vessel to NMR for sampling, using sampling parameters from config.
     """
-    params = config.nmr_transfer_parameters["sampling"]
+    params = config.nmr_transfer_params["sampling"]
     serial_communication_error_safe_transfer_volumetric(
         medusa,
         source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump",
@@ -142,7 +142,7 @@ def from_nmr_liquid_transfer_sampling(medusa):
     """
     Transfer sample from NMR back to reaction vessel after sampling, using sampling parameters from config.
     """
-    params = config.nmr_transfer_parameters["sampling"]
+    params = config.nmr_transfer_params["sampling"]
     serial_communication_error_safe_transfer_volumetric(
         medusa,
         source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump",

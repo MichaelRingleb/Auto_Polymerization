@@ -98,7 +98,7 @@ def prime_tubing(medusa, prime_transfer_params):
         medusa: Medusa instance
         prime_transfer_params: dict containing all transfer parameters for all priming steps
     """
-    serial_communication_error_safe_transfer_volumetric(medusa, {
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
         "source": "Solvent_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
         "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
         "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
@@ -107,7 +107,7 @@ def prime_tubing(medusa, prime_transfer_params):
         "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1),
         "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1)
     })
-    serial_communication_error_safe_transfer_volumetric(medusa, {
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
         "source": "Monomer_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
         "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
         "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
@@ -116,7 +116,7 @@ def prime_tubing(medusa, prime_transfer_params):
         "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1),
         "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1)
     })
-    serial_communication_error_safe_transfer_volumetric(medusa, {
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
         "source": "Initiator_Vessel", "target": "Waste_Vessel", "pump_id": "Initiator_CTA_Pump",
         "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
         "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
@@ -125,7 +125,7 @@ def prime_tubing(medusa, prime_transfer_params):
         "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1),
         "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1)
     })
-    serial_communication_error_safe_transfer_volumetric(medusa, {
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
         "source": "CTA_Vessel", "target": "Waste_Vessel", "pump_id": "Initiator_CTA_Pump",
         "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
         "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
@@ -134,7 +134,7 @@ def prime_tubing(medusa, prime_transfer_params):
         "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1),
         "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1)
     })
-    serial_communication_error_safe_transfer_volumetric(medusa, {
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
         "source": "Modification_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
         "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
         "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
