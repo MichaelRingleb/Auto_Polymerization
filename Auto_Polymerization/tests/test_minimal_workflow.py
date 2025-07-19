@@ -131,7 +131,7 @@ def test_volumetric_transfers(medusa, logger):
                                 pre_rinse = 1, pre_rinse_volume = 1.0, pre_rinse_speed = 0.2,
                                 volume=1.0, draw_speed = 0.1, dispense_speed = 0.2,  
                                 flush = 1, flush_volume = 2, flush_speed = 0.3,  
-                                post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_2", post_rinse_volume = 1.0, post_rinse_speed = 0.1
+                                post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_1", post_rinse_volume = 1.0, post_rinse_speed = 0.1
                                 )  
     
     medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", 
@@ -139,7 +139,7 @@ def test_volumetric_transfers(medusa, logger):
                                 pre_rinse = 1, pre_rinse_volume = 1.0, pre_rinse_speed = 0.2,
                                 volume=1.0, draw_speed = 0.1, dispense_speed = 0.2,  
                                 flush = 1, flush_volume = 2, flush_speed = 0.3,  
-                                post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_2", post_rinse_volume = 1.0, post_rinse_speed = 0.1
+                                post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_1", post_rinse_volume = 1.0, post_rinse_speed = 0.1
                                 )  
         
     medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", 
@@ -147,7 +147,7 @@ def test_volumetric_transfers(medusa, logger):
                                 pre_rinse = 1, pre_rinse_volume = 1.0, pre_rinse_speed = 0.2,
                                 volume=1.0, draw_speed = 0.1, dispense_speed = 0.2,  
                                 flush = 1, flush_volume = 2, flush_speed = 0.3,  
-                                post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_2", post_rinse_volume = 1.0, post_rinse_speed = 0.1
+                                post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_1", post_rinse_volume = 1.0, post_rinse_speed = 0.1
                                 )  
     logger.info("Syringe pump test complete.")
 
