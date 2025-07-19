@@ -244,7 +244,7 @@ def run_preparation_workflow(
     polymerization_temp,
     set_rpm,
     shim_kwargs=None,
-    prime_volume=3,
+    prime_volume=2,
     run_minimal_test=False,
     draw_speeds=None,
     dispense_speeds=None
