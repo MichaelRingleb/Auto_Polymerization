@@ -32,6 +32,57 @@ prime_transfer_params = {
     "post_rinse_volume": 2.5,
     "post_rinse_speed": 0.1,
 }
+
+#Parameters for the polymerization workflow substep, change, if you want to use different volumes for the reaction components
+polymerization_params = { 
+    "solvent_volume": 10,
+    "solvent_draw_speed": 0.08,
+    "solvent_dispense_speed": 0.13,
+    "monomer_volume": 4,
+    "monomer_draw_speed": 0.08,
+    "monomer_dispense_speed": 0.13,
+    "cta_volume": 4,
+    "cta_draw_speed": 0.08,
+    "cta_dispense_speed": 0.13,
+    "initiator_volume": 3,
+    "initiator_draw_speed": 0.08,
+    "initiator_dispense_speed": 0.13,
+    "flush": 2,
+    "flush_volume": 5,
+    "flush_speed": 0.3,
+    "pre_rinse": 1,
+    "pre_rinse_volume": 0.5,
+    "pre_rinse_speed": 0.1,
+    "post_rinse": 1,
+    "post_rinse_volume": 2.5,
+    "last_post_rinse_volume": 6,
+    "post_rinse_speed": 0.133,
+    "post_rinse_vessel": "Purge_Solvent_Vessel_1",
+}
+
+# Timing and workflow-specific parameters (seconds, iterations, etc.)
+timings = {
+    "deoxygenation_time": 1200, #20 min
+    "functionalization_interval_sec": 180,  # 3 minutes
+    "functionalization_max_iterations": 200,
+    "precipitation_wait_sec": 600,
+    
+}
+
+# Temperatures for various steps (C)
+temperatures = {
+    "polymerization_temp": 75,
+    "functionalization_temp": 30,
+    "cleaning_dry_temp": 80,
+}
+
+# RPM settings for various steps
+target_rpm = {
+    "polymerization_rpm": 600,
+    "cleaning_rpm": 300,
+}
+
+
 #Parameters for the analytical transfers (NMR shimming, NMR sampling, UV-VIS)
 #change if you changed the length of the tubing or the volume of the NMR cell 
 nmr_transfer_params = {
@@ -70,27 +121,7 @@ uv_vis_transfer_params = {
     "transfer_type": "liquid"
 }
 
-# Timing and workflow-specific parameters (seconds, iterations, etc.)
-timings = {
-    "degas_time": 1200,
-    "functionalization_interval_sec": 180,  # 3 minutes
-    "functionalization_max_iterations": 200,
-    "precipitation_wait_sec": 600,
-    "cleaning_dry_temp": 80,
-}
 
-# Temperatures for various steps (C)
-temperatures = {
-    "polymerization": 75,
-    "functionalization": 30,
-    "cleaning_dry": 70,
-}
-
-# RPM settings for various steps
-target_rpm = {
-    "polymerization": 600,
-    "cleaning": 300,
-}
 
 draw_speeds = {
     "solvent": 0.08,

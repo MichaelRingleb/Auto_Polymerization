@@ -72,7 +72,7 @@ def serial_communication_error_safe_transfer_volumetric(medusa, logger=None, **k
     return retry_on_serial_com_error(transfer_func, logger=logger)
 
 
-def uvvis_liquid_transfer(medusa):
+def uv_vis_liquid_transfer(medusa):
     """
     Perform a transfer to the UV-VIS using standardized parameters.
     Args:
@@ -87,10 +87,12 @@ def uvvis_liquid_transfer(medusa):
         source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump",
         transfer_type=params.get("transfer_type", "liquid"),
         pre_rinse=params.get("pre_rinse", 1), pre_rinse_volume=params.get("pre_rinse_volume", 1.0), pre_rinse_speed=params.get("pre_rinse_speed", 0.02),
+        volume=params.get("volume", 1.5), draw_speed=params.get("draw_speed", 0.03), dispense_speed=params.get("dispense_speed", 0.016),
+        flush=params.get("flush", 1), flush_volume=params.get("flush_volume", 2), flush_speed=params.get("flush_speed", 0.05),
         post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"), post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 1.5),
         post_rinse_speed=params.get("post_rinse_speed", 0.01),
-        flush=params.get("flush", 1), flush_volume=params.get("flush_volume", 2), flush_speed=params.get("flush_speed", 0.05),
-        volume=params.get("volume", 1.5), draw_speed=params.get("draw_speed", 0.03), dispense_speed=params.get("dispense_speed", 0.016),
+        
+        
     )
 
 def to_nmr_liquid_transfer_shimming(medusa):
@@ -102,10 +104,10 @@ def to_nmr_liquid_transfer_shimming(medusa):
         medusa,
         source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump",
         transfer_type=params.get("transfer_type", "liquid"),
-        post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"),
-        post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 1.5),
-        post_rinse_speed=params.get("post_rinse_speed", 0.1),
         volume=params.get("volume", 2.1), draw_speed=params.get("draw_speed", 0.05), dispense_speed=params.get("dispense_speed", 0.05),
+        post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"), post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 1.5),
+        post_rinse_speed=params.get("post_rinse_speed", 0.1),
+        
     )
 
 def from_nmr_liquid_transfer_shimming(medusa):
@@ -117,10 +119,10 @@ def from_nmr_liquid_transfer_shimming(medusa):
         medusa,
         source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump",
         transfer_type=params.get("transfer_type", "liquid"),
-        post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"),
-        post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 1.5),
-        post_rinse_speed=params.get("post_rinse_speed", 0.1),
         volume=params.get("volume", 2.1), draw_speed=params.get("draw_speed", 0.05), dispense_speed=params.get("dispense_speed", 0.05),
+        post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"), post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 1.5), 
+        post_rinse_speed=params.get("post_rinse_speed", 0.1),
+        
     )
 
 def to_nmr_liquid_transfer_sampling(medusa):
@@ -132,10 +134,10 @@ def to_nmr_liquid_transfer_sampling(medusa):
         medusa,
         source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump",
         transfer_type=params.get("transfer_type", "liquid"),
-        post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"),
-        post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 2),
-        post_rinse_speed=params.get("post_rinse_speed", 0.1),
         volume=params.get("volume", 2.1), draw_speed=params.get("draw_speed", 0.05), dispense_speed=params.get("dispense_speed", 0.05),
+        post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"), post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 2),
+        post_rinse_speed=params.get("post_rinse_speed", 0.1),
+        
     )
 
 def from_nmr_liquid_transfer_sampling(medusa):
@@ -147,8 +149,9 @@ def from_nmr_liquid_transfer_sampling(medusa):
         medusa,
         source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump",
         transfer_type=params.get("transfer_type", "liquid"),
+        volume=params.get("volume", 2.1), draw_speed=params.get("draw_speed", 0.05), dispense_speed=params.get("dispense_speed", 0.05),
         post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"),
         post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 2),
         post_rinse_speed=params.get("post_rinse_speed", 0.1),
-        volume=params.get("volume", 2.1), draw_speed=params.get("draw_speed", 0.05), dispense_speed=params.get("dispense_speed", 0.05),
+        
     ) 
