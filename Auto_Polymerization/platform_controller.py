@@ -41,14 +41,14 @@ medusa = Medusa(
 )
 
 # Use config values for workflow parameters
-solvent_volume = config.default_volumes.get("solvent", 10)
-solvent_draw_speed = config.draw_speeds.get("solvent", 5)
-monomer_volume = config.default_volumes.get("monomer", 4)
-monomer_draw_speed = config.draw_speeds.get("monomer", 5)
-initiator_volume = config.default_volumes.get("initiator", 3)
-initiator_draw_speed = config.draw_speeds.get("initiator", 5)
-cta_volume = config.default_volumes.get("cta", 4)
-cta_draw_speed = config.draw_speeds.get("cta", 5)
+solvent_volume = config.default_volumes.get("solvent", 0.1)
+solvent_draw_speed = config.draw_speeds.get("solvent", 0.088)
+monomer_volume = config.default_volumes.get("monomer", 0.04)
+monomer_draw_speed = config.draw_speeds.get("monomer", 0.05)
+initiator_volume = config.default_volumes.get("initiator", 0.05)
+initiator_draw_speed = config.draw_speeds.get("initiator", 0.1)
+cta_volume = config.default_volumes.get("cta", 0.0666)
+cta_draw_speed = config.draw_speeds.get("cta", 0.088)
 polymerization_temp = config.temperatures.get("polymerization", 20)
 set_rpm = config.target_rpm.get("polymerization", 600)
 degas_time = config.timings.get("degas_time", 1200)
@@ -66,7 +66,7 @@ prep.run_preparation_workflow(
     polymerization_temp,
     set_rpm,
     shim_kwargs=None,
-    prime_volume=default_volumes.get("prime", 3),
+    prime_volume=default_volumes.get("prime", 0.5),
     run_minimal_test=False,
     draw_speeds=draw_speeds,
     dispense_speeds=dispense_speeds
