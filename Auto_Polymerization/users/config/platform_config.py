@@ -18,7 +18,7 @@ Do not rename or remove keys unless you are also updating the workflow code.
 
 
 #Parameters for the preparation workflow substep, change, if you have longer lines, which are not sufficiently primed with the current volumes 
-prime_transfer_parameters = { 
+prime_transfer_params = { 
     "prime_volume": 1,
     "draw_speed": 0.07,
     "dispense_speed": 0.1,
@@ -34,7 +34,7 @@ prime_transfer_parameters = {
 }
 #Parameters for the analytical transfers (NMR shimming, NMR sampling, UV-VIS)
 #change if you changed the length of the tubing or the volume of the NMR cell 
-nmr_transfer_parameters = {
+nmr_transfer_params = {
     # Parameters for NMR shimming transfer (deuterated solvent)
     "shimming": {
         "volume": 2.1,
@@ -59,7 +59,7 @@ nmr_transfer_parameters = {
     }
 }
 #change if you changed the length of the tubing to the UV-VIS cell
-uv_vis_transfer_parameters = {
+uv_vis_transfer_params = {
     "volume": 1.5,
     "draw_speed": 0.03,
     "dispense_speed": 0.016,

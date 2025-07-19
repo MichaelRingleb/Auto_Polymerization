@@ -15,7 +15,7 @@ import src.NMR.nmr_utils as nmr_utils
 import src.workflow_steps._0_preparation as prep
 # Import user-editable platform configuration
 from users.config import platform_config as config
-import src.workflow_steps._1_polymerization_module as polymerization
+#import src.workflow_steps._1_polymerization_module as polymerization
 
 #Setup logging for Medusa liquid transfers
 logger = logging.getLogger("platform_controller")
@@ -71,12 +71,11 @@ prep.run_preparation_workflow(
     polymerization_temp,
     set_rpm,
     shim_kwargs=None,
-    run_minimal_test=False,
+    run_minimal_test=True,
     prime_transfer_params=config.prime_transfer_params,
-    draw_speeds=draw_speeds,
-    dispense_speeds=dispense_speeds
 )
 
+exit()
 # Prepare parameters for polymerization workflow
 polymerization_params = {
     "solvent_volume": solvent_volume,
