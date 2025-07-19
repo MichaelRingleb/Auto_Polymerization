@@ -71,7 +71,7 @@ prep.run_preparation_workflow(
     polymerization_temp,
     set_rpm,
     shim_kwargs=None,
-    run_minimal_test=True,
+    run_minimal_test=False,
     prime_transfer_params=config.prime_transfer_params,
 )
 
