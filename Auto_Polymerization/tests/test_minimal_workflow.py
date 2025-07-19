@@ -119,30 +119,36 @@ def test_volumetric_transfers(medusa, logger):
     logger.info("Testing syringe pumps...")
     #max draw and dispense speeds = 0.5 mL/s
     medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="Waste_Vessel", pump_id="Analytical_Pump", 
-                                pre_rinse = 2, pre_rinse_volume = 5.0, pre_rinse_speed = 0.2,
-                                volume=5.0, transfer_type="liquid", draw_speed = 0.1, dispense_speed = 0.2, post_rinse_vessel = "Purge_Solvent_Vessel_2", 
+                                transfer_type="liquid",
+                                pre_rinse = 1, pre_rinse_volume = 1.0, pre_rinse_speed = 0.2,
+                                volume=1.0, draw_speed = 0.1, dispense_speed = 0.2,  
                                 flush = 1, flush_volume = 2, flush_speed = 0.3,  
-                                post_rinse_volume = 5.0, post_rinse_speed = 0.1
+                                post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_2", post_rinse_volume = 1.0, post_rinse_speed = 0.1
                                 )  
     
     medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Precipitation_Pump", 
-                                pre_rinse = 2, pre_rinse_volume = 5.0, pre_rinse_speed = 0.2,
-                                volume=5.0, transfer_type="liquid", draw_speed = 0.1, dispense_speed = 0.2, post_rinse_vessel = "Purge_Solvent_Vessel_1", 
+                                transfer_type="liquid",
+                                pre_rinse = 1, pre_rinse_volume = 1.0, pre_rinse_speed = 0.2,
+                                volume=1.0, draw_speed = 0.1, dispense_speed = 0.2,  
                                 flush = 1, flush_volume = 2, flush_speed = 0.3,  
-                                post_rinse_volume = 5.0, post_rinse_speed = 0.1
-                                )
+                                post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_2", post_rinse_volume = 1.0, post_rinse_speed = 0.1
+                                )  
+    
     medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", 
-                                pre_rinse = 2, pre_rinse_volume = 1.0, pre_rinse_speed = 1,
-                                volume=1.0, transfer_type="liquid", draw_speed = 1, dispense_speed = 0.2, post_rinse_vessel = "Purge_Solvent_Vessel_1", 
-                                flush = 1, flush_volume = 2, flush_speed = 1,  
-                                post_rinse_volume = 1.0, post_rinse_speed = 0.5
-                                )      
+                                transfer_type="liquid",
+                                pre_rinse = 1, pre_rinse_volume = 1.0, pre_rinse_speed = 0.2,
+                                volume=1.0, draw_speed = 0.1, dispense_speed = 0.2,  
+                                flush = 1, flush_volume = 2, flush_speed = 0.3,  
+                                post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_2", post_rinse_volume = 1.0, post_rinse_speed = 0.1
+                                )  
+        
     medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", 
-                                pre_rinse = 2, pre_rinse_volume = 5.0, pre_rinse_speed = 1,
-                                volume=5.0, transfer_type="liquid", draw_speed = 1, dispense_speed = 1, post_rinse_vessel = "Purge_Solvent_Vessel_1", 
-                                flush = 1, flush_volume = 2, flush_speed = 1,  
-                                post_rinse_volume = 5.0, post_rinse_speed = 0.5
-                                )
+                                transfer_type="liquid",
+                                pre_rinse = 1, pre_rinse_volume = 1.0, pre_rinse_speed = 0.2,
+                                volume=1.0, draw_speed = 0.1, dispense_speed = 0.2,  
+                                flush = 1, flush_volume = 2, flush_speed = 0.3,  
+                                post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_2", post_rinse_volume = 1.0, post_rinse_speed = 0.1
+                                )  
     logger.info("Syringe pump test complete.")
 
 
@@ -152,6 +158,7 @@ def run_minimal_workflow_test(medusa=None, logger=None):
     If medusa is not provided, tries to find a .json config in users/config, else prompts the user.
     Tracks and deletes only NMR and UV-Vis files created during the test run.
     """
+    
     logger = _setup_logger(logger)
     if medusa is None:
         layout_path = _find_or_prompt_layout(logger)
@@ -166,6 +173,7 @@ def run_minimal_workflow_test(medusa=None, logger=None):
     nmr_files_before = set(glob.glob(os.path.join(nmr_data_dir, '*')))
     uvvis_files_before = set(glob.glob(os.path.join(uvvis_data_dir, '*')))
 
+    logger.info("Start of minimal workflow test")
     # Run all hardware and workflow tests
     test_peristaltic_transfers(medusa, logger)
     test_hotplate(medusa, logger)
