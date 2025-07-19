@@ -39,6 +39,7 @@ from src.liquid_transfers.liquid_transfers_utils import (
 import importlib.util
 import sys
 import os
+import threading
 
 # All calls to serial_communication_error_safe_transfer_volumetric now use the imported version.
 # Update any docstrings/comments to note the function is imported from liquid_transfers_utils.
@@ -203,7 +204,7 @@ def run_preparation_workflow(
         - serial_communication_error_safe_transfer_volumetric handles conflicts with automatic retry
         - No manual synchronization needed - the retry logic handles it automatically
     """
-    import threading
+
     if run_minimal_test:
         # Dynamically import test_minimal_workflow from the correct path
         test_path = os.path.join(os.path.dirname(__file__), '../../tests/test_minimal_workflow.py')
