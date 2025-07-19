@@ -35,7 +35,7 @@ default_volumes = {
     "initiator": 3,
     "cta": 4,
     "modification": 2,
-    "nmr": 3,
+    "nmr": 2.1,
     "uv_vis": 1.5,
     "functionalization": 2,
     "precipitation_methanol": 25,

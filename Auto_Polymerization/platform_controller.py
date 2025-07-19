@@ -80,8 +80,8 @@ exit()
 #open gas valve again (for flush steps)
 medusa.write_serial("Gas_Valve","GAS_ON")
 #fill reaction vial with things for reaction and flush it to the vial 
-medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= solvent_volume, transfer_type="liquid", flush=2, draw_speed=solvent_draw_speed)
-medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= monomer_volume, transfer_type="liquid", flush=2, draw_speed=monomer_draw_speed)
+medusa.transfer_volumetric(source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= solvent_volume, transfer_type="liquid", flush=1, draw_speed=solvent_draw_speed)
+medusa.transfer_volumetric(source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= monomer_volume, transfer_type="liquid", flush=1, draw_speed=monomer_draw_speed)
 medusa.transfer_volumetric(source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= initiator_volume, transfer_type="liquid",flush=2, draw_speed=initiator_draw_speed)
 medusa.transfer_volumetric(source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= cta_volume, transfer_type="liquid",flush=2, draw_speed=cta_draw_speed)
 
@@ -156,7 +156,7 @@ while dialysis_conversion < 90:
   medusa.transfer_volumetric(source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
         # Take NMR spectrum and evaluate signal at ca. 5.5 ppm with regards to signal intensity of same signal at beginning
         # Pump 3 mL from NMR back to reaction vial and flush rest into vial with argon
-  medusa.transfer_volumetric(source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump", volume=5, transfer_type="liquid")
+  medusa.transfer_volumetric(source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump", volume=3.5, transfer_type="liquid")
   #wait for 5 minutes
   time.sleep(300)
 

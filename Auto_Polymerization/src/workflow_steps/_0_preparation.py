@@ -139,7 +139,7 @@ def safe_transfer_volumetric(medusa, **kwargs):
 # If you add new components to the config, ensure to use the same keys in your workflow logic.
 
 
-def shim_nmr_sample(medusa, volume=3, pump_id="Analytical_Pump", source="Deuterated_Solvent", target="NMR", shim_level=2, shim_repeats=2, draw_speed=3, dispense_speed=3):
+def shim_nmr_sample(medusa, volume=2.1, pump_id="Analytical_Pump", source="Deuterated_Solvent", target="NMR", shim_level=2, shim_repeats=2, draw_speed=0.2, dispense_speed=0.2):
     """
     Transfer deuterated solvent to NMR, perform shimming, and return solvent to the original vessel.
     
@@ -160,13 +160,16 @@ def shim_nmr_sample(medusa, volume=3, pump_id="Analytical_Pump", source="Deutera
     import src.NMR.nmr_utils as nmr
     medusa.logger.info("Transferring deuterated solvent to NMR for shimming...")
     # Use safe_transfer_volumetric to handle COM port conflicts
-    safe_transfer_volumetric(medusa, source=source, target=target, pump_id=pump_id, volume=volume, transfer_type="liquid", draw_speed=draw_speed, dispense_speed=dispense_speed)
+    safe_transfer_volumetric(medusa, source=source, target=target, pump_id=pump_id, 
+                             volume=volume, transfer_type="liquid", draw_speed=draw_speed, dispense_speed=dispense_speed)
     for _ in range(shim_repeats):
         nmr.run_shimming(shim_level)
         medusa.logger.info(f"NMR shimming (level {shim_level}) complete.")
     medusa.logger.info("Transferring solvent back to deuterated solvent vessel...")
-    # Use safe_transfer_volumetric to handle COM port conflicts
-    safe_transfer_volumetric(medusa, source=target, target=source, pump_id=pump_id, volume=volume, transfer_type="liquid", draw_speed=draw_speed, dispense_speed=dispense_speed)
+    # Use safe_transfer_volumetric to handle potential COM port conflicts for the syringe pumps
+    safe_transfer_volumetric(medusa, source=target, target=source, pump_id=pump_id, 
+                             volume=(volume), transfer_type="liquid", draw_speed=draw_speed, dispense_speed=dispense_speed, 
+                             post_rinse_vessel = "Purge_Solvent_Vessel_2", post_rinse = 1, post_rinse_speed = 0.3)
 
 
 def prepare_reaction_vial_and_heatplate(medusa, polymerization_temp, set_rpm):
@@ -193,7 +196,7 @@ def open_gas_valve(medusa):
     medusa.write_serial("Gas_Valve", "GAS_ON")
 
 
-def prime_tubing(medusa, volume=3, draw_speeds=None, dispense_speeds=None):
+def prime_tubing(medusa, volume=2, draw_speeds=None, dispense_speeds=None):
     """
     Prime tubing from each vessel to waste using the appropriate pumps.
     
@@ -222,11 +225,26 @@ def prime_tubing(medusa, volume=3, draw_speeds=None, dispense_speeds=None):
     
     # Use safe_transfer_volumetric for all transfers with retry logic
     # This handles COM port conflicts that can occur when running in parallel with NMR shimming
-    safe_transfer_volumetric(medusa, source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("solvent", 0.133), dispense_speed=dispense_speeds.get("solvent", 0.1), flush=1, post_rinse = 1, post_rinse_speed = 0.2)
-    safe_transfer_volumetric(medusa, source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("monomer", 0.1), dispense_speed=dispense_speeds.get("monomer", 0.1), flush=1, post_rinse = 1, post_rinse_speed = 0.2)
-    safe_transfer_volumetric(medusa, source="Modification_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("modification", 0.05), dispense_speed=dispense_speeds.get("modification", 0.1), flush=1, post_rinse = 1, post_rinse_speed = 0.2)
-    safe_transfer_volumetric(medusa, source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("initiator", 0.5), dispense_speed=dispense_speeds.get("initiator", 0.1), flush=1, post_rinse = 1, post_rinse_speed = 0.2)
-    safe_transfer_volumetric(medusa, source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("cta", 0.5), dispense_speed=dispense_speeds.get("cta", 0.1), flush=1, post_rinse = 1, post_rinse_speed = 0.2)
+    safe_transfer_volumetric(medusa, source="Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", 
+                             volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("solvent", 0.133), dispense_speed=dispense_speeds.get("solvent", 0.1),
+                             flush=1, 
+                             post_rinse_vessel = "Purge_Solvent_Vessel_1", post_rinse = 1, post_rinse_speed = 0.3)
+    safe_transfer_volumetric(medusa, source="Monomer_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump",
+                             volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("monomer", 0.1), dispense_speed=dispense_speeds.get("monomer", 0.1), 
+                             flush=1, 
+                             post_rinse = 1, post_rinse_speed = 0.3)
+    safe_transfer_volumetric(medusa, source="Modification_Vessel", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", 
+                             volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("modification", 0.05), dispense_speed=dispense_speeds.get("modification", 0.1), 
+                             flush=1, 
+                             post_rinse_vessel = "Purge_Solvent_Vessel_1",post_rinse = 1, post_rinse_speed = 0.3)
+    safe_transfer_volumetric(medusa, source="Initiator_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", 
+                             volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("initiator", 0.5), dispense_speed=dispense_speeds.get("initiator", 0.1), 
+                             flush=1, 
+                             post_rinse_vessel = "Purge_Solvent_Vessel_1",post_rinse = 1, post_rinse_speed = 0.3)
+    safe_transfer_volumetric(medusa, source="CTA_Vessel", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", 
+                             volume=volume, transfer_type="liquid", draw_speed=draw_speeds.get("cta", 0.5), dispense_speed=dispense_speeds.get("cta", 0.1), 
+                             flush=1, 
+                             post_rinse_vessel = "Purge_Solvent_Vessel_1",post_rinse = 1, post_rinse_speed = 0.3)
 
 
 def close_gas_valve(medusa):
