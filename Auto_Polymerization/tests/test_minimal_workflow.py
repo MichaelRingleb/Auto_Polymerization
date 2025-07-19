@@ -1,7 +1,7 @@
 """
 Minimal Workflow Test Script for Auto_Polymerization
 ---------------------------------------------------
-Tests core workflow functionalities: liquid transfers, hotplate, serial devices, NMR, and UV-Vis integration.
+Tests core workflow functionalities: liquid transfers, hotplate, serial devices, NMR, and UV-Vis integration with preset values.
 
 Usage:
     Run directly to execute all tests sequentially.

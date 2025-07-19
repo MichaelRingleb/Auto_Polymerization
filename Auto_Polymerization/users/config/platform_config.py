@@ -1,7 +1,97 @@
-# User-editable platform configuration for Auto_Polymerization
-# Edit this file to change platform-wide settings and workflow parameters.
+"""
+platform_config.py
 
-# Draw speeds for each component (mL/min)
+User-editable platform configuration for Auto_Polymerization.
+
+This file defines all workflow and transfer parameters for the platform, including:
+- Priming, NMR shimming, NMR sampling, and UV-VIS transfer parameters
+- Draw/dispense speeds, volumes, temperatures, timings, and RPMs for all workflow steps
+
+All parameters defined here are passed unchanged to the error-safe transfer logic (serial_communication_error_safe_transfer_volumetric),
+which is a direct, parameter-preserving wrapper for medusa.transfer_volumetric. Only parameter values should be changed by users;
+parameter names and structure must be preserved for correct operation.
+
+If you change tubing lengths, vessel sizes, or hardware, update the relevant volume values here.
+Do not rename or remove keys unless you are also updating the workflow code.
+"""
+
+
+
+#Parameters for the preparation workflow substep, change, if you have longer lines, which are not sufficiently primed with the current volumes 
+prime_transfer_parameters = { 
+    "prime_volume": 1,
+    "draw_speed": 0.07,
+    "dispense_speed": 0.1,
+    "flush": 1,
+    "flush_volume": 5,
+    "flush_speed": 0.2,
+    "pre_rinse": 2,
+    "pre_rinse_volume": 0.5,
+    "pre_rinse_speed": 0.1,
+    "post_rinse": 1,
+    "post_rinse_volume": 2.5,
+    "post_rinse_speed": 0.1,
+}
+#Parameters for the analytical transfers (NMR shimming, NMR sampling, UV-VIS)
+#change if you changed the length of the tubing or the volume of the NMR cell 
+nmr_transfer_parameters = {
+    # Parameters for NMR shimming transfer (deuterated solvent)
+    "shimming": {
+        "volume": 2.1,
+        "draw_speed": 0.07,
+        "dispense_speed": 0.07,
+        "post_rinse": 1,
+        "post_rinse_volume": 1.5,
+        "post_rinse_speed": 0.1,
+        "post_rinse_vessel": "Purge_Solvent_Vessel_2",
+        "transfer_type": "liquid"
+    },
+    # Parameters for NMR sampling transfer (reaction/sample)
+    "sampling": {
+        "volume": 2.1,
+        "draw_speed": 0.05,
+        "dispense_speed": 0.05,
+        "post_rinse": 1,
+        "post_rinse_volume": 2.5,
+        "post_rinse_speed": 0.1,
+        "post_rinse_vessel": "Purge_Solvent_Vessel_2",
+        "transfer_type": "liquid"
+    }
+}
+#change if you changed the length of the tubing to the UV-VIS cell
+uv_vis_transfer_parameters = {
+    "volume": 1.5,
+    "draw_speed": 0.03,
+    "dispense_speed": 0.016,
+    "post_rinse": 1,
+    "post_rinse_volume": 1.5,
+    "post_rinse_speed": 0.1,
+    "post_rinse_vessel": "Purge_Solvent_Vessel_2",
+    "transfer_type": "liquid"
+}
+
+# Timing and workflow-specific parameters (seconds, iterations, etc.)
+timings = {
+    "degas_time": 1200,
+    "functionalization_interval_sec": 180,  # 3 minutes
+    "functionalization_max_iterations": 200,
+    "precipitation_wait_sec": 600,
+    "cleaning_dry_temp": 80,
+}
+
+# Temperatures for various steps (C)
+temperatures = {
+    "polymerization": 75,
+    "functionalization": 30,
+    "cleaning_dry": 70,
+}
+
+# RPM settings for various steps
+target_rpm = {
+    "polymerization": 600,
+    "cleaning": 300,
+}
+
 draw_speeds = {
     "solvent": 0.08,
     "monomer": 0.08,
@@ -30,6 +120,7 @@ dispense_speeds = {
 
 # Default volumes for different transfers / components
 default_volumes = {
+    "prime" : 2,
     "solvent": 10,
     "monomer": 4,
     "initiator": 3,
@@ -37,34 +128,22 @@ default_volumes = {
     "modification": 2,
     "nmr": 2.1,
     "uv_vis": 1.5,
+    "flush": 5,
     "functionalization": 2,
     "precipitation_methanol": 25,
     "precipitation_argon": 100,
     "cleaning_purge_solvent": 30,
-    "cleaning_dry_argon": 200,
-    "prime" : 2
+    "cleaning_dry_argon": 200
+    
 }
 
-# Timing and workflow-specific parameters (seconds, iterations, etc.)
-timings = {
-    "degas_time": 1200,
-    "functionalization_interval_sec": 180,  # 3 minutes
-    "functionalization_max_iterations": 200,
-    "precipitation_wait_sec": 600,
-    "cleaning_dry_temp": 80,
-}
 
-# Temperatures for various steps (C)
-temperatures = {
-    "polymerization": 75,
-    "functionalization": 20,
-    "cleaning_dry": 70,
-}
 
-# RPM settings for various steps
-target_rpm = {
-    "polymerization": 600,
-    "cleaning": 300,
-}
+
+
+
+
+
+
 
 # Add more user-editable parameters as needed below 

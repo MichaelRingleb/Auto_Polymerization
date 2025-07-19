@@ -15,6 +15,7 @@ import src.NMR.nmr_utils as nmr_utils
 import src.workflow_steps._0_preparation as prep
 # Import user-editable platform configuration
 from users.config import platform_config as config
+import src.workflow_steps._1_polymerization_module as polymerization
 
 #Setup logging for Medusa liquid transfers
 logger = logging.getLogger("platform_controller")
@@ -53,6 +54,9 @@ polymerization_temp = config.temperatures.get("polymerization", 20)
 set_rpm = config.target_rpm.get("polymerization", 600)
 degas_time = config.timings.get("degas_time", 1200)
 functionalization_temp = config.temperatures.get("functionalization", 20)
+#generic parameters for post rinse for all pumps
+post_rinse_speed = 0.5
+post_rinse_volume = 2.5
 
 # Use the draw_speeds and dispense_speeds dictionaries from config
 # Keys should match those used in the workflow_steps modules (solvent, monomer, modification, initiator, cta, nmr, uv_vis, etc.)
@@ -60,17 +64,35 @@ draw_speeds = config.draw_speeds
 dispense_speeds = config.dispense_speeds
 default_volumes = config.default_volumes
 
+
 # Call the preparation workflow, passing draw_speeds, dispense_speeds, and config values
 prep.run_preparation_workflow(
     medusa,
     polymerization_temp,
     set_rpm,
     shim_kwargs=None,
-    prime_volume=default_volumes.get("prime", 0.5),
     run_minimal_test=False,
+    prime_transfer_params=config.prime_transfer_params,
     draw_speeds=draw_speeds,
     dispense_speeds=dispense_speeds
 )
+
+# Prepare parameters for polymerization workflow
+polymerization_params = {
+    "solvent_volume": solvent_volume,
+    "solvent_draw_speed": solvent_draw_speed,
+    "monomer_volume": monomer_volume,
+    "monomer_draw_speed": monomer_draw_speed,
+    "initiator_volume": initiator_volume,
+    "initiator_draw_speed": initiator_draw_speed,
+    "cta_volume": cta_volume,
+    "cta_draw_speed": cta_draw_speed,
+    "polymerization_temp": polymerization_temp,
+    "degas_time": degas_time
+}
+
+# Call the polymerization workflow step
+polymerization.run_polymerization_workflow(medusa, polymerization_params)
 
 
 #at this point the preparation module should stop and the polymerization module should start
@@ -85,7 +107,7 @@ iteration_counter = 0
 while polymerization_conversion < 80:
   iteration_counter += 1
         # Pump 3 mL from reaction vial to NMR
-  medusa.transfer_volumetric(source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
+  medusa.transfer_volumetric(source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump", volume=2, transfer_type="liquid")
         # Take NMR spectrum and evaluate signal at ca. 5.5 ppm with regards to signal intensity of same signal at beginning
 
   nmr.set_hardlock_exp(num_scans=32, 
@@ -101,7 +123,7 @@ while polymerization_conversion < 80:
 
 
         # Pump 3 mL from NMR back to reaction vial and flush rest into vial with argon
-  medusa.transfer_volumetric(source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump", volume=3.1, transfer_type="liquid", draw_speed=4, dispense_speed=6)   
+  medusa.transfer_volumetric(source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump", volume=2, transfer_type="liquid", draw_speed=4, dispense_speed=6)   
         #wait for 5 minutes   
 
   #after 5 iterations of the previous loop, the NMR is reshimmed
