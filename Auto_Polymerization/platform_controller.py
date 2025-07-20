@@ -21,6 +21,7 @@ from src.workflow_steps._0_preparation import run_preparation_workflow
 from src.workflow_steps._1_polymerization_module import run_polymerization_workflow
 from src.workflow_steps._2_polymerization_monitoring import run_polymerization_monitoring
 from src.workflow_steps._3_dialysis_module import run_dialysis_workflow
+from src.workflow_steps._4_modification_module import run_modification_workflow
 
 
 def find_layout_json(config_folder='Auto_Polymerization/users/config/'):
@@ -122,21 +123,19 @@ def main():
     medusa.logger.info(f"Summary file: {monitoring_result['summary_file']}")
     
 
-
+    # Step 3: Dialysis workflow
     # --- USER-CONFIGURABLE DIALYSIS STOPPING OPTIONS ---
     # Set to True to use NMR noise signal for stopping dialysis
     use_noise_comparison_based_stopping = True
     # Set to True to use time-based stopping for dialysis
     use_time_based_stopping = True
-    # Maximum dialysis duration in minutes (only relevant if time-based is enabled)
-    max_dialysis_time_minutes = 180
+ 
 
     # Update config for dialysis workflow
     config.dialysis_params["noise_comparison_based"] = use_noise_comparison_based_stopping
     config.dialysis_params["time_based"] = use_time_based_stopping
-    config.dialysis_params["dialysis_duration_mins"] = max_dialysis_time_minutes
 
-    # Step 3: Dialysis workflow
+
     medusa.logger.info("Step 3: Running dialysis workflow...")
     try:
         dialysis_result = run_dialysis_workflow(medusa)
@@ -147,25 +146,75 @@ def main():
 
 
     
-    # Step 4: Modification (placeholder for future implementation)
-    medusa.logger.info("Step 4: Modification workflow (placeholder)")
-    # TODO: Implement modification workflow
-    # from src.workflow_steps._3_modification_module import run_modification_workflow
-    # modification_result = run_modification_workflow(medusa, modification_params, experiment_id, base_path)
+    # Step 4: Modification workflow
+    medusa.logger.info("Step 4: Running modification workflow...")
+    try:
+        modification_result = run_modification_workflow(
+            medusa=medusa,
+            modification_params=config.modification_params,
+            experiment_id=config.experiment_id,
+            data_base_path=config.data_base_path,
+            uv_vis_data_base_path=config.uv_vis_data_base_path
+        )
+        
+        if not modification_result['success']:
+            medusa.logger.error(f"Modification workflow failed: {modification_result.get('error_message', 'Unknown error')}")
+            return
+        
+        medusa.logger.info("Modification workflow completed successfully.")
+        medusa.logger.info(f"Final conversion: {modification_result.get('final_conversion', 'N/A')}%")
+        medusa.logger.info(f"Total iterations: {modification_result.get('total_iterations', 'N/A')}")
+        
+        summary_files = modification_result.get('summary_files', {})
+        if summary_files.get('summary_txt'):
+            medusa.logger.info(f"Summary file: {summary_files['summary_txt']}")
+        if summary_files.get('summary_csv'):
+            medusa.logger.info(f"CSV file: {summary_files['summary_csv']}")
+            
+    except Exception as e:
+        medusa.logger.error(f"Modification workflow failed: {str(e)}")
+        return
+    
+    # Step 4b: Post-modification dialysis (time-based)
+    medusa.logger.info("Step 4b: Running post-modification dialysis...")
+    try:
+        # Configure dialysis for time-based stopping only (noise-based disabled)
+        original_dialysis_params = config.dialysis_params.copy()
+        config.dialysis_params["noise_comparison_based"] = False
+        config.dialysis_params["time_based"] = True
+        config.dialysis_params["dialysis_duration_mins"] = config.modification_params["post_modification_dialysis_hours"] * 60
+        
+        post_dialysis_result = run_dialysis_workflow(medusa)
+        
+        # Restore original dialysis parameters
+        config.dialysis_params = original_dialysis_params
+        
+        if post_dialysis_result.get('success', False):
+            medusa.logger.info("Post-modification dialysis completed successfully")
+            medusa.logger.info(f"Summary: {post_dialysis_result.get('summary_txt', 'N/A')}")
+        else:
+            medusa.logger.warning("Post-modification dialysis failed, but continuing...")
+            
+    except Exception as e:
+        medusa.logger.error(f"Post-modification dialysis failed: {str(e)}")
+        # Continue with next step even if dialysis fails
+    
+
+
     
     # Step 5: Precipitation (placeholder for future implementation)
-    logger.info("Step 5: Precipitation workflow (placeholder)")
+    medusa.logger.info("Step 5: Precipitation workflow (placeholder)")
     # TODO: Implement precipitation workflow
     # from src.workflow_steps._4_precipitation_module import run_precipitation_workflow
     # precipitation_result = run_precipitation_workflow(medusa, precipitation_params, experiment_id, base_path)
     
     # Step 6: Cleaning (placeholder for future implementation)
-    logger.info("Step 6: Cleaning workflow (placeholder)")
+    medusa.logger.info("Step 6: Cleaning workflow (placeholder)")
     # TODO: Implement cleaning workflow
     # from src.workflow_steps._5_cleaning_module import run_cleaning_workflow
     # cleaning_result = run_cleaning_workflow(medusa, cleaning_params, experiment_id, base_path)
     
-    logger.info(f"Auto_Polymerization experiment {config.experiment_id} completed successfully!")
+    medusa.logger.info(f"Auto_Polymerization experiment {config.experiment_id} completed successfully!")
 
 
 
@@ -176,172 +225,101 @@ def main():
 
 
 
+    #once functionalization is finished: 
+
+        #open gas valve and pump 10 mL of argon to reaction vial through the UV_VIS cell
+    medusa.write_serial("COM12","GAS_ON")
+    medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= 10, transfer_type="gas", dispense_speed=10, flush=3)
+        #close gas valve
+    medusa.write_serial("COM12","GAS_OFF")
+
+    #another round of dialysis (with peristaltic pumps)
+    # Start peristaltic pumps   
+    medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0.7)
+    medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = True, transfer_rate=0.7)
+    #wait for 5 h 
+    time.sleep(18000)
+    # pump peristaltic pump tubing empty for polymer pump in different direction and stop eluent pump
+    medusa.transfer_continuous(source="Reaction_Vial", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
+    medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
+        #wait for 10 min to pump fully empty
+    time.sleep(600)
+        #turn off polymer pump
+    medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0)
+
+
+    #pump 25 mL of methanol to the precipitation module
+    #set solenoid valve accordingly
+    medusa.write_serial("COM12","PRECIP_ON")
+    #pump 25 mL of methanol to the precipitation module
+    medusa.transfer_volumetric(source="Methanol_Vessel", target="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
+    #close solenoid valve and open gas valve to bubble argon through bottom
+    medusa.write_serial("COM12","PRECIP_OFF")
+    medusa.write_serial("COM12","GAS_ON")
+
+    #add the polymer to the precipitation vessels upper port
+    medusa.transfer_volumetric(source="Reaction_Vial", target="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", draw_speed=10, dispense_speed=5, flush=3)
+    medusa.write_serial("COM12","GAS_OFF")
+    #wait for some minutes while bubbling (5 min)
+    time.sleep(300)
+
+    #remove supernatant from precipitation vessel
+    medusa.write_serial("COM12","PRECIP_ON")
+    medusa.transfer_volumetric(source="Precipitation_Vessel_Solenoid", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", draw_speed=10, dispense_speed=20)
+    #
+    #wash the polymer with methanol
+    medusa.write_serial("COM12","GAS_ON")
+    medusa.transfer_volumetric(source="Methanol_Vessel", target="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
+    medusa.write_serial("COM12","GAS_OFF")
+    #change solenoid position to bubble gas through bottom
+    medusa.write_serial("COM12","PRECIP_OFF")
+
+    #remove the supernatant from the precipitation vessel
+    medusa.write_serial("COM12","PRECIP_ON")
+    medusa.transfer_volumetric(source="Precipitation_Vessel_Solenoid", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", draw_speed=10, dispense_speed=20)
+    medusa.write_serial("COM12","PRECIP_OFF")
+    #dry polymer by purging argon trhough it from below and above
+    medusa.write_serial("COM12","GAS_ON")
+    medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 100, dispense_speed=25, transfer_type="gas", flush=3)
 
 
 
 
-
-
-#add functionalization step
-#degas reaction vial
-medusa.write_serial("COM12","GAS_ON")
-#degas for 10 min (repeat step below for 10 min)
-while timing < 600:
-    medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Reaction_Vial", pump_id="Solvent_Monomer_Modification_Pump", volume= 10, transfer_type="liquid", flush=3, dispense_speed=0.1)
-    timing += 1
-medusa.write_serial("COM12","GAS_OFF")
-
-
-#add NMR solvent to the UV_VIS cell
-medusa.transfer_volumetric(source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= default_volumes.get(1), transfer_type="liquid", draw_speed=draw_speeds.get("uv_vis", 1.2), dispense_speed=dispense_speeds.get("uv_vis", 0.05))
-
-#first measurement of UV_VIS and use this as the reference spectrum
-uv_vis.take_spectrum(reference=True)
-
-#remove NMR solvent from UV_VIS cell
-medusa.transfer_volumetric(source="UV_VIS", target="NMR_Solvent_Vessel", pump_id="Analytical_Pump", volume = 3, transfer_type="liquid",  draw_speed= draw_speeds.get("uv_vis", 1), dispense_speed=dispense_speeds.get("uv_vis", 4))
-
-#start flow through UV_VIS and measure the t0 spectrum
-#flow will go on until stopped by other command (use of async or threading)
-medusa.transfer_volumetric(source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", draw_speed=Functionalization_draw_speed, dispense_speed=1)
-uv_vis.take_spectrum(t0=True)
-
-
-#add functionalization reagent and flush into reaction vial
-medusa.transfer_volumetric(source="Modification_Vessel", target="Reaction_Vial", pump_id="Functionalization_Pump", volume= Functionanilzation_volume, transfer_type="liquid", flush=3, draw_speed=Functionalization_draw_speed, dispense_speed=2)
-
-#take UV_VIS measurement and calculate conversion
-spectrum, wavelengths, filename, conversion, reaction_complete = uv_vis.take_spectrum(calculate_conversion=True)
-
-# Monitor functionalization reaction until completion
-functionalization_iteration = 0
-max_functionalization_iterations = 200  # 10 hours maximum (3 min intervals)
-
-while not reaction_complete and functionalization_iteration < max_functionalization_iterations:
-    medusa.transfer_volumetric(source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", draw_speed=Functionalization_draw_speed, dispense_speed=1)
-    functionalization_iteration += 1
-    medusa.logger.info(f"Functionalization monitoring iteration {functionalization_iteration}/{max_functionalization_iterations}")
-    
-    if conversion is not None:
-        medusa.logger.info(f"Current conversion: {conversion:.2f}%")
-    
-    if reaction_complete:
-        medusa.logger.info("Functionalization reaction completed based on absorbance stability")
-        break
-    
-    # Wait before next measurement
-    medusa.logger.info("Waiting 3 minutes before next measurement...")
-    time.sleep(180)  # 3 minutes
-    
-    # Take next UV_VIS measurement and calculate conversion
-    spectrum, wavelengths, filename, conversion, reaction_complete = uv_vis.take_spectrum(calculate_conversion=True)
-
-
-if functionalization_iteration >= max_functionalization_iterations:
-    medusa.logger.warning(f"Functionalization monitoring stopped after {max_functionalization_iterations} iterations")
-    if conversion is not None:
-        medusa.logger.info(f"Final conversion achieved: {conversion:.2f}%")
-else:
-    medusa.logger.info(f"Functionalization completed successfully in {functionalization_iteration} iterations")
-    if conversion is not None:
-        medusa.logger.info(f"Final conversion: {conversion:.2f}%")
-
-
-#once functionalization is finished: 
-
-    #open gas valve and pump 10 mL of argon to reaction vial through the UV_VIS cell
-medusa.write_serial("COM12","GAS_ON")
-medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= 10, transfer_type="gas", dispense_speed=10, flush=3)
-    #close gas valve
-medusa.write_serial("COM12","GAS_OFF")
-
-#another round of dialysis (with peristaltic pumps)
-# Start peristaltic pumps   
-medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0.7)
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = True, transfer_rate=0.7)
-#wait for 5 h 
-time.sleep(18000)
-# pump peristaltic pump tubing empty for polymer pump in different direction and stop eluent pump
-medusa.transfer_continuous(source="Reaction_Vial", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
-    #wait for 10 min to pump fully empty
-time.sleep(600)
-    #turn off polymer pump
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0)
-
-
-#pump 25 mL of methanol to the precipitation module
- #set solenoid valve accordingly
-medusa.write_serial("COM12","PRECIP_ON")
- #pump 25 mL of methanol to the precipitation module
-medusa.transfer_volumetric(source="Methanol_Vessel", target="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
- #close solenoid valve and open gas valve to bubble argon through bottom
-medusa.write_serial("COM12","PRECIP_OFF")
-medusa.write_serial("COM12","GAS_ON")
-
-#add the polymer to the precipitation vessels upper port
-medusa.transfer_volumetric(source="Reaction_Vial", target="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", draw_speed=10, dispense_speed=5, flush=3)
-medusa.write_serial("COM12","GAS_OFF")
-#wait for some minutes while bubbling (5 min)
-time.sleep(300)
-
-#remove supernatant from precipitation vessel
-medusa.write_serial("COM12","PRECIP_ON")
-medusa.transfer_volumetric(source="Precipitation_Vessel_Solenoid", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", draw_speed=10, dispense_speed=20)
-#
-#wash the polymer with methanol
-medusa.write_serial("COM12","GAS_ON")
-medusa.transfer_volumetric(source="Methanol_Vessel", target="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
-medusa.write_serial("COM12","GAS_OFF")
-#change solenoid position to bubble gas through bottom
-medusa.write_serial("COM12","PRECIP_OFF")
-
-#remove the supernatant from the precipitation vessel
-medusa.write_serial("COM12","PRECIP_ON")
-medusa.transfer_volumetric(source="Precipitation_Vessel_Solenoid", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", draw_speed=10, dispense_speed=20)
-medusa.write_serial("COM12","PRECIP_OFF")
-#dry polymer by purging argon trhough it from below and above
-medusa.write_serial("COM12","GAS_ON")
-medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 100, dispense_speed=25, transfer_type="gas", flush=3)
-
-
-
-
-#clean everything each way from the pumps to the reaction vial, uv_vis and dialysis module before next run
-  #open gas valve
-medusa.write_serial("COM12","GAS_ON")	
-medusa.heat_stir("Reaction_Vial", temperature= 20, rpm= 300)
-  #flush the UV_VIS cell
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="UV_VIS", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3, draw_speed=10, dispense_speed=3)
-  #flush purge solvent to the waste vessel
-medusa.transfer_volumetric(source="UV_VIS", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 5, transfer_type="liquid", flush=3, draw_speed=3, dispense_speed=10)
-  #also remove solvent from reaction vial
-medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3)
-  #flush the Solvent_Monomer_Modification_Pump flowpath
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Solvent_Monomer_Modification_Pump", volume= 20, transfer_type="liquid", flush=3)
-  #flush purge solvent to the waste vessel
-medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 30, transfer_type="liquid", flush=3)
-   #flush the Precipitation_Pump flowpath
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Precipitation_Pump", volume= 20, transfer_type="liquid", flush=3)
-  #flush purge solvent to the waste vessel
-medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", flush=3)
-  #fill reaction_vial with purge solvent
-medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Initiator_CTA_Pump", volume= 20, transfer_type="liquid", flush=3)
-  #flush purge solvent to the waste vessel
-medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 30, transfer_type="liquid", flush=3)
-  #close gas valve
-medusa.write_serial("COM12","GAS_OFF")
-  #dry the reaction vial
-medusa.heat_stir("Reaction_Vial", temperature= 80, rpm= 0)
-  #wait until vial is at 80 °C (get property)
-  #pump 200 mL of argon to dry rest of vial
-medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Reaction_Vial", pump_id="Precipitation_Pump", volume= 200, dispense_speed=25, transfer_type="gas", flush=3)
-  #get temperature of heatplate
-  #let heatplate cool down
-medusa.heat_stir("Reaction_Vial", temperature= 25, rpm= 0)
-  #wait until heatplate is at 25 °C (get property)
-  #close gas valve
-medusa.write_serial("COM12","GAS_OFF")
+    #clean everything each way from the pumps to the reaction vial, uv_vis and dialysis module before next run
+      #open gas valve
+    medusa.write_serial("COM12","GAS_ON")	
+    medusa.heat_stir("Reaction_Vial", temperature= 20, rpm= 300)
+      #flush the UV_VIS cell
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="UV_VIS", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3, draw_speed=10, dispense_speed=3)
+      #flush purge solvent to the waste vessel
+    medusa.transfer_volumetric(source="UV_VIS", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 5, transfer_type="liquid", flush=3, draw_speed=3, dispense_speed=10)
+      #also remove solvent from reaction vial
+    medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3)
+      #flush the Solvent_Monomer_Modification_Pump flowpath
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Solvent_Monomer_Modification_Pump", volume= 20, transfer_type="liquid", flush=3)
+      #flush purge solvent to the waste vessel
+    medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 30, transfer_type="liquid", flush=3)
+      #flush the Precipitation_Pump flowpath
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Precipitation_Pump", volume= 20, transfer_type="liquid", flush=3)
+      #flush purge solvent to the waste vessel
+    medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", flush=3)
+      #fill reaction_vial with purge solvent
+    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Initiator_CTA_Pump", volume= 20, transfer_type="liquid", flush=3)
+      #flush purge solvent to the waste vessel
+    medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 30, transfer_type="liquid", flush=3)
+      #close gas valve
+    medusa.write_serial("COM12","GAS_OFF")
+      #dry the reaction vial
+    medusa.heat_stir("Reaction_Vial", temperature= 80, rpm= 0)
+      #wait until vial is at 80 °C (get property)
+      #pump 200 mL of argon to dry rest of vial
+    medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Reaction_Vial", pump_id="Precipitation_Pump", volume= 200, dispense_speed=25, transfer_type="gas", flush=3)
+      #get temperature of heatplate
+      #let heatplate cool down
+    medusa.heat_stir("Reaction_Vial", temperature= 25, rpm= 0)
+      #wait until heatplate is at 25 °C (get property)
+      #close gas valve
+    medusa.write_serial("COM12","GAS_OFF")
 
 
 #ready for next run
@@ -357,15 +335,3 @@ medusa.write_serial("COM12","GAS_OFF")
 
 if __name__ == "__main__":
   main()
-
-
-
-
-
-
-
-
-
-
-
-

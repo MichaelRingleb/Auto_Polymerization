@@ -20,7 +20,7 @@ WORKFLOW ORDER (maintained in run_polymerization_workflow):
 3. Perform pre-polymerization setup (shimming + t0 measurements)
 4. Start polymerization reaction
 """
-from src.liquid_transfers.liquid_transfers_utils import serial_communication_error_safe_transfer_volumetric
+from src.liquid_transfers.liquid_transfers_utils import serial_communication_error_safe_transfer_volumetric, deoxygenate_reaction_mixture
 from src.NMR.nmr_utils import perform_nmr_shimming_with_retry, acquire_multiple_t0_measurements
 import time
 
@@ -93,18 +93,6 @@ def transfer_reaction_components(medusa, polymerization_params):
 
     medusa.logger.info("All reaction components transferred successfully.")
 
-
-def deoxygenate_reaction_mixture(medusa, deoxygenation_time):
-    """
-    Deoxygenate the reaction mixture for the specified time.
-    
-    Args:
-        medusa: Medusa instance
-        deoxygenation_time: Time to deoxygenate reaction mixture in seconds
-    """
-    medusa.logger.info(f"Deoxygenating reaction mixture for {deoxygenation_time} seconds...")
-    time.sleep(deoxygenation_time)
-    medusa.logger.info("Deoxygenation complete.")
 
 
 # =============================================================================
@@ -309,8 +297,8 @@ def run_polymerization_workflow(medusa, polymerization_params, polymerization_te
     # Step 2: Transfer all reaction components
     transfer_reaction_components(medusa, polymerization_params)
     
-    # Step 3: Deoxygenate reaction mixture
-    deoxygenate_reaction_mixture(medusa, deoxygenation_time)
+    # Step 3: Deoxygenate reaction mixture (active pumping mode)
+    deoxygenate_reaction_mixture(medusa, deoxygenation_time, pump_id="Solvent_Monomer_Modification_Pump")
     
     # Close gas valve
     medusa.write_serial("Gas_Valve", "GAS_OFF")

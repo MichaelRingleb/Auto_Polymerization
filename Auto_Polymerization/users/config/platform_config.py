@@ -21,6 +21,35 @@ Do not rename or remove keys unless you are also updating the workflow code.
 experiment_id = "MRG_061_I"  # Unique experiment identifier
 data_base_path = "users/data"  # Base directory for all experiment data
 nmr_data_base_path = "users/data/NMR_data"  # Directory for NMR data (subfolder of data_base_path)
+uv_vis_data_base_path = "users/data/UV_VIS_data"  # Directory for UV-VIS data (subfolder of data_base_path)
+
+
+# -------------------------------------------------------------------
+# TIMINGS FOR WORKFLOW STEPS (seconds unless otherwise noted)
+# -------------------------------------------------------------------
+timings = {
+    "deoxygenation_time": 1200,                # s, time for deoxygenation (20 min) before start of polymerization
+    "functionalization_interval_sec": 180,     # s, interval between functionalization measurements (3 min)
+    "functionalization_max_iterations": 200,   # max iterations for functionalization (10 hours)
+    "precipitation_wait_sec": 600,             # s, wait time for precipitation (10 min)
+}
+
+# -------------------------------------------------------------------
+# TEMPERATURES FOR VARIOUS STEPS (°C)
+# -------------------------------------------------------------------
+temperatures = {
+    "polymerization_temp": 75,         # °C, polymerization
+    "functionalization_temp": 30,      # °C, modification/functionalization
+    "cleaning_dry_temp": 80,           # °C, cleaning
+}
+
+# -------------------------------------------------------------------
+# RPM SETTINGS FOR VARIOUS STEPS
+# -------------------------------------------------------------------
+target_rpm = {
+    "polymerization_rpm": 600,   # rpm, polymerization
+    "cleaning_rpm": 300,         # rpm, cleaning
+}
 
 # -------------------------------------------------------------------
 # PREPARATION WORKFLOW PARAMETERS
@@ -71,15 +100,6 @@ polymerization_params = {
     "post_rinse_vessel": "Purge_Solvent_Vessel_1", # Vessel for post-rinse
 }
 
-# -------------------------------------------------------------------
-# TIMINGS FOR WORKFLOW STEPS (seconds unless otherwise noted)
-# -------------------------------------------------------------------
-timings = {
-    "deoxygenation_time": 1200,                # s, time for deoxygenation (20 min)
-    "functionalization_interval_sec": 180,     # s, interval between functionalization measurements (3 min)
-    "functionalization_max_iterations": 200,   # max iterations for functionalization (10 hours)
-    "precipitation_wait_sec": 600,             # s, wait time for precipitation (10 min)
-}
 
 # -------------------------------------------------------------------
 # POLYMERIZATION MONITORING & DIALYSIS MONITORING PARAMETERS
@@ -98,14 +118,6 @@ polymerization_monitoring_params = {
     "max_monitoring_hours": 20,            # h, max monitoring time
 }
 
-# -------------------------------------------------------------------
-# TEMPERATURES FOR VARIOUS STEPS (°C)
-# -------------------------------------------------------------------
-temperatures = {
-    "polymerization_temp": 75,         # °C, polymerization
-    "functionalization_temp": 30,      # °C, modification/functionalization
-    "cleaning_dry_temp": 80,           # °C, cleaning
-}
 
 # -------------------------------------------------------------------
 # DIALYSIS WORKFLOW PARAMETERS
@@ -113,7 +125,7 @@ temperatures = {
 dialysis_params = {
     "noise_comparison_based": True,      # If True, stop dialysis when monomer peak < 3x noise (NMR-based)
     "time_based": True,                  # If True, stop dialysis after a set duration (see below)
-    "dialysis_duration_mins": 180,       # min, duration for time-based stopping
+    "dialysis_duration_mins": 300,       # min, duration for time-based stopping
     "dialysis_measurement_interval_minutes": None,  # min, overrides monitoring interval if set
     # The following parameters are referenced from other config dicts:
     # "sample_volume_ml": nmr_transfer_params['sample_volume_ml']
@@ -121,13 +133,32 @@ dialysis_params = {
     # NMR regions for dialysis are the same as for monitoring.
 }
 
+
 # -------------------------------------------------------------------
-# RPM SETTINGS FOR VARIOUS STEPS
+# Modification WORKFLOW PARAMETERS
 # -------------------------------------------------------------------
-target_rpm = {
-    "polymerization_rpm": 600,   # rpm, polymerization
-    "cleaning_rpm": 300,         # rpm, cleaning
+modification_params = {
+    "modification_volume": 2,            # mL, volume of modification reagent
+    "modification_draw_speed": 0.08,     # mL/s, speed for drawing modification reagent
+    "modification_dispense_speed": 0.13, # mL/s, speed for dispensing modification reagent
+    "modification_flush": 1,             # times, number of flushes
+    "modification_flush_volume": 5,      # mL, volume per flush
+    "modification_flush_speed": 0.15,    # mL/s, speed for flushing
+    "pre_rinse": 1,                  # times
+    "pre_rinse_volume": 0.7,         # mL
+    "pre_rinse_speed": 0.1,          # mL/s
+    "post_rinse": 1,                 # times
+    "post_rinse_volume": 2.5,        # mL
+    "post_rinse_speed": 0.133,       # mL/s
+    "post_rinse_vessel": "Purge_Solvent_Vessel_1", # Vessel for post-rinse
+    "deoxygenation_time_sec": 600,       # s, time for argon deoxygenation (10 min)
+    "monitoring_interval_minutes": 3,    # min, interval between UV-VIS measurements
+    "max_monitoring_iterations": 200,    # max iterations for monitoring (10 hours)
+    "post_modification_dialysis_hours": 5, # h, duration for post-modification dialysis
+    "uv_vis_stability_tolerance_percent": 5.0,  # %, tolerance for absorbance stability check
+    "uv_vis_stability_measurements": 10, # number of recent measurements to compare for stability
 }
+
 
 # -------------------------------------------------------------------
 # NMR TRANSFER PARAMETERS (used for all NMR sample transfers)
@@ -169,6 +200,7 @@ nmr_transfer_params = {
 # -------------------------------------------------------------------
 uv_vis_transfer_params = {
     "volume": 1.5,                # mL
+    "reference_volume": 0.7,       # mL
     "draw_speed": 0.03,           # mL/s
     "dispense_speed": 0.016,      # mL/s
     "post_rinse": 1,              # times
@@ -178,25 +210,7 @@ uv_vis_transfer_params = {
     "transfer_type": "liquid"
 }
 
-# -------------------------------------------------------------------
-# DEFAULT VOLUMES FOR COMMON TRANSFERS/COMPONENTS
-# -------------------------------------------------------------------
-default_volumes = {
-    "prime": 2,                       # mL
-    "solvent": 10,                    # mL
-    "monomer": 4,                     # mL
-    "initiator": 3,                   # mL
-    "cta": 4,                         # mL
-    "modification": 2,                # mL
-    "nmr": 2.1,                       # mL
-    "uv_vis": 1.5,                    # mL
-    "flush": 5,                       # mL
-    "functionalization": 2,           # mL
-    "precipitation_methanol": 25,     # mL
-    "precipitation_argon": 100,       # mL
-    "cleaning_purge_solvent": 30,     # mL
-    "cleaning_dry_argon": 200,        # mL
-}
+
 
 # -------------------------------------------------------------------
 # Add more user-editable parameters as needed below

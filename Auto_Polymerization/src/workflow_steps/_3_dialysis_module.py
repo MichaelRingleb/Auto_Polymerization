@@ -50,7 +50,7 @@ def run_dialysis_workflow(medusa, logger=None):
     interrupted = False
 
     # --- Start peristaltic pumps ---
-    medusa.log_info('Starting dialysis peristaltic pumps...')
+    medusa.logger.info('Starting dialysis peristaltic pumps...')
     medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW=False, transfer_rate=0.7)
     medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW=True, transfer_rate=0.7)
 
@@ -59,7 +59,7 @@ def run_dialysis_workflow(medusa, logger=None):
             iteration_counter += 1
             elapsed_minutes = int((time.time() - dialysis_start) / 60)
             timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
-            medusa.log_info(f"Dialysis iteration {iteration_counter} (elapsed: {elapsed_minutes} min)")
+            medusa.logger.info(f"Dialysis iteration {iteration_counter} (elapsed: {elapsed_minutes} min)")
             # --- Transfer sample to NMR ---
             try:
                 to_nmr_liquid_transfer_sampling(medusa)
@@ -69,7 +69,7 @@ def run_dialysis_workflow(medusa, logger=None):
                     'error_type': 'Transfer', 'error_message': str(e),
                     'retry_count': 0, 'additional_info': 'To NMR'
                 })
-                medusa.log_error(f"Sample transfer to NMR failed: {e}")
+                medusa.logger.error(f"Sample transfer to NMR failed: {e}")
                 continue
 
             # --- NMR acquisition with retry logic ---
@@ -106,9 +106,9 @@ def run_dialysis_workflow(medusa, logger=None):
                         'error_type': 'NMR', 'error_message': str(e),
                         'retry_count': nmr_retries, 'additional_info': 'acquire_and_analyze_nmr_spectrum'
                     })
-                    medusa.log_warn(f"NMR acquisition failed (retry {nmr_retries}): {e}")
+                    medusa.logger.warning(f"NMR acquisition failed (retry {nmr_retries}): {e}")
                     if nmr_retries > max_nmr_retries:
-                        medusa.log_error(f"NMR acquisition failed after {max_nmr_retries} retries. Skipping iteration.")
+                        medusa.logger.error(f"NMR acquisition failed after {max_nmr_retries} retries. Skipping iteration.")
                         break
                     time.sleep(10)
 
@@ -147,7 +147,7 @@ def run_dialysis_workflow(medusa, logger=None):
                     'error_type': 'Analysis', 'error_message': str(e),
                     'retry_count': 0, 'additional_info': 'monomer_removal_dialysis'
                 })
-                medusa.log_warn(f"Dialysis analysis failed: {e}")
+                medusa.logger.warning(f"Dialysis analysis failed: {e}")
                 monomer_peak = None
                 noise_level = None
                 ratio = None
@@ -194,9 +194,9 @@ def run_dialysis_workflow(medusa, logger=None):
                             'error_type': 'Shim', 'error_message': str(e),
                             'retry_count': shim_retries, 'additional_info': 'perform_nmr_shimming_with_retry'
                         })
-                        medusa.log_warn(f"Shimming failed (retry {shim_retries}): {e}")
+                        medusa.logger.warning(f"Shimming failed (retry {shim_retries}): {e}")
                         if shim_retries > max_shim_retries:
-                            medusa.log_error(f"Shimming failed after {max_shim_retries} retries. Continuing without shimming.")
+                            medusa.logger.error(f"Shimming failed after {max_shim_retries} retries. Continuing without shimming.")
                             break
                         time.sleep(10)
 
@@ -222,17 +222,17 @@ def run_dialysis_workflow(medusa, logger=None):
     except KeyboardInterrupt:
         interrupted = True
         stop_reason = 'KeyboardInterrupt (user stopped)'
-        medusa.log_warn('Dialysis workflow interrupted by user. Finishing current measurement and stopping.')
+        medusa.logger.warning('Dialysis workflow interrupted by user. Finishing current measurement and stopping.')
 
     # --- Stop peristaltic pumps and flush polymer back to reaction vial---
-    medusa.log_info('Stopping peristaltic pumps and flushing lines...')
+    medusa.logger.info('Stopping peristaltic pumps and flushing lines...')
     medusa.transfer_continuous(source="Reaction_Vial", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW=True, transfer_rate=0.7)
     medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW=False, transfer_rate=0)
     time.sleep(600)  # Wait 10 min to pump fully empty
     medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW=True, transfer_rate=0)
 
     end_time = datetime.now()
-    medusa.log_info(f"Dialysis workflow completed. Reason: {stop_reason}")
+    medusa.logger.info(f"Dialysis workflow completed. Reason: {stop_reason}")
     write_dialysis_summary_txt(summary_txt, experiment_id, start_time, nmr_results, error_log, dialysis_params, monitoring_params, nmr_transfer_params, end_time=end_time, stop_reason=stop_reason)
     write_dialysis_summary_csv(summary_csv, nmr_results, error_log)
 
