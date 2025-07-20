@@ -143,7 +143,6 @@ def to_nmr_liquid_transfer_sampling(medusa):
         source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump",
         transfer_type=params.get("transfer_type", "liquid"),
         volume=params.get("volume", 2.1), draw_speed=params.get("draw_speed", 0.05), dispense_speed=params.get("dispense_speed", 0.05),
-        flush=
         post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"), post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 2),
         post_rinse_speed=params.get("post_rinse_speed", 0.1),
         

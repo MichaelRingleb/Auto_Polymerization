@@ -46,7 +46,7 @@ import time # Added for retry logic
 _spectrum_cache = {}
 _cache_max_size = 100  # Maximum number of cached spectra
 
-def _get_cached_spectrum(ppm_file, spec_file):
+def _get_cached_spectrum(ppm_file, spec_file, medusa=None):
     """
     Get spectrum data from cache or load from files if not cached.
     Always returns the real part of complex NMR data.
@@ -55,6 +55,7 @@ def _get_cached_spectrum(ppm_file, spec_file):
     Args:
         ppm_file: Path to ppm axis file
         spec_file: Path to spectrum file
+        medusa: Medusa instance for logging (optional)
         
     Returns:
         tuple: (ppm, spec_real) spectrum data where spec_real is always real
@@ -88,7 +89,10 @@ def _get_cached_spectrum(ppm_file, spec_file):
     # Always extract real part for NMR intensity analysis
     if np.iscomplexobj(spec):
         spec_real = np.real(spec)
-        print(f"📊 Extracted real part from complex NMR data: {spec_file}")
+        if medusa:
+            medusa.logger.info(f"📊 Extracted real part from complex NMR data: {spec_file}")
+        else:
+            print(f"📊 Extracted real part from complex NMR data: {spec_file}")
     else:
         spec_real = spec
     
@@ -97,7 +101,10 @@ def _get_cached_spectrum(ppm_file, spec_file):
         # Remove oldest entry (simple FIFO)
         oldest_key = next(iter(_spectrum_cache))
         del _spectrum_cache[oldest_key]
-        print(f"🗑️ Removed oldest spectrum from cache: {oldest_key[0]}")
+        if medusa:
+            medusa.logger.info(f"🗑️ Removed oldest spectrum from cache: {oldest_key[0]}")
+        else:
+            print(f"🗑️ Removed oldest spectrum from cache: {oldest_key[0]}")
     
     # Cache the result with modification times
     _spectrum_cache[cache_key] = {
@@ -108,14 +115,20 @@ def _get_cached_spectrum(ppm_file, spec_file):
     
     return ppm, spec_real
 
-def clear_spectrum_cache():
+def clear_spectrum_cache(medusa=None):
     """
     Clear the global spectrum cache to free memory.
+    
+    Args:
+        medusa: Medusa instance for logging (optional)
     """
     global _spectrum_cache
     cache_size = len(_spectrum_cache)
     _spectrum_cache.clear()
-    print(f"🗑️ Cleared spectrum cache ({cache_size} entries)")
+    if medusa:
+        medusa.logger.info(f"🗑️ Cleared spectrum cache ({cache_size} entries)")
+    else:
+        print(f"🗑️ Cleared spectrum cache ({cache_size} entries)")
 
 def get_cache_info():
     """
@@ -134,12 +147,13 @@ def get_cache_info():
         ) / (1024 * 1024)
     }
 
-def set_cache_max_size(max_size):
+def set_cache_max_size(max_size, medusa=None):
     """
     Set the maximum number of spectra to keep in cache.
     
     Args:
         max_size: Maximum number of cached spectra
+        medusa: Medusa instance for logging (optional)
     """
     global _cache_max_size
     old_size = _cache_max_size
@@ -150,32 +164,47 @@ def set_cache_max_size(max_size):
         oldest_key = next(iter(_spectrum_cache))
         del _spectrum_cache[oldest_key]
     
-    print(f"⚙️ Cache max size changed: {old_size} → {max_size}")
-    if len(_spectrum_cache) < old_size:
-        print(f"🗑️ Removed {old_size - len(_spectrum_cache)} excess entries")
+    if medusa:
+        medusa.logger.info(f"⚙️ Cache max size changed: {old_size} → {max_size}")
+        if len(_spectrum_cache) < old_size:
+            medusa.logger.info(f"🗑️ Removed {old_size - len(_spectrum_cache)} excess entries")
+    else:
+        print(f"⚙️ Cache max size changed: {old_size} → {max_size}")
+        if len(_spectrum_cache) < old_size:
+            print(f"🗑️ Removed {old_size - len(_spectrum_cache)} excess entries")
 
 # --- Hardware Control Utilities ---
 
 
-def run_shimming(level=1):
+def run_shimming(level=1, medusa=None):
     """
     Run shimming with the specified level (default: 1).
     This function calls the NMR60Pro hardware to perform shimming, which optimizes the magnetic field homogeneity.
     The 'level' parameter controls the number of shim parameters (e.g., 1=3, 2=8, 3=30),
     but the exact meaning depends on the hardware/firmware. Requires a connected NMR instrument.
+    
+    Args:
+        level: Shimming level (default: 1)
+        medusa: Medusa instance for logging (optional)
     """
     nmr = NMR60Pro()
     nmr.shim(level)  # type: ignore
-    print(f"Shimming complete with level {level}.")
+    if medusa:
+        medusa.logger.info(f"Shimming complete with level {level}.")
+    else:
+        print(f"Shimming complete with level {level}.")
 
 
-def acquire_nmr_spectrum():
+def acquire_nmr_spectrum(medusa=None):
     """
     Acquire and save an NMR spectrum using hardlock experiment settings.
     This function configures the NMR60Pro for a hardlock experiment (no deuterated solvent lock),
     runs the acquisition, processes the 1D spectrum, and saves both the spectrum and raw data
     to Auto_Polymerization/users/data/NMR_data/<timestamp>.*
     Requires a connected NMR instrument and appropriate sample in the magnet.
+    
+    Args:
+        medusa: Medusa instance for logging (optional)
     """
     nmr = NMR60Pro()
     nmr.set_hardlock_exp(
@@ -191,7 +220,10 @@ def acquire_nmr_spectrum():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     nmr.save_spectrum(save_path, timestamp)
     nmr.save_data(save_path, timestamp)
-    print(f"NMR data saved to {save_path / timestamp}")
+    if medusa:
+        medusa.logger.info(f"NMR data saved to {save_path / timestamp}")
+    else:
+        print(f"NMR data saved to {save_path / timestamp}")
 
 
 
@@ -256,7 +288,7 @@ def _expand_peak_boundaries(spec, peak_idx, threshold, direction='both'):
 # --- Core Analysis Functions ---
 
 def integrate_monomer_peaks_simpson(
-    ppm, spec_real, region, noise_std, snr_thresh=3, plot=False, annotate_peaks=None
+    ppm, spec_real, region, noise_std, snr_thresh=3, plot=False, annotate_peaks=None, medusa=None
 ):
     """
     Integrate the two largest monomer peaks in a specified region using Simpson's rule.
@@ -288,7 +320,10 @@ def integrate_monomer_peaks_simpson(
     height_thresh = snr_thresh * noise_std
     peaks, properties = find_peaks(spec_region, height=height_thresh)
     if len(peaks) == 0:
-        print("[WARNING] No peaks found above threshold in monomer region")
+        if medusa:
+            medusa.logger.warning("No peaks found above threshold in monomer region")
+        else:
+            print("[WARNING] No peaks found above threshold in monomer region")
         return None, None, 0.0, None, None, None
     # Sort peaks by intensity, descending
     peak_heights = spec_region[peaks]
@@ -336,14 +371,20 @@ def integrate_monomer_peaks_simpson(
                 current_width = ppm[right_full_idx] - ppm[left_full_idx]
                 overlap_ratio = overlap_width / current_width
                 if overlap_ratio > 0.9:  # More than 90% overlap (nearly identical regions)
-                    print(f"[WARNING] Peak {i+1} at {peak_ppm:.3f} ppm has nearly identical integration region with previous peak (overlap ratio: {overlap_ratio:.2f}). Skipping to avoid double-counting.")
+                    if medusa:
+                        medusa.logger.warning(f"Peak {i+1} at {peak_ppm:.3f} ppm has nearly identical integration region with previous peak (overlap ratio: {overlap_ratio:.2f}). Skipping to avoid double-counting.")
+                    else:
+                        print(f"[WARNING] Peak {i+1} at {peak_ppm:.3f} ppm has nearly identical integration region with previous peak (overlap ratio: {overlap_ratio:.2f}). Skipping to avoid double-counting.")
                     overlap_detected = True
                     break
         if overlap_detected:
             continue
         # Ensure we have a valid integration region
         if right_full_idx <= left_full_idx:
-            print(f"[WARNING] Integration region for peak at {peak_ppm:.3f} ppm is empty. Skipping.")
+            if medusa:
+                medusa.logger.warning(f"Integration region for peak at {peak_ppm:.3f} ppm is empty. Skipping.")
+            else:
+                print(f"[WARNING] Integration region for peak at {peak_ppm:.3f} ppm is empty. Skipping.")
             continue
         # Extract integration region for integration
         integration_ppm = ppm[left_full_idx:right_full_idx+1]
@@ -362,7 +403,10 @@ def integrate_monomer_peaks_simpson(
         peak_intensities.append(peak_intensity)
         fallback_list.append((method == 'trapezoidal', False))
     if not integrals:
-        print("[WARNING] No valid integration regions found.")
+        if medusa:
+            medusa.logger.warning("No valid integration regions found.")
+        else:
+            print("[WARNING] No valid integration regions found.")
         return None, None, 0.0, None, None, None
     # Sum integrals for total monomer signal
     total_integral = sum(integrals)
@@ -374,7 +418,7 @@ def integrate_monomer_peaks_simpson(
     return peak_ppms, peak_intensities, total_integral, bounds_list, methods, fallback_list
 
 def find_peak_robust(
-    ppm, spec_real, region, noise_std, snr_thresh=3, plot=False, annotate_peaks=None
+    ppm, spec_real, region, noise_std, snr_thresh=3, plot=False, annotate_peaks=None, medusa=None
 ):
     """
     Wrapper for integrate_monomer_peaks_simpson to maintain API consistency.
@@ -394,7 +438,7 @@ def find_peak_robust(
         tuple: (peak_ppm, peak_intensity, total_integral, bounds, method, fallbacks)
     """
     return integrate_monomer_peaks_simpson(
-        ppm, spec_real, region, noise_std, snr_thresh, plot, annotate_peaks
+        ppm, spec_real, region, noise_std, snr_thresh, plot, annotate_peaks, medusa=None
     )
 
 
@@ -1059,7 +1103,7 @@ def analyze_dialysis_conversion(
 
 def calculate_polymerization_conversion(
     ppm, spec_real, nmr_monomer_region, nmr_standard_region, nmr_noise_region, 
-    t0_monomer_area=None, t0_standard_area=None, plot=False, title=None
+    t0_monomer_area=None, t0_standard_area=None, plot=False, title=None, medusa=None
 ):
     """
     Calculate polymerization conversion based on monomer to standard peak area ratios.
@@ -1121,7 +1165,7 @@ def calculate_polymerization_conversion(
         
         # Analyze monomer peaks
         monomer_result = integrate_monomer_peaks_simpson(
-            ppm, spec_real, nmr_monomer_region, noise_std, plot=plot
+            ppm, spec_real, nmr_monomer_region, noise_std, plot=plot, medusa=medusa
         )
         if monomer_result[2] is None or monomer_result[2] <= 0:
             return {
@@ -1139,7 +1183,7 @@ def calculate_polymerization_conversion(
         
         # Analyze standard peaks
         standard_result = integrate_monomer_peaks_simpson(
-            ppm, spec_real, nmr_standard_region, noise_std, plot=plot
+            ppm, spec_real, nmr_standard_region, noise_std, plot=plot, medusa=medusa
         )
         if standard_result[2] is None or standard_result[2] <= 0:
             return {
@@ -1209,7 +1253,7 @@ def acquire_and_analyze_nmr_spectrum(
     t0_monomer_area=None, t0_standard_area=None, 
     nmr_scans=32, nmr_spectrum_center=5, nmr_spectrum_width=12,
     save_data=True, nmr_data_base_path=None, iteration_counter=None, experiment_id=None,
-    measurement_type="monitoring", experiment_start_time=None
+    measurement_type="monitoring", experiment_start_time=None, medusa=None
 ):
     """
     Acquire an NMR spectrum and analyze it for polymerization conversion.
@@ -1250,6 +1294,50 @@ def acquire_and_analyze_nmr_spectrum(
         nmr.run()
         nmr.proc_1D()
         
+        # Generate timestamp and filename (needed for both saving and analysis)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # Generate descriptive filename based on measurement type
+        if measurement_type == "t0":
+            # t0 measurements: use t0_1, t0_2, t0_3 for multiple baseline measurements
+            if experiment_id:
+                if iteration_counter is not None:
+                    filename = f"{experiment_id}_{timestamp}_t0_{iteration_counter}"
+                else:
+                    filename = f"{experiment_id}_{timestamp}_t0"
+            else:
+                if iteration_counter is not None:
+                    filename = f"{timestamp}_t0_{iteration_counter}"
+                else:
+                    filename = f"{timestamp}_t0"
+                    
+        elif measurement_type == "monitoring" and experiment_start_time is not None:
+            # Monitoring measurements: add time since experiment start
+            elapsed_minutes = int((time.time() - experiment_start_time) / 60)
+            if experiment_id:
+                if iteration_counter is not None:
+                    filename = f"{experiment_id}_{timestamp}_sample_{iteration_counter}_t{elapsed_minutes}"
+                else:
+                    filename = f"{experiment_id}_{timestamp}_t{elapsed_minutes}"
+            else:
+                if iteration_counter is not None:
+                    filename = f"{timestamp}_sample_{iteration_counter}_t{elapsed_minutes}"
+                else:
+                    filename = f"{timestamp}_t{elapsed_minutes}"
+                    
+        else:
+            # Fallback to original naming
+            if experiment_id:
+                if iteration_counter is not None:
+                    filename = f"{experiment_id}_{timestamp}_sample_{iteration_counter}"
+                else:
+                    filename = f"{experiment_id}_{timestamp}"
+            else:
+                if iteration_counter is not None:
+                    filename = f"{timestamp}_sample_{iteration_counter}"
+                else:
+                    filename = timestamp
+        
         # Save data if requested
         if save_data:
             if nmr_data_base_path is None:
@@ -1261,49 +1349,6 @@ def acquire_and_analyze_nmr_spectrum(
             nmr_data_path = nmr_data_base_path
             nmr_data_path.mkdir(parents=True, exist_ok=True)
             
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            
-            # Generate descriptive filename based on measurement type
-            if measurement_type == "t0":
-                # t0 measurements: use t0_1, t0_2, t0_3 for multiple baseline measurements
-                if experiment_id:
-                    if iteration_counter is not None:
-                        filename = f"{experiment_id}_{timestamp}_t0_{iteration_counter}"
-                    else:
-                        filename = f"{experiment_id}_{timestamp}_t0"
-                else:
-                    if iteration_counter is not None:
-                        filename = f"{timestamp}_t0_{iteration_counter}"
-                    else:
-                        filename = f"{timestamp}_t0"
-                        
-            elif measurement_type == "monitoring" and experiment_start_time is not None:
-                # Monitoring measurements: add time since experiment start
-                elapsed_minutes = int((time.time() - experiment_start_time) / 60)
-                if experiment_id:
-                    if iteration_counter is not None:
-                        filename = f"{experiment_id}_{timestamp}_sample_{iteration_counter}_t{elapsed_minutes}"
-                    else:
-                        filename = f"{experiment_id}_{timestamp}_t{elapsed_minutes}"
-                else:
-                    if iteration_counter is not None:
-                        filename = f"{timestamp}_sample_{iteration_counter}_t{elapsed_minutes}"
-                    else:
-                        filename = f"{timestamp}_t{elapsed_minutes}"
-                        
-            else:
-                # Fallback to original naming
-                if experiment_id:
-                    if iteration_counter is not None:
-                        filename = f"{experiment_id}_{timestamp}_sample_{iteration_counter}"
-                    else:
-                        filename = f"{experiment_id}_{timestamp}"
-                else:
-                    if iteration_counter is not None:
-                        filename = f"{timestamp}_sample_{iteration_counter}"
-                    else:
-                        filename = timestamp
-                
             # Save spectrum and data to NMR_data subfolder (will overwrite if exists)
             nmr.save_spectrum(nmr_data_path, filename)
             nmr.save_data(nmr_data_path, filename)
@@ -1311,11 +1356,11 @@ def acquire_and_analyze_nmr_spectrum(
         # Get spectrum data for analysis
         # Load spectrum data from saved files (NMR60Pro API approach)
         if save_data:
-            ppm_file = nmr_data_path / f"{filename}_freq_ppm.npy"
-            spec_file = nmr_data_path / f"{filename}_spec.npy"
+            ppm_file = Path(nmr_data_path) / f"{filename}_freq_ppm.npy"
+            spec_file = Path(nmr_data_path) / f"{filename}_spec.npy"
             if ppm_file.exists() and spec_file.exists():
                 # Use cached spectrum loading (handles complex data automatically)
-                ppm, spec_real = _get_cached_spectrum(ppm_file, spec_file)
+                ppm, spec_real = _get_cached_spectrum(ppm_file, spec_file, medusa)
             else:
                 raise ValueError("Could not load spectrum data from saved files")
         else:
@@ -1324,7 +1369,7 @@ def acquire_and_analyze_nmr_spectrum(
         # Analyze spectrum for conversion with plotting
         analysis_result = calculate_polymerization_conversion(
             ppm, spec_real, nmr_monomer_region, nmr_standard_region, nmr_noise_region,
-            t0_monomer_area, t0_standard_area, plot=True, title=f"Sample {iteration_counter}" if iteration_counter else "NMR Spectrum"
+            t0_monomer_area, t0_standard_area, plot=True, title=f"Sample {iteration_counter}" if iteration_counter else "NMR Spectrum", medusa=medusa
         )
         
         # Generate and save spectrum plot with integration regions if analysis was successful
@@ -1381,13 +1426,16 @@ def acquire_and_analyze_nmr_spectrum(
                 
                 # Save plot (will overwrite if exists)
                 plot_filename = f"{filename}_integrated_spectrum.png"
-                plt.savefig(nmr_data_path / plot_filename, dpi=300, bbox_inches='tight')
+                plt.savefig(Path(nmr_data_path) / plot_filename, dpi=300, bbox_inches='tight')
                 plt.close()
                 
                 analysis_result['plot_filename'] = plot_filename
                 
             except Exception as plot_error:
-                print(f"Warning: Could not generate spectrum plot: {plot_error}")
+                if medusa:
+                    medusa.logger.warning(f"Could not generate spectrum plot: {plot_error}")
+                else:
+                    print(f"Warning: Could not generate spectrum plot: {plot_error}")
                 analysis_result['plot_filename'] = None
         
         # Add acquisition metadata
@@ -1448,7 +1496,7 @@ def perform_nmr_shimming_with_retry(medusa, max_retries=5, shim_level=1):
             to_nmr_liquid_transfer_shimming(medusa)
             
             # Run shimming
-            run_shimming(level=shim_level)
+            run_shimming(level=shim_level, medusa=medusa)
             
             # Transfer deuterated solvent back
             from_nmr_liquid_transfer_shimming(medusa)

@@ -47,18 +47,18 @@ def main():
     logger.addHandler(logging.StreamHandler())
 
 
-#Instantiate Medusa object
-layout = find_layout_json() 
-medusa = Medusa(
-    graph_layout=layout,
-    logger=logger     
-)
+    #Instantiate Medusa object
+    layout = find_layout_json() 
+    medusa = Medusa(
+        graph_layout=Path(layout),
+        logger=logger     
+    )
+    
 
-
-    logger.info(f"Starting Auto_Polymerization experiment: {config.experiment_id}")
+    medusa.logger.info(f"Starting Auto_Polymerization experiment: {config.experiment_id}")
     
     # Step 0: Preparation workflow
-    logger.info("Step 0: Running preparation workflow...")
+    medusa.logger.info("Step 0: Running preparation workflow...")
     try:
         run_preparation_workflow(
             medusa=medusa,
@@ -68,13 +68,13 @@ medusa = Medusa(
             run_minimal_test=False  # Set to True to run minimal workflow test
         )
 
-        logger.info("Preparation workflow completed successfully.")
+        medusa.logger.info("Preparation workflow completed successfully.")
     except Exception as e:
-        logger.error(f"Preparation workflow failed: {str(e)}")
+        medusa.logger.error(f"Preparation workflow failed: {str(e)}")
         return
     
     # Step 1: Polymerization with pre-polymerization setup
-    logger.info("Step 1: Running polymerization workflow with pre-polymerization setup...")
+    medusa.logger.info("Step 1: Running polymerization workflow with pre-polymerization setup...")
     polymerization_result = run_polymerization_workflow(
         medusa=medusa,
         polymerization_params=config.polymerization_params,
@@ -87,20 +87,20 @@ medusa = Medusa(
     )
     
     if not polymerization_result['success']:
-        logger.error(f"Polymerization workflow failed: {polymerization_result['error_message']}")
+        medusa.logger.error(f"Polymerization workflow failed: {polymerization_result['error_message']}")
         return
     
-    logger.info("Polymerization workflow completed successfully.")
+    medusa.logger.info("Polymerization workflow completed successfully.")
     
     # Extract t0 baseline data for monitoring
     t0_baseline = polymerization_result.get('t0_baseline')
     if t0_baseline and t0_baseline['success']:
-        logger.info(f"t0 baseline established: {t0_baseline['successful_count']}/{t0_baseline['total_count']} successful measurements")
+        medusa.logger.info(f"t0 baseline established: {t0_baseline['successful_count']}/{t0_baseline['total_count']} successful measurements")
     else:
-        logger.warning("No valid t0 baseline available for monitoring")
+        medusa.logger.warning("No valid t0 baseline available for monitoring")
     
     # Step 2: Polymerization monitoring
-    logger.info("Step 2: Running polymerization monitoring...")
+    medusa.logger.info("Step 2: Running polymerization monitoring...")
     monitoring_result = run_polymerization_monitoring(
         medusa=medusa,
         monitoring_params=config.polymerization_monitoring_params,
@@ -111,23 +111,27 @@ medusa = Medusa(
     )
     
     if not monitoring_result['success']:
-        logger.error("Polymerization monitoring failed")
+        medusa.logger.error("Polymerization monitoring failed")
         return
     
-    logger.info("Polymerization monitoring completed successfully.")
-    logger.info(f"Final conversion: {monitoring_result['final_conversion']:.2f}%")
-    logger.info(f"Total measurements: {monitoring_result['total_measurements']}")
-    logger.info(f"Successful measurements: {monitoring_result['successful_measurements']}")
-    logger.info(f"Summary file: {monitoring_result['summary_file']}")
+    medusa.logger.info("Polymerization monitoring completed successfully.")
+    medusa.logger.info(f"Final conversion: {monitoring_result['final_conversion']:.2f}%")
+    medusa.logger.info(f"Total measurements: {monitoring_result['total_measurements']}")
+    medusa.logger.info(f"Successful measurements: {monitoring_result['successful_measurements']}")
+    medusa.logger.info(f"Summary file: {monitoring_result['summary_file']}")
     
+
+
+
+
     # Step 3: Dialysis (placeholder for future implementation)
-    logger.info("Step 3: Dialysis workflow (placeholder)")
+    medusa.logger.info("Step 3: Dialysis workflow (placeholder)")
     # TODO: Implement dialysis workflow
     # from src.workflow_steps._2_dialysis_module import run_dialysis_workflow
     # dialysis_result = run_dialysis_workflow(medusa, dialysis_params, experiment_id, base_path)
     
     # Step 4: Modification (placeholder for future implementation)
-    logger.info("Step 4: Modification workflow (placeholder)")
+    medusa.logger.info("Step 4: Modification workflow (placeholder)")
     # TODO: Implement modification workflow
     # from src.workflow_steps._3_modification_module import run_modification_workflow
     # modification_result = run_modification_workflow(medusa, modification_params, experiment_id, base_path)
@@ -150,64 +154,18 @@ medusa = Medusa(
 
 
 
-# Call the preparation workflow, passing draw_speeds, dispense_speeds, and config values
-prep.run_preparation_workflow(
-    medusa,
-    polymerization_temp=config.temperatures.get("polymerization_temp", 20),
-    set_rpm=config.target_rpm.get("polymerization_rpm", 600),
-    shim_kwargs=None,
-    run_minimal_test=False,
-    prime_transfer_params=config.prime_transfer_params,
-)
-
-# Call the polymerization workflow step with config-driven parameters
-polymerization.run_polymerization_workflow(
-    medusa,
-    polymerization_params=config.polymerization_params,
-    polymerization_temp=config.temperatures.get("polymerization_temp", 20),
-    set_rpm=config.target_rpm.get("polymerization_rpm", 600),
-    deoxygenation_time=config.timings.get("deoxygenation_time", 1200)
-)
-
-
-#at this point the preparation module should stop and the polymerization module should start
 
 
 
 
-
-
-
-
-        # Pump 3 mL from NMR back to reaction vial and flush rest into vial with argon
-  medusa.transfer_volumetric(source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump", volume=2, transfer_type="liquid", draw_speed=4, dispense_speed=6)   
-        #wait for 5 minutes   
-
-  #after 5 iterations of the previous loop, the NMR is reshimmed
-  if iteration_counter % 3 == 0:
-        # pump deuterated solvent to NMR
-    medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid", draw_speed=6, dispense_speed=6)
-        # shim NMR on deuterated solvent
-            # different process, needs to be implemented still
-
-        # pump deuterated solvent back
-    medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=3.5, transfer_type="liquid", draw_speed=6, dispense_speed=6)
-
-#if conversion is reached, stop the reaction
-if polymerization_conversion >= 80:
-    #stop the loop
-    i = 1
-
-    # Stop heatplate
-medusa.heat_stir("Reaction_Vial", temperature=0)
-    # Also remove vial from heatplate with linear actuator
-medusa.write_serial("COM12", "2000")
+#start of first dialysis loop (with monitoring of monomer removal)
 
     # Start peristaltic pumps   
 medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0.7)
 medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = True, transfer_rate=0.7)
 
 iteration_counter = 0
+#while monomer peak still above 2x noise (see nmr_utils.py)
 while dialysis_conversion < 90:
   iteration_counter += 1
         # Pump 3 mL from reaction vial to NMR and evaluate "conversion in comparison to last NMR from polzmerization"
@@ -218,7 +176,7 @@ while dialysis_conversion < 90:
   #wait for 5 minutes
   time.sleep(300)
 
-  #after 6 iterations of the previous loop, the NMR is reshimmed
+  #after 5 iterations of the previous loop, the NMR is reshimmed
   if iteration_counter % 6 == 0:
         # pump deuterated solvent to NMR
     medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
@@ -278,17 +236,17 @@ max_functionalization_iterations = 200  # 10 hours maximum (3 min intervals)
 while not reaction_complete and functionalization_iteration < max_functionalization_iterations:
     medusa.transfer_volumetric(source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump", volume= 2, transfer_type="liquid", draw_speed=Functionalization_draw_speed, dispense_speed=1)
     functionalization_iteration += 1
-    logger.info(f"Functionalization monitoring iteration {functionalization_iteration}/{max_functionalization_iterations}")
+    medusa.logger.info(f"Functionalization monitoring iteration {functionalization_iteration}/{max_functionalization_iterations}")
     
     if conversion is not None:
-        logger.info(f"Current conversion: {conversion:.2f}%")
+        medusa.logger.info(f"Current conversion: {conversion:.2f}%")
     
     if reaction_complete:
-        logger.info("Functionalization reaction completed based on absorbance stability")
+        medusa.logger.info("Functionalization reaction completed based on absorbance stability")
         break
     
     # Wait before next measurement
-    logger.info("Waiting 3 minutes before next measurement...")
+    medusa.logger.info("Waiting 3 minutes before next measurement...")
     time.sleep(180)  # 3 minutes
     
     # Take next UV_VIS measurement and calculate conversion
@@ -296,13 +254,13 @@ while not reaction_complete and functionalization_iteration < max_functionalizat
 
 
 if functionalization_iteration >= max_functionalization_iterations:
-    logger.warning(f"Functionalization monitoring stopped after {max_functionalization_iterations} iterations")
+    medusa.logger.warning(f"Functionalization monitoring stopped after {max_functionalization_iterations} iterations")
     if conversion is not None:
-        logger.info(f"Final conversion achieved: {conversion:.2f}%")
+        medusa.logger.info(f"Final conversion achieved: {conversion:.2f}%")
 else:
-    logger.info(f"Functionalization completed successfully in {functionalization_iteration} iterations")
+    medusa.logger.info(f"Functionalization completed successfully in {functionalization_iteration} iterations")
     if conversion is not None:
-        logger.info(f"Final conversion: {conversion:.2f}%")
+        medusa.logger.info(f"Final conversion: {conversion:.2f}%")
 
 
 #once functionalization is finished: 

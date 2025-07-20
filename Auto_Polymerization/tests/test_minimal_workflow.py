@@ -32,10 +32,10 @@ def _setup_logger(logger=None):
     """
     if logger is not None:
         return logger
-logger = logging.getLogger("test")
-logger.setLevel(logging.DEBUG)
+    logger = logging.getLogger("test")
+    logger.setLevel(logging.DEBUG)
     if not logger.handlers:
-logger.addHandler(logging.StreamHandler())
+        logger.addHandler(logging.StreamHandler())
     return logger
 
 
@@ -46,8 +46,8 @@ def _find_or_prompt_layout(logger):
     """
     config_folder = 'Auto_Polymerization/users/config/'
     if os.path.exists(config_folder):
-    for fname in os.listdir(config_folder):
-        if fname.endswith('.json'):
+        for fname in os.listdir(config_folder):
+             if fname.endswith('.json'):
                 layout_path = os.path.join(config_folder, fname)
                 logger.info(f"Found layout JSON: {layout_path}")
                 return layout_path
@@ -97,17 +97,17 @@ def test_serial_devices(medusa, logger):
     Demonstrates sending commands to linear actuator, gas valve, and precipitation valve.
     """
     logger.info("Testing serial devices...")
-medusa.write_serial("Linear_Actuator", b"2000\n")
+    medusa.write_serial("Linear_Actuator", b"2000\n")
     time.sleep(SLEEP_TIME)
-medusa.write_serial("Linear_Actuator", b"1000\n")
+    medusa.write_serial("Linear_Actuator", b"1000\n")
     time.sleep(SLEEP_TIME)
-medusa.write_serial("Gas_Valve", b"GAS_ON\n")
+    medusa.write_serial("Gas_Valve", b"GAS_ON\n")
     time.sleep(SLEEP_TIME)
-medusa.write_serial("Gas_Valve", b"GAS_OFF\n")
+    medusa.write_serial("Gas_Valve", b"GAS_OFF\n")
     time.sleep(SLEEP_TIME)
-medusa.write_serial("Precipitation_Valve", b"PRECIP_ON\n")
+    medusa.write_serial("Precipitation_Valve", b"PRECIP_ON\n")
     time.sleep(SLEEP_TIME)
-medusa.write_serial("Precipitation_Valve", b"PRECIP_OFF\n")
+    medusa.write_serial("Precipitation_Valve", b"PRECIP_OFF\n")
     logger.info("Serial devices test complete.")
 
 
@@ -180,10 +180,10 @@ def run_minimal_workflow_test(medusa=None, logger=None):
     test_serial_devices(medusa, logger)
     test_volumetric_transfers(medusa, logger)
     logger.info("Testing NMR spectrum acquisition...")
-nmr.acquire_nmr_spectrum()
+    nmr.acquire_nmr_spectrum(medusa=medusa)
     logger.info("NMR spectrum acquisition test complete.")
     logger.info("Testing UV-Vis spectrum acquisition...")
-uv_vis.take_spectrum(reference=True)
+    uv_vis.take_spectrum(reference=True)
     logger.info("UV-Vis spectrum acquisition test complete.")
     logger.info("==== All tests completed successfully ====")
 

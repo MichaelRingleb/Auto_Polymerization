@@ -270,7 +270,7 @@ def start_polymerization_reaction(medusa, polymerization_temp, set_rpm):
            
 
     # Lower vial into heatplate
-medusa.write_serial("Linear_Actuator", "1000")
+    medusa.write_serial("Linear_Actuator", "1000")
     medusa.logger.info("Reaction vial lowered into heatplate. Polymerization started.")
 
 

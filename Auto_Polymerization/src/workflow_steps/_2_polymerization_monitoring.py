@@ -112,7 +112,8 @@ def acquire_monitoring_measurement(medusa, monitoring_params, experiment_id, ite
                 iteration_counter=iteration_counter,
                 experiment_id=experiment_id,
                 measurement_type="monitoring",
-                experiment_start_time=experiment_start_time
+                experiment_start_time=experiment_start_time,
+                medusa=medusa
             )
             
             # Check if acquisition was successful
@@ -295,8 +296,9 @@ def stop_polymerization_reaction(medusa):
     """
     medusa.logger.info("Stopping heating and stirring...")
     medusa.set_hotplate_temperature("Reaction_Vial", 25)  # Cool down
-    medusa.set_hotplate_rpm("Reaction_Vial", 0)  # Stop stirring
+    medusa.set_hotplate_rpm("Reaction_Vial", 300)  # Stir slower
     medusa.logger.info("Polymerization reaction stopped.")
+    medusa.write_serial("COM12", "2000") # Also remove vial from heatplate with linear actuator to cool down faster
 
 
 # =============================================================================
