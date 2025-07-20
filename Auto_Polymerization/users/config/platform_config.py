@@ -28,9 +28,6 @@ uv_vis_data_base_path = "users/data/UV_VIS_data"  # Directory for UV-VIS data (s
 # TIMINGS FOR WORKFLOW STEPS (seconds unless otherwise noted)
 # -------------------------------------------------------------------
 timings = {
-    "deoxygenation_time": 1200,                # s, time for deoxygenation (20 min) before start of polymerization
-    "functionalization_interval_sec": 180,     # s, interval between functionalization measurements (3 min)
-    "functionalization_max_iterations": 200,   # max iterations for functionalization (10 hours)
     "precipitation_wait_sec": 600,             # s, wait time for precipitation (10 min)
 }
 
@@ -98,6 +95,7 @@ polymerization_params = {
     "last_post_rinse_volume": 6,     # mL, final rinse
     "post_rinse_speed": 0.133,       # mL/s
     "post_rinse_vessel": "Purge_Solvent_Vessel_1", # Vessel for post-rinse
+    "deoxygenation_time": 1200,      # s, time for deoxygenation (20 min) before start of polymerization
 }
 
 
