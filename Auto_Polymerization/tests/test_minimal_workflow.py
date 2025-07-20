@@ -58,45 +58,45 @@ def _find_or_prompt_layout(logger):
     return layout_path
 
 
-def test_peristaltic_transfers(medusa, logger):
+def test_peristaltic_transfers(medusa):
     """
     Test peristaltic pump liquid transfers in both directions.
     Demonstrates starting and stopping flow for each peristaltic pump.
     """
-    logger.info("Testing peristaltic pumps...")
+    medusa.logger.info("Testing peristaltic pumps...")
     medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW=False, transfer_rate=20)
     medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW=True, transfer_rate=20)
     time.sleep(SLEEP_TIME)
     medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW=True, transfer_rate=0)
     medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW=False, transfer_rate=0)
-    logger.info("Peristaltic pump test complete.")
+    medusa.logger.info("Peristaltic pump test complete.")
 
 
 
-def test_hotplate(medusa, logger):
+def test_hotplate(medusa):
     """
     Test hotplate heating and stirring control.
     Demonstrates setting and stopping temperature and RPM, and reading back values.
     """
-    logger.info("Testing hotplate...")
+    medusa.logger.info("Testing hotplate...")
     medusa.heat_stir(vessel="Reaction_Vial", temperature=20, rpm=200)
-    logger.info(f"Hotplate temperature: {medusa.get_hotplate_temperature('Reaction_Vial')}")
-    logger.info(f"Hotplate RPM: {medusa.get_hotplate_rpm('Reaction_Vial')}")
+    medusa.logger.info(f"Hotplate temperature: {medusa.get_hotplate_temperature('Reaction_Vial')}")
+    medusa.logger.info(f"Hotplate RPM: {medusa.get_hotplate_rpm('Reaction_Vial')}")
     time.sleep(SLEEP_TIME)
     medusa.heat_stir(vessel="Reaction_Vial", temperature=0, rpm=0)
     time.sleep(SLEEP_TIME)
-    logger.info(f"Hotplate temperature after stop: {medusa.get_hotplate_temperature('Reaction_Vial')}")
-    logger.info(f"Hotplate RPM after stop: {medusa.get_hotplate_rpm('Reaction_Vial')}")
+    medusa.logger.info(f"Hotplate temperature after stop: {medusa.get_hotplate_temperature('Reaction_Vial')}")
+    medusa.logger.info(f"Hotplate RPM after stop: {medusa.get_hotplate_rpm('Reaction_Vial')}")
     time.sleep(SLEEP_TIME)
-    logger.info("Hotplate test complete.")
+    medusa.logger.info("Hotplate test complete.")
 
 
-def test_serial_devices(medusa, logger):
+def test_serial_devices(medusa):
     """
     Test serial device control for actuators and valves.
     Demonstrates sending commands to linear actuator, gas valve, and precipitation valve.
     """
-    logger.info("Testing serial devices...")
+    medusa.logger.info("Testing serial devices...")
     medusa.write_serial("Linear_Actuator", b"2000\n")
     time.sleep(SLEEP_TIME)
     medusa.write_serial("Linear_Actuator", b"1000\n")
@@ -108,15 +108,15 @@ def test_serial_devices(medusa, logger):
     medusa.write_serial("Precipitation_Valve", b"PRECIP_ON\n")
     time.sleep(SLEEP_TIME)
     medusa.write_serial("Precipitation_Valve", b"PRECIP_OFF\n")
-    logger.info("Serial devices test complete.")
+    medusa.logger.info("Serial devices test complete.")
 
 
-def test_volumetric_transfers(medusa, logger):
+def test_volumetric_transfers(medusa):
     """
     Test syringe pump liquid transfers.
     Demonstrates transferring small volumes from various vessels to waste using different syringe pumps.
     """
-    logger.info("Testing syringe pumps...")
+    medusa.logger.info("Testing syringe pumps...")
     #max draw and dispense speeds = 0.5 mL/s
     medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="Waste_Vessel", pump_id="Analytical_Pump", 
                                 transfer_type="liquid",
@@ -149,7 +149,7 @@ def test_volumetric_transfers(medusa, logger):
                                 flush = 1, flush_volume = 2, flush_speed = 0.3,  
                                 post_rinse = 1, post_rinse_vessel = "Purge_Solvent_Vessel_1", post_rinse_volume = 1.0, post_rinse_speed = 0.1
                                 )  
-    logger.info("Syringe pump test complete.")
+    medusa.logger.info("Syringe pump test complete.")
 
 
 def run_minimal_workflow_test(medusa=None, logger=None):
@@ -175,10 +175,10 @@ def run_minimal_workflow_test(medusa=None, logger=None):
 
     logger.info("Start of minimal workflow test")
     # Run all hardware and workflow tests
-    test_peristaltic_transfers(medusa, logger)
-    test_hotplate(medusa, logger)
-    test_serial_devices(medusa, logger)
-    test_volumetric_transfers(medusa, logger)
+    test_peristaltic_transfers(medusa)
+    test_hotplate(medusa)
+    test_serial_devices(medusa)
+    test_volumetric_transfers(medusa)
     logger.info("Testing NMR spectrum acquisition...")
     nmr.acquire_nmr_spectrum(medusa=medusa)
     logger.info("NMR spectrum acquisition test complete.")
