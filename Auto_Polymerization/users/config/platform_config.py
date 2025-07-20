@@ -73,6 +73,11 @@ timings = {
     "precipitation_wait_sec": 600,
 }
 
+
+# -------------------------------------------------------------------
+# Polymerization Monitoring Parameters
+# Used for both polymerization and dialysis shimming intervals, etc.
+# -------------------------------------------------------------------
 # Polymerization monitoring parameters
 polymerization_monitoring_params = {
     "nmr_monomer_region": (5.0, 6.0),  # ppm range for monomer peaks
@@ -87,6 +92,8 @@ polymerization_monitoring_params = {
     "max_monitoring_hours": 20,  # Maximum monitoring time, after this time the workflow will stop and continue with the next step
 }
 
+
+
 # Temperatures for various steps (C)
 temperatures = {
     "polymerization_temp": 75,
@@ -94,12 +101,30 @@ temperatures = {
     "cleaning_dry_temp": 80,
 }
 
+# -------------------------------------------------------------------
+# Dialysis Workflow Parameters
+# Only dialysis-specific booleans and references to shared config values.
+# -------------------------------------------------------------------
+dialysis_params = {
+    "noise_comparison_based": True,      # If True, stop dialysis when monomer peak < 3x noise (NMR-based)
+    "time_based": True,            # If True, stop dialysis after a set duration (see below)
+    "dialysis_duration_mins": 180, # Duration (in minutes) for time-based stopping
+    "dialysis_measurement_interval_minutes": None,  # If set, overrides monitoring interval for dialysis. If None, uses polymerization_monitoring_params["measurement_interval_minutes"].
+    # The following parameters are referenced from other config dicts:
+    # "sample_volume_ml": nmr_transfer_params['sample_volume_ml']
+    # "reshim_interval": polymerization_monitoring_params['shimming_interval']
+    # NMR regions for dialysis are the same as for monitoring.
+}
+
 # RPM settings for various steps
 target_rpm = {
     "polymerization_rpm": 600,
     "cleaning_rpm": 300,
 }
-
+# -------------------------------------------------------------------
+# NMR Transfer Parameters
+# Used for all NMR sample transfers (monitoring, t0, dialysis, etc.)
+# -------------------------------------------------------------------
 # Parameters for the analytical transfers (NMR shimming, NMR sampling, UV-VIS)
 #change if you changed the length of the tubing or the volume of the NMR cell 
 nmr_transfer_params = {

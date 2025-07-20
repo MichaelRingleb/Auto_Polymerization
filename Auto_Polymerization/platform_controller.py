@@ -20,6 +20,7 @@ import users.config.platform_config as config
 from src.workflow_steps._0_preparation import run_preparation_workflow
 from src.workflow_steps._1_polymerization_module import run_polymerization_workflow
 from src.workflow_steps._2_polymerization_monitoring import run_polymerization_monitoring
+from src.workflow_steps._3_dialysis_module import run_dialysis_workflow
 
 
 def find_layout_json(config_folder='Auto_Polymerization/users/config/'):
@@ -122,13 +123,29 @@ def main():
     
 
 
+    # --- USER-CONFIGURABLE DIALYSIS STOPPING OPTIONS ---
+    # Set to True to use NMR noise signal for stopping dialysis
+    use_noise_comparison_based_stopping = True
+    # Set to True to use time-based stopping for dialysis
+    use_time_based_stopping = True
+    # Maximum dialysis duration in minutes (only relevant if time-based is enabled)
+    max_dialysis_time_minutes = 180
+
+    # Update config for dialysis workflow
+    config.dialysis_params["noise_comparison_based"] = use_noise_comparison_based_stopping
+    config.dialysis_params["time_based"] = use_time_based_stopping
+    config.dialysis_params["dialysis_duration_mins"] = max_dialysis_time_minutes
+
+    # Step 3: Dialysis workflow
+    medusa.logger.info("Step 3: Running dialysis workflow...")
+    try:
+        dialysis_result = run_dialysis_workflow(medusa)
+        medusa.logger.info(f"Dialysis workflow completed. Summary: {dialysis_result.get('summary_txt', 'N/A')}")
+    except Exception as e:
+        medusa.logger.error(f"Dialysis workflow failed: {str(e)}")
+        return
 
 
-    # Step 3: Dialysis (placeholder for future implementation)
-    medusa.logger.info("Step 3: Dialysis workflow (placeholder)")
-    # TODO: Implement dialysis workflow
-    # from src.workflow_steps._2_dialysis_module import run_dialysis_workflow
-    # dialysis_result = run_dialysis_workflow(medusa, dialysis_params, experiment_id, base_path)
     
     # Step 4: Modification (placeholder for future implementation)
     medusa.logger.info("Step 4: Modification workflow (placeholder)")
@@ -158,58 +175,25 @@ def main():
 
 
 
-#start of first dialysis loop (with monitoring of monomer removal)
-
-    # Start peristaltic pumps   
-medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0.7)
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = True, transfer_rate=0.7)
-
-iteration_counter = 0
-#while monomer peak still above 2x noise (see nmr_utils.py)
-while dialysis_conversion < 90:
-  iteration_counter += 1
-        # Pump 3 mL from reaction vial to NMR and evaluate "conversion in comparison to last NMR from polzmerization"
-  medusa.transfer_volumetric(source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
-        # Take NMR spectrum and evaluate signal at ca. 5.5 ppm with regards to signal intensity of same signal at beginning
-        # Pump 3 mL from NMR back to reaction vial and flush rest into vial with argon
-  medusa.transfer_volumetric(source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump", volume=3.5, transfer_type="liquid")
-  #wait for 5 minutes
-  time.sleep(300)
-
-  #after 5 iterations of the previous loop, the NMR is reshimmed
-  if iteration_counter % 6 == 0:
-        # pump deuterated solvent to NMR
-    medusa.transfer_volumetric(source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump", volume=3, transfer_type="liquid")
-        # shim NMR on deuterated solvent
-            # different process, needs to be implemented still
-
-        # pump deuterated solvent back
-    medusa.transfer_volumetric(source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump", volume=5, transfer_type="liquid")
-
-    
 
 
-#when 90% conversion reached
-    # pump peristaltic pump tubing empty for polymer pump in different direction and stop eluent pump
-medusa.transfer_continuous(source="Reaction_Vial", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
-    #wait for 10 min to pump fully empty
-time.sleep(600)
 
-#turn off polymer pump
-medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0)
 
-   
+
+
 
 #add functionalization step
 #degas reaction vial
 medusa.write_serial("COM12","GAS_ON")
-medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 30, transfer_type="liquid", flush=3, dispense_speed=3)
+#degas for 10 min (repeat step below for 10 min)
+while timing < 600:
+    medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Reaction_Vial", pump_id="Solvent_Monomer_Modification_Pump", volume= 10, transfer_type="liquid", flush=3, dispense_speed=0.1)
+    timing += 1
 medusa.write_serial("COM12","GAS_OFF")
 
 
 #add NMR solvent to the UV_VIS cell
-medusa.transfer_volumetric(source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= default_volumes.get(1), transfer_type="liquid", draw_speed=draw_speeds.get("uv_vis", 1.5), dispense_speed=dispense_speeds.get("uv_vis", 1))
+medusa.transfer_volumetric(source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= default_volumes.get(1), transfer_type="liquid", draw_speed=draw_speeds.get("uv_vis", 1.2), dispense_speed=dispense_speeds.get("uv_vis", 0.05))
 
 #first measurement of UV_VIS and use this as the reference spectrum
 uv_vis.take_spectrum(reference=True)

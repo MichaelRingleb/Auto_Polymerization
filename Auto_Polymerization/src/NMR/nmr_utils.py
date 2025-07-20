@@ -1253,7 +1253,8 @@ def acquire_and_analyze_nmr_spectrum(
     t0_monomer_area=None, t0_standard_area=None, 
     nmr_scans=32, nmr_spectrum_center=5, nmr_spectrum_width=12,
     save_data=True, nmr_data_base_path=None, iteration_counter=None, experiment_id=None,
-    measurement_type="monitoring", experiment_start_time=None, medusa=None
+    measurement_type="monitoring", experiment_start_time=None, medusa=None,
+    filename_override=None
 ):
     """
     Acquire an NMR spectrum and analyze it for polymerization conversion.
@@ -1276,6 +1277,7 @@ def acquire_and_analyze_nmr_spectrum(
         experiment_id (str, optional): Experiment identifier for filenames
         measurement_type (str): Type of measurement ("t0" or "monitoring")
         experiment_start_time (float, optional): Experiment start time (time.time()) for time-based naming
+        filename_override (str, optional): If provided, use this as the filename for all NMR data saves/loads
         
     Returns:
         dict: Analysis results with conversion data and acquisition status
@@ -1283,7 +1285,6 @@ def acquire_and_analyze_nmr_spectrum(
     try:
         # Initialize NMR hardware
         nmr = NMR60Pro()
-        
         # Configure and run NMR experiment
         nmr.set_hardlock_exp(
             num_scans=nmr_scans,
@@ -1293,66 +1294,59 @@ def acquire_and_analyze_nmr_spectrum(
         )
         nmr.run()
         nmr.proc_1D()
-        
         # Generate timestamp and filename (needed for both saving and analysis)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # Generate descriptive filename based on measurement type
-        if measurement_type == "t0":
-            # t0 measurements: use t0_1, t0_2, t0_3 for multiple baseline measurements
-            if experiment_id:
-                if iteration_counter is not None:
-                    filename = f"{experiment_id}_{timestamp}_t0_{iteration_counter}"
-                else:
-                    filename = f"{experiment_id}_{timestamp}_t0"
-            else:
-                if iteration_counter is not None:
-                    filename = f"{timestamp}_t0_{iteration_counter}"
-                else:
-                    filename = f"{timestamp}_t0"
-                    
-        elif measurement_type == "monitoring" and experiment_start_time is not None:
-            # Monitoring measurements: add time since experiment start
-            elapsed_minutes = int((time.time() - experiment_start_time) / 60)
-            if experiment_id:
-                if iteration_counter is not None:
-                    filename = f"{experiment_id}_{timestamp}_sample_{iteration_counter}_t{elapsed_minutes}"
-                else:
-                    filename = f"{experiment_id}_{timestamp}_t{elapsed_minutes}"
-            else:
-                if iteration_counter is not None:
-                    filename = f"{timestamp}_sample_{iteration_counter}_t{elapsed_minutes}"
-                else:
-                    filename = f"{timestamp}_t{elapsed_minutes}"
-                    
+        # Allow custom filename override for special workflows (e.g., dialysis)
+        if filename_override is not None:
+            filename = filename_override
         else:
-            # Fallback to original naming
-            if experiment_id:
-                if iteration_counter is not None:
-                    filename = f"{experiment_id}_{timestamp}_sample_{iteration_counter}"
+            # Generate descriptive filename based on measurement type
+            if measurement_type == "t0":
+                if experiment_id:
+                    if iteration_counter is not None:
+                        filename = f"{experiment_id}_{timestamp}_t0_{iteration_counter}"
+                    else:
+                        filename = f"{experiment_id}_{timestamp}_t0"
                 else:
-                    filename = f"{experiment_id}_{timestamp}"
+                    if iteration_counter is not None:
+                        filename = f"{timestamp}_t0_{iteration_counter}"
+                    else:
+                        filename = f"{timestamp}_t0"
+            elif measurement_type == "monitoring" and experiment_start_time is not None:
+                elapsed_minutes = int((time.time() - experiment_start_time) / 60)
+                if experiment_id:
+                    if iteration_counter is not None:
+                        filename = f"{experiment_id}_{timestamp}_sample_{iteration_counter}_t{elapsed_minutes}"
+                    else:
+                        filename = f"{experiment_id}_{timestamp}_t{elapsed_minutes}"
+                else:
+                    if iteration_counter is not None:
+                        filename = f"{timestamp}_sample_{iteration_counter}_t{elapsed_minutes}"
+                    else:
+                        filename = f"{timestamp}_t{elapsed_minutes}"
             else:
-                if iteration_counter is not None:
-                    filename = f"{timestamp}_sample_{iteration_counter}"
+                if experiment_id:
+                    if iteration_counter is not None:
+                        filename = f"{experiment_id}_{timestamp}_sample_{iteration_counter}"
+                    else:
+                        filename = f"{experiment_id}_{timestamp}"
                 else:
-                    filename = timestamp
-        
+                    if iteration_counter is not None:
+                        filename = f"{timestamp}_sample_{iteration_counter}"
+                    else:
+                        filename = timestamp
         # Save data if requested
         if save_data:
             if nmr_data_base_path is None:
                 nmr_data_base_path = Path('Auto_Polymerization/users/data/NMR_data')
             else:
                 nmr_data_base_path = Path(nmr_data_base_path)
-            
             # Create NMR data directory
             nmr_data_path = nmr_data_base_path
             nmr_data_path.mkdir(parents=True, exist_ok=True)
-            
             # Save spectrum and data to NMR_data subfolder (will overwrite if exists)
             nmr.save_spectrum(nmr_data_path, filename)
             nmr.save_data(nmr_data_path, filename)
-        
         # Get spectrum data for analysis
         # Load spectrum data from saved files (NMR60Pro API approach)
         if save_data:
@@ -1365,32 +1359,25 @@ def acquire_and_analyze_nmr_spectrum(
                 raise ValueError("Could not load spectrum data from saved files")
         else:
             raise ValueError("Cannot analyze spectrum without saving data first")
-        
         # Analyze spectrum for conversion with plotting
         analysis_result = calculate_polymerization_conversion(
             ppm, spec_real, nmr_monomer_region, nmr_standard_region, nmr_noise_region,
             t0_monomer_area, t0_standard_area, plot=True, title=f"Sample {iteration_counter}" if iteration_counter else "NMR Spectrum", medusa=medusa
         )
-        
         # Generate and save spectrum plot with integration regions if analysis was successful
         if analysis_result['success'] and save_data:
             try:
                 import matplotlib.pyplot as plt
-                
                 fig, ax = plt.subplots(figsize=(12, 8))
-                
                 # Plot spectrum
                 ax.plot(ppm, spec_real, 'b-', linewidth=1, label='NMR Spectrum')
-                
                 # Highlight regions
                 ax.axvspan(nmr_monomer_region[0], nmr_monomer_region[1], alpha=0.2, color='red', label='Monomer Region')
                 ax.axvspan(nmr_standard_region[0], nmr_standard_region[1], alpha=0.2, color='green', label='Standard Region')
                 ax.axvspan(nmr_noise_region[0], nmr_noise_region[1], alpha=0.2, color='gray', label='Noise Region')
-                
                 # Add integration annotations if available
                 if analysis_result['plot_data']:
                     plot_data = analysis_result['plot_data']
-                    
                     # Add monomer peak annotations
                     if plot_data['monomer_result'] and plot_data['monomer_result'][0]:
                         for i, peak_ppm in enumerate(plot_data['monomer_result'][0]):
@@ -1399,7 +1386,6 @@ def acquire_and_analyze_nmr_spectrum(
                                       xytext=(peak_ppm+0.5, plot_data['monomer_result'][1][i]*1.1),
                                       arrowprops=dict(arrowstyle='->', color='red'),
                                       fontsize=10, color='red')
-                    
                     # Add standard peak annotations
                     if plot_data['standard_result'] and plot_data['standard_result'][0]:
                         for i, peak_ppm in enumerate(plot_data['standard_result'][0]):
@@ -1408,36 +1394,29 @@ def acquire_and_analyze_nmr_spectrum(
                                       xytext=(peak_ppm+0.5, plot_data['standard_result'][1][i]*1.1),
                                       arrowprops=dict(arrowstyle='->', color='green'),
                                       fontsize=10, color='green')
-                
                 # Add conversion info if available
                 if analysis_result['conversion_percent'] is not None:
                     ax.text(0.02, 0.98, f"Conversion: {analysis_result['conversion_percent']:.1f}%", 
                            transform=ax.transAxes, fontsize=12, verticalalignment='top',
                            bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
-                
                 ax.set_xlabel('Chemical Shift (ppm)')
                 ax.set_ylabel('Intensity')
                 ax.set_title(f'{experiment_id} - Sample {iteration_counter}' if experiment_id and iteration_counter else f'Sample {iteration_counter}' if iteration_counter else 'NMR Spectrum')
                 ax.legend()
                 ax.grid(True, alpha=0.3)
-                
                 # Invert x-axis for NMR convention
                 ax.invert_xaxis()
-                
                 # Save plot (will overwrite if exists)
                 plot_filename = f"{filename}_integrated_spectrum.png"
                 plt.savefig(Path(nmr_data_path) / plot_filename, dpi=300, bbox_inches='tight')
                 plt.close()
-                
                 analysis_result['plot_filename'] = plot_filename
-                
             except Exception as plot_error:
                 if medusa:
                     medusa.logger.warning(f"Could not generate spectrum plot: {plot_error}")
                 else:
                     print(f"Warning: Could not generate spectrum plot: {plot_error}")
                 analysis_result['plot_filename'] = None
-        
         # Add acquisition metadata
         analysis_result.update({
             'acquisition_success': True,
@@ -1447,9 +1426,7 @@ def acquire_and_analyze_nmr_spectrum(
             'iteration_counter': iteration_counter,
             'experiment_id': experiment_id
         })
-        
         return analysis_result
-        
     except Exception as e:
         return {
             'conversion_percent': None,
