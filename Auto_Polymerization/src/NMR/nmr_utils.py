@@ -40,6 +40,119 @@ except ImportError:
 from pathlib import Path
 from datetime import datetime
 from matterlab_nmr import NMR60Pro, DSolv, HSolv
+import time # Added for retry logic
+
+# Global spectrum cache to prevent loading the same data multiple times
+_spectrum_cache = {}
+_cache_max_size = 100  # Maximum number of cached spectra
+
+def _get_cached_spectrum(ppm_file, spec_file):
+    """
+    Get spectrum data from cache or load from files if not cached.
+    Always returns the real part of complex NMR data.
+    Includes file modification time checking to detect file changes.
+    
+    Args:
+        ppm_file: Path to ppm axis file
+        spec_file: Path to spectrum file
+        
+    Returns:
+        tuple: (ppm, spec_real) spectrum data where spec_real is always real
+    """
+    cache_key = (str(ppm_file), str(spec_file))
+    
+    # Check if files exist
+    if not (os.path.exists(ppm_file) and os.path.exists(spec_file)):
+        raise FileNotFoundError(f"One or both files not found: {ppm_file}, {spec_file}")
+    
+    # Get file modification times
+    ppm_mtime = os.path.getmtime(ppm_file)
+    spec_mtime = os.path.getmtime(spec_file)
+    
+    # Check if cached data is still valid
+    if cache_key in _spectrum_cache:
+        cached_data = _spectrum_cache[cache_key]
+        cached_ppm_mtime, cached_spec_mtime = cached_data['mtime']
+        
+        # If files haven't changed, return cached data
+        if cached_ppm_mtime == ppm_mtime and cached_spec_mtime == spec_mtime:
+            return cached_data['ppm'], cached_data['spec_real']
+        else:
+            # Files changed, remove from cache
+            del _spectrum_cache[cache_key]
+    
+    # Load from files
+    ppm = np.load(ppm_file)
+    spec = np.load(spec_file)
+    
+    # Always extract real part for NMR intensity analysis
+    if np.iscomplexobj(spec):
+        spec_real = np.real(spec)
+        print(f"📊 Extracted real part from complex NMR data: {spec_file}")
+    else:
+        spec_real = spec
+    
+    # Manage cache size
+    if len(_spectrum_cache) >= _cache_max_size:
+        # Remove oldest entry (simple FIFO)
+        oldest_key = next(iter(_spectrum_cache))
+        del _spectrum_cache[oldest_key]
+        print(f"🗑️ Removed oldest spectrum from cache: {oldest_key[0]}")
+    
+    # Cache the result with modification times
+    _spectrum_cache[cache_key] = {
+        'ppm': ppm,
+        'spec_real': spec_real,
+        'mtime': (ppm_mtime, spec_mtime)
+    }
+    
+    return ppm, spec_real
+
+def clear_spectrum_cache():
+    """
+    Clear the global spectrum cache to free memory.
+    """
+    global _spectrum_cache
+    cache_size = len(_spectrum_cache)
+    _spectrum_cache.clear()
+    print(f"🗑️ Cleared spectrum cache ({cache_size} entries)")
+
+def get_cache_info():
+    """
+    Get information about the current spectrum cache.
+    
+    Returns:
+        dict: Cache information including size, max size, and keys
+    """
+    return {
+        'cache_size': len(_spectrum_cache),
+        'max_cache_size': _cache_max_size,
+        'cached_files': list(_spectrum_cache.keys()),
+        'memory_usage_mb': sum(
+            cached_data['ppm'].nbytes + cached_data['spec_real'].nbytes 
+            for cached_data in _spectrum_cache.values()
+        ) / (1024 * 1024)
+    }
+
+def set_cache_max_size(max_size):
+    """
+    Set the maximum number of spectra to keep in cache.
+    
+    Args:
+        max_size: Maximum number of cached spectra
+    """
+    global _cache_max_size
+    old_size = _cache_max_size
+    _cache_max_size = max_size
+    
+    # If new size is smaller, remove excess entries
+    while len(_spectrum_cache) > _cache_max_size:
+        oldest_key = next(iter(_spectrum_cache))
+        del _spectrum_cache[oldest_key]
+    
+    print(f"⚙️ Cache max size changed: {old_size} → {max_size}")
+    if len(_spectrum_cache) < old_size:
+        print(f"🗑️ Removed {old_size - len(_spectrum_cache)} excess entries")
 
 # --- Hardware Control Utilities ---
 
@@ -337,7 +450,7 @@ def characterize_baseline(ppm, spec, noise_region, max_order=3, improvement_thre
 
 
 def analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
-    ppm, spec, monomer_region, std_region, noise_region, plot=True, title=None, save_plot=False, output_folder=None
+    ppm, spec, nmr_monomer_region, nmr_standard_region, nmr_noise_region, plot=True, title=None, save_plot=False, output_folder=None
 ):
     """
     Full automated NMR workflow for polymerization monitoring.
@@ -365,9 +478,9 @@ def analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
     Parameters:
         ppm (np.ndarray): Chemical shift axis (ppm).
         spec (np.ndarray): NMR spectrum (complex or real).
-        monomer_region (tuple): (min_ppm, max_ppm) for monomer peak region.
-        std_region (tuple): (min_ppm, max_ppm) for internal standard peak region.
-        noise_region (tuple): (min_ppm, max_ppm) for baseline noise estimation.
+        nmr_monomer_region (tuple): (min_ppm, max_ppm) for monomer peak region.
+        nmr_standard_region (tuple): (min_ppm, max_ppm) for internal standard peak region.
+        nmr_noise_region (tuple): (min_ppm, max_ppm) for baseline noise estimation.
         plot (bool): Whether to show the plot.
         title (str or None): Plot title (e.g., filename).
         save_plot (bool): Whether to save the plot to file.
@@ -384,7 +497,7 @@ def analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
             - std_method (str): Integration method used for standard
     """
     # Baseline noise and type
-    noise_std, baseline_type, noise_x, baseline_fit = characterize_baseline(ppm, spec, noise_region)
+    noise_std, baseline_type, noise_x, baseline_fit = characterize_baseline(ppm, spec, nmr_noise_region)
     baseline_type_str = ['flat', 'sloped', 'curved', 'higher-order'][baseline_type] if baseline_type < 4 else f'order-{baseline_type}'
 
     # Apply ALS baseline correction to the full spectrum
@@ -403,7 +516,7 @@ def analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
     # For monomer, collect annotations for each singlet
     mono_annotations = []
     mono_result = find_peak_robust(
-        ppm, spec_corrected, monomer_region, noise_std, snr_thresh=3, plot=plot, annotate_peaks=mono_annotations
+        ppm, spec_corrected, nmr_monomer_region, noise_std, snr_thresh=3, plot=plot, annotate_peaks=mono_annotations
     )
     if mono_result is not None:
         mono_peak_ppm, mono_peak_intensity, mono_integral, mono_bounds, mono_method, mono_fallbacks = mono_result
@@ -411,7 +524,7 @@ def analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
         mono_peak_ppm = mono_peak_intensity = mono_integral = mono_bounds = mono_method = mono_fallbacks = None
 
     # Standard region: peak finding + connectivity testing + Simpson's rule integration
-    std_mask = (ppm >= std_region[0]) & (ppm <= std_region[1])
+    std_mask = (ppm >= nmr_standard_region[0]) & (ppm <= nmr_standard_region[1])
     ppm_std = ppm[std_mask]
     spec_std = spec_corrected[std_mask]
     std_integral = 0.0
@@ -554,7 +667,7 @@ def analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
                 label_text = 'Standard peaks' if i==0 else None
                 
                 # Convert from standard region indices to full spectrum ppm values
-                full_indices = np.where((ppm >= std_region[0]) & (ppm <= std_region[1]))[0]
+                full_indices = np.where((ppm >= nmr_standard_region[0]) & (ppm <= nmr_standard_region[1]))[0]
                 left_full = full_indices[left]
                 right_full = full_indices[right]
                 
@@ -696,7 +809,7 @@ def analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
                     if not file_exists:
                         f.write("Filename\tMonomer_Start\tMonomer_End\tMonomer_Peak_Positions\tMonomer_Integral\tStandard_Start\tStandard_End\tStandard_Integral\tRatio(Monomer/Standard)\n")
                     # Write data row
-                    f.write(f"{filename}\t{monomer_region[0]:.2f}\t{monomer_region[1]:.2f}\t{monomer_peak_positions_str}\t{total_monomer_integral:.6f}\t{std_region[0]:.2f}\t{std_region[1]:.2f}\t{total_std_integral:.6f}\t{ratio_str}\n")
+                    f.write(f"{filename}\t{nmr_monomer_region[0]:.2f}\t{nmr_monomer_region[1]:.2f}\t{monomer_peak_positions_str}\t{total_monomer_integral:.6f}\t{nmr_standard_region[0]:.2f}\t{nmr_standard_region[1]:.2f}\t{total_std_integral:.6f}\t{ratio_str}\n")
                 print(f"Integration results appended to: {txt_path}")
         
         plt.show()
@@ -713,7 +826,7 @@ def analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
 
 # --- Batch and Post-Processing Utilities ---
 
-def batch_analyze_nmr_folder(folder, monomer_region, std_region, noise_region, plot=True, save_plots=True):
+def batch_analyze_nmr_folder(folder, nmr_monomer_region, nmr_standard_region, nmr_noise_region, plot=True, save_plots=True):
     """
     Batch analyze all NMR spectra in a folder using the automated workflow.
     Expects .npy files for both ppm and spectrum, named as {base}_freq_ppm.npy and {base}_spec.npy.
@@ -722,9 +835,9 @@ def batch_analyze_nmr_folder(folder, monomer_region, std_region, noise_region, p
 
     Parameters:
         folder (str): Path to folder containing NMR .npy files.
-        monomer_region (tuple): (min_ppm, max_ppm) for monomer peak region.
-        std_region (tuple): (min_ppm, max_ppm) for internal standard peak region.
-        noise_region (tuple): (min_ppm, max_ppm) for baseline noise estimation.
+        nmr_monomer_region (tuple): (min_ppm, max_ppm) for monomer peak region.
+        nmr_standard_region (tuple): (min_ppm, max_ppm) for internal standard peak region.
+        nmr_noise_region (tuple): (min_ppm, max_ppm) for baseline noise estimation.
         plot (bool): Whether to show plots for each spectrum.
         save_plots (bool): Whether to save plots to the same folder as the data.
 
@@ -743,10 +856,14 @@ def batch_analyze_nmr_folder(folder, monomer_region, std_region, noise_region, p
     base_names = sorted(set(f.split('_freq_ppm.npy')[0] for f in files if f.endswith('_freq_ppm.npy')))
     results = []
     for base in base_names:
-        ppm = np.load(os.path.join(folder, base + '_freq_ppm.npy'))
-        spec = np.load(os.path.join(folder, base + '_spec.npy'))
+        ppm_file = os.path.join(folder, base + '_freq_ppm.npy')
+        spec_file = os.path.join(folder, base + '_spec.npy')
+        
+        # Use cached spectrum loading (handles complex data automatically)
+        ppm, spec_real = _get_cached_spectrum(ppm_file, spec_file)
+
         res = analyze_nmr_spectrum_with_auto_baseline_and_full_peak_integration(
-            ppm, spec, monomer_region, std_region, noise_region, 
+            ppm, spec_real, nmr_monomer_region, nmr_standard_region, nmr_noise_region, 
             plot=plot, title=base, save_plot=save_plots, output_folder=folder
         )
         results.append({'filename': base, **res})
@@ -791,18 +908,13 @@ def monomer_removal_dialysis(
                 leftmost_peak_ppm = float(entry['Monomer_Peak_Positions'])
             except Exception:
                 continue
-            # Load NMR data
+            # Load NMR data using cache (handles complex data automatically)
             ppm_path = os.path.join(nmr_data_folder, filename + ppm_suffix)
             spec_path = os.path.join(nmr_data_folder, filename + spec_suffix)
             if not (os.path.exists(ppm_path) and os.path.exists(spec_path)):
                 print(f"Missing NMR data for {filename}, skipping.")
                 continue
-            ppm = np.load(ppm_path)
-            spec = np.load(spec_path)
-            if np.iscomplexobj(spec):
-                spec_real = np.real(spec)
-            else:
-                spec_real = spec
+            ppm, spec_real = _get_cached_spectrum(ppm_path, spec_path)
             # Find index closest to leftmost peak position
             idx = np.argmin(np.abs(ppm - leftmost_peak_ppm))
             peak_height = spec_real[idx]
@@ -892,12 +1004,8 @@ def analyze_dialysis_conversion(
     if not (os.path.exists(ppm_path) and os.path.exists(spec_path)):
         print(f"Missing NMR data for {spectrum_base}, aborting.")
         return None
-    ppm = np.load(ppm_path)
-    spec = np.load(spec_path)
-    if np.iscomplexobj(spec):
-        spec_real = np.real(spec)
-    else:
-        spec_real = spec
+    # Use cached spectrum loading (handles complex data automatically)
+    ppm, spec_real = _get_cached_spectrum(ppm_path, spec_path)
     # 5. Search for a peak within ±search_window ppm of median_peak
     mask = (ppm >= median_peak - search_window) & (ppm <= median_peak + search_window)
     if not np.any(mask):
@@ -949,11 +1057,595 @@ def analyze_dialysis_conversion(
         'Above_2x_Noise': pass_fail
     }
 
+def calculate_polymerization_conversion(
+    ppm, spec_real, nmr_monomer_region, nmr_standard_region, nmr_noise_region, 
+    t0_monomer_area=None, t0_standard_area=None, plot=False, title=None
+):
+    """
+    Calculate polymerization conversion based on monomer to standard peak area ratios.
+    
+    This function analyzes an NMR spectrum to determine the current polymerization conversion
+    by comparing the monomer/standard peak area ratio to the initial (t0) ratio.
+    
+    Conversion = (1 - (current_monomer_area/current_standard_area) / (t0_monomer_area/t0_standard_area)) * 100
+    
+    Args:
+        ppm (np.ndarray): Chemical shift axis (ppm)
+        spec_real (np.ndarray): Real part of NMR spectrum
+        nmr_monomer_region (tuple): (min_ppm, max_ppm) for monomer peak region
+        nmr_standard_region (tuple): (min_ppm, max_ppm) for internal standard peak region
+        nmr_noise_region (tuple): (min_ppm, max_ppm) for baseline noise calculation
+        t0_monomer_area (float, optional): Initial monomer peak area for conversion calculation
+        t0_standard_area (float, optional): Initial standard peak area for conversion calculation
+        plot (bool): Whether to show debug plots
+        title (str, optional): Plot title
+        
+    Returns:
+        dict: Analysis results containing:
+            - conversion_percent (float): Calculated conversion percentage (None if calculation fails)
+            - monomer_area (float): Current monomer peak area
+            - standard_area (float): Current standard peak area
+            - monomer_standard_ratio (float): Current monomer/standard ratio
+            - t0_ratio (float): Initial monomer/standard ratio (if provided)
+            - success (bool): Whether analysis was successful
+            - error_message (str): Error message if analysis failed
+            - plot_data (dict): Data for plotting if plot=True
+    """
+    try:
+        # Calculate baseline noise for robust peak detection
+        noise_mask = (ppm >= nmr_noise_region[0]) & (ppm <= nmr_noise_region[1])
+        if np.sum(noise_mask) < 10:
+            return {
+                'conversion_percent': None,
+                'monomer_area': None,
+                'standard_area': None,
+                'monomer_standard_ratio': None,
+                't0_ratio': None,
+                'success': False,
+                'error_message': f"Insufficient data points in noise region {nmr_noise_region}",
+                'plot_data': None
+            }
+        
+        noise_std = np.std(spec_real[noise_mask])
+        if noise_std <= 0:
+            return {
+                'conversion_percent': None,
+                'monomer_area': None,
+                'standard_area': None,
+                'monomer_standard_ratio': None,
+                't0_ratio': None,
+                'success': False,
+                'error_message': "Zero noise standard deviation - spectrum may be flat",
+                'plot_data': None
+            }
+        
+        # Analyze monomer peaks
+        monomer_result = integrate_monomer_peaks_simpson(
+            ppm, spec_real, nmr_monomer_region, noise_std, plot=plot
+        )
+        if monomer_result[2] is None or monomer_result[2] <= 0:
+            return {
+                'conversion_percent': None,
+                'monomer_area': None,
+                'standard_area': None,
+                'monomer_standard_ratio': None,
+                't0_ratio': None,
+                'success': False,
+                'error_message': f"Failed to integrate monomer peaks in region {nmr_monomer_region}",
+                'plot_data': None
+            }
+        
+        monomer_area = monomer_result[2]
+        
+        # Analyze standard peaks
+        standard_result = integrate_monomer_peaks_simpson(
+            ppm, spec_real, nmr_standard_region, noise_std, plot=plot
+        )
+        if standard_result[2] is None or standard_result[2] <= 0:
+            return {
+                'conversion_percent': None,
+                'monomer_area': monomer_area,
+                'standard_area': None,
+                'monomer_standard_ratio': None,
+                't0_ratio': None,
+                'success': False,
+                'error_message': f"Failed to integrate standard peaks in region {nmr_standard_region}",
+                'plot_data': None
+            }
+        
+        standard_area = standard_result[2]
+        current_ratio = monomer_area / standard_area
+        
+        # Calculate conversion if t0 data is provided
+        conversion_percent = None
+        t0_ratio = None
+        if t0_monomer_area is not None and t0_standard_area is not None:
+            t0_ratio = t0_monomer_area / t0_standard_area
+            if t0_ratio > 0:
+                conversion_percent = (1 - (current_ratio / t0_ratio)) * 100
+                # Clamp conversion to reasonable range
+                conversion_percent = max(0.0, min(100.0, conversion_percent))
+        
+        # Prepare plot data if requested
+        plot_data = None
+        if plot:
+            plot_data = {
+                'ppm': ppm,
+                'spec_real': spec_real,
+                'monomer_region': nmr_monomer_region,
+                'standard_region': nmr_standard_region,
+                'noise_region': nmr_noise_region,
+                'monomer_result': monomer_result,
+                'standard_result': standard_result,
+                'title': title
+            }
+        
+        return {
+            'conversion_percent': conversion_percent,
+            'monomer_area': monomer_area,
+            'standard_area': standard_area,
+            'monomer_standard_ratio': current_ratio,
+            't0_ratio': t0_ratio,
+            'success': True,
+            'error_message': None,
+            'plot_data': plot_data
+        }
+        
+    except Exception as e:
+        return {
+            'conversion_percent': None,
+            'monomer_area': None,
+            'standard_area': None,
+            'monomer_standard_ratio': None,
+            't0_ratio': None,
+            'success': False,
+            'error_message': f"Unexpected error in conversion calculation: {str(e)}",
+            'plot_data': None
+        }
+
+
+def acquire_and_analyze_nmr_spectrum(
+    nmr_monomer_region, nmr_standard_region, nmr_noise_region, 
+    t0_monomer_area=None, t0_standard_area=None, 
+    nmr_scans=32, nmr_spectrum_center=5, nmr_spectrum_width=12,
+    save_data=True, nmr_data_base_path=None, iteration_counter=None, experiment_id=None,
+    measurement_type="monitoring", experiment_start_time=None
+):
+    """
+    Acquire an NMR spectrum and analyze it for polymerization conversion.
+    
+    This function combines NMR acquisition with conversion analysis, providing
+    robust error handling for both hardware and analysis failures.
+    
+    Args:
+        nmr_monomer_region (tuple): (min_ppm, max_ppm) for monomer peak region
+        nmr_standard_region (tuple): (min_ppm, max_ppm) for internal standard peak region
+        nmr_noise_region (tuple): (min_ppm, max_ppm) for baseline noise calculation
+        t0_monomer_area (float, optional): Initial monomer peak area
+        t0_standard_area (float, optional): Initial standard peak area
+        nmr_scans (int): Number of NMR scans
+        nmr_spectrum_center (float): Spectrum center in ppm
+        nmr_spectrum_width (float): Spectrum width in ppm
+        save_data (bool): Whether to save NMR data
+        nmr_data_base_path (str, optional): Base path for saving NMR data
+        iteration_counter (int, optional): Iteration counter for filename
+        experiment_id (str, optional): Experiment identifier for filenames
+        measurement_type (str): Type of measurement ("t0" or "monitoring")
+        experiment_start_time (float, optional): Experiment start time (time.time()) for time-based naming
+        
+    Returns:
+        dict: Analysis results with conversion data and acquisition status
+    """
+    try:
+        # Initialize NMR hardware
+        nmr = NMR60Pro()
+        
+        # Configure and run NMR experiment
+        nmr.set_hardlock_exp(
+            num_scans=nmr_scans,
+            solvent=HSolv.DMSO,
+            spectrum_center=nmr_spectrum_center,
+            spectrum_width=nmr_spectrum_width
+        )
+        nmr.run()
+        nmr.proc_1D()
+        
+        # Save data if requested
+        if save_data:
+            if nmr_data_base_path is None:
+                nmr_data_base_path = Path('Auto_Polymerization/users/data/NMR_data')
+            else:
+                nmr_data_base_path = Path(nmr_data_base_path)
+            
+            # Create NMR data directory
+            nmr_data_path = nmr_data_base_path
+            nmr_data_path.mkdir(parents=True, exist_ok=True)
+            
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # Generate descriptive filename based on measurement type
+            if measurement_type == "t0":
+                # t0 measurements: use t0_1, t0_2, t0_3 for multiple baseline measurements
+                if experiment_id:
+                    if iteration_counter is not None:
+                        filename = f"{experiment_id}_{timestamp}_t0_{iteration_counter}"
+                    else:
+                        filename = f"{experiment_id}_{timestamp}_t0"
+                else:
+                    if iteration_counter is not None:
+                        filename = f"{timestamp}_t0_{iteration_counter}"
+                    else:
+                        filename = f"{timestamp}_t0"
+                        
+            elif measurement_type == "monitoring" and experiment_start_time is not None:
+                # Monitoring measurements: add time since experiment start
+                elapsed_minutes = int((time.time() - experiment_start_time) / 60)
+                if experiment_id:
+                    if iteration_counter is not None:
+                        filename = f"{experiment_id}_{timestamp}_sample_{iteration_counter}_t{elapsed_minutes}"
+                    else:
+                        filename = f"{experiment_id}_{timestamp}_t{elapsed_minutes}"
+                else:
+                    if iteration_counter is not None:
+                        filename = f"{timestamp}_sample_{iteration_counter}_t{elapsed_minutes}"
+                    else:
+                        filename = f"{timestamp}_t{elapsed_minutes}"
+                        
+            else:
+                # Fallback to original naming
+                if experiment_id:
+                    if iteration_counter is not None:
+                        filename = f"{experiment_id}_{timestamp}_sample_{iteration_counter}"
+                    else:
+                        filename = f"{experiment_id}_{timestamp}"
+                else:
+                    if iteration_counter is not None:
+                        filename = f"{timestamp}_sample_{iteration_counter}"
+                    else:
+                        filename = timestamp
+                
+            # Save spectrum and data to NMR_data subfolder (will overwrite if exists)
+            nmr.save_spectrum(nmr_data_path, filename)
+            nmr.save_data(nmr_data_path, filename)
+        
+        # Get spectrum data for analysis
+        # Load spectrum data from saved files (NMR60Pro API approach)
+        if save_data:
+            ppm_file = nmr_data_path / f"{filename}_freq_ppm.npy"
+            spec_file = nmr_data_path / f"{filename}_spec.npy"
+            if ppm_file.exists() and spec_file.exists():
+                # Use cached spectrum loading (handles complex data automatically)
+                ppm, spec_real = _get_cached_spectrum(ppm_file, spec_file)
+            else:
+                raise ValueError("Could not load spectrum data from saved files")
+        else:
+            raise ValueError("Cannot analyze spectrum without saving data first")
+        
+        # Analyze spectrum for conversion with plotting
+        analysis_result = calculate_polymerization_conversion(
+            ppm, spec_real, nmr_monomer_region, nmr_standard_region, nmr_noise_region,
+            t0_monomer_area, t0_standard_area, plot=True, title=f"Sample {iteration_counter}" if iteration_counter else "NMR Spectrum"
+        )
+        
+        # Generate and save spectrum plot with integration regions if analysis was successful
+        if analysis_result['success'] and save_data:
+            try:
+                import matplotlib.pyplot as plt
+                
+                fig, ax = plt.subplots(figsize=(12, 8))
+                
+                # Plot spectrum
+                ax.plot(ppm, spec_real, 'b-', linewidth=1, label='NMR Spectrum')
+                
+                # Highlight regions
+                ax.axvspan(nmr_monomer_region[0], nmr_monomer_region[1], alpha=0.2, color='red', label='Monomer Region')
+                ax.axvspan(nmr_standard_region[0], nmr_standard_region[1], alpha=0.2, color='green', label='Standard Region')
+                ax.axvspan(nmr_noise_region[0], nmr_noise_region[1], alpha=0.2, color='gray', label='Noise Region')
+                
+                # Add integration annotations if available
+                if analysis_result['plot_data']:
+                    plot_data = analysis_result['plot_data']
+                    
+                    # Add monomer peak annotations
+                    if plot_data['monomer_result'] and plot_data['monomer_result'][0]:
+                        for i, peak_ppm in enumerate(plot_data['monomer_result'][0]):
+                            ax.annotate(f'M{i+1}: {peak_ppm:.2f} ppm', 
+                                      xy=(peak_ppm, plot_data['monomer_result'][1][i]),
+                                      xytext=(peak_ppm+0.5, plot_data['monomer_result'][1][i]*1.1),
+                                      arrowprops=dict(arrowstyle='->', color='red'),
+                                      fontsize=10, color='red')
+                    
+                    # Add standard peak annotations
+                    if plot_data['standard_result'] and plot_data['standard_result'][0]:
+                        for i, peak_ppm in enumerate(plot_data['standard_result'][0]):
+                            ax.annotate(f'S{i+1}: {peak_ppm:.2f} ppm', 
+                                      xy=(peak_ppm, plot_data['standard_result'][1][i]),
+                                      xytext=(peak_ppm+0.5, plot_data['standard_result'][1][i]*1.1),
+                                      arrowprops=dict(arrowstyle='->', color='green'),
+                                      fontsize=10, color='green')
+                
+                # Add conversion info if available
+                if analysis_result['conversion_percent'] is not None:
+                    ax.text(0.02, 0.98, f"Conversion: {analysis_result['conversion_percent']:.1f}%", 
+                           transform=ax.transAxes, fontsize=12, verticalalignment='top',
+                           bbox=dict(boxstyle='round', facecolor='white', alpha=0.8))
+                
+                ax.set_xlabel('Chemical Shift (ppm)')
+                ax.set_ylabel('Intensity')
+                ax.set_title(f'{experiment_id} - Sample {iteration_counter}' if experiment_id and iteration_counter else f'Sample {iteration_counter}' if iteration_counter else 'NMR Spectrum')
+                ax.legend()
+                ax.grid(True, alpha=0.3)
+                
+                # Invert x-axis for NMR convention
+                ax.invert_xaxis()
+                
+                # Save plot (will overwrite if exists)
+                plot_filename = f"{filename}_integrated_spectrum.png"
+                plt.savefig(nmr_data_path / plot_filename, dpi=300, bbox_inches='tight')
+                plt.close()
+                
+                analysis_result['plot_filename'] = plot_filename
+                
+            except Exception as plot_error:
+                print(f"Warning: Could not generate spectrum plot: {plot_error}")
+                analysis_result['plot_filename'] = None
+        
+        # Add acquisition metadata
+        analysis_result.update({
+            'acquisition_success': True,
+            'acquisition_error': None,
+            'filename': filename if save_data else None,
+            'timestamp': timestamp,
+            'iteration_counter': iteration_counter,
+            'experiment_id': experiment_id
+        })
+        
+        return analysis_result
+        
+    except Exception as e:
+        return {
+            'conversion_percent': None,
+            'monomer_area': None,
+            'standard_area': None,
+            'monomer_standard_ratio': None,
+            't0_ratio': None,
+            'success': False,
+            'error_message': f"NMR acquisition failed: {str(e)}",
+            'plot_data': None,
+            'acquisition_success': False,
+            'acquisition_error': str(e),
+            'filename': None,
+            'timestamp': datetime.now().strftime("%Y%m%d_%H%M%S"),
+            'iteration_counter': iteration_counter,
+            'experiment_id': experiment_id
+        }
+
+def perform_nmr_shimming_with_retry(medusa, max_retries=5, shim_level=1):
+    """
+    Perform NMR shimming with retry logic.
+    
+    This function handles the complete shimming process including sample transfer,
+    shimming execution, and error handling with retries.
+    
+    Args:
+        medusa: Medusa instance
+        max_retries: Maximum number of shimming attempts
+        shim_level: Shimming level (default: 1)
+        
+    Returns:
+        dict: Shimming results with success status and error information
+    """
+    from src.liquid_transfers.liquid_transfers_utils import (
+        to_nmr_liquid_transfer_shimming,
+        from_nmr_liquid_transfer_shimming
+    )
+    
+    medusa.logger.info(f"Starting NMR shimming with level {shim_level} (max {max_retries} retries)...")
+    
+    for attempt in range(max_retries + 1):
+        try:
+            # Transfer deuterated solvent to NMR
+            to_nmr_liquid_transfer_shimming(medusa)
+            
+            # Run shimming
+            run_shimming(level=shim_level)
+            
+            # Transfer deuterated solvent back
+            from_nmr_liquid_transfer_shimming(medusa)
+            
+            medusa.logger.info(f"NMR shimming completed successfully on attempt {attempt + 1}")
+            return {
+                'success': True,
+                'attempts': attempt + 1,
+                'error_message': None
+            }
+            
+        except Exception as e:
+            error_msg = f"Shimming attempt {attempt + 1} failed: {str(e)}"
+            medusa.logger.warning(error_msg)
+            
+            if attempt < max_retries:
+                medusa.logger.info(f"Retrying shimming in 30 seconds...")
+                time.sleep(30)
+            else:
+                medusa.logger.error(f"All shimming attempts failed after {max_retries + 1} tries")
+                return {
+                    'success': False,
+                    'attempts': max_retries + 1,
+                    'error_message': f"Shimming failed after {max_retries + 1} attempts: {str(e)}"
+                }
+    
+    return {
+        'success': False,
+        'attempts': max_retries + 1,
+        'error_message': f"Shimming failed after {max_retries + 1} attempts"
+    }
+
+
+def acquire_t0_measurement_with_retry(medusa, monitoring_params, experiment_id, max_retries=3, nmr_data_base_path=None, iteration_counter=None):
+    """
+    Acquire a single t0 NMR measurement with retry logic.
+    
+    This function handles a single t0 measurement with proper error handling
+    and retry logic for both acquisition and peak detection failures.
+    
+    Args:
+        medusa: Medusa instance
+        monitoring_params: dict containing monitoring parameters
+        experiment_id: Experiment identifier for filenames
+        max_retries: Maximum number of retry attempts
+        nmr_data_base_path: Base path for saving NMR data
+        iteration_counter: Iteration counter for t0 measurement (1, 2, 3, etc.)
+        
+    Returns:
+        dict: t0 measurement results with success status and data
+    """
+    from src.liquid_transfers.liquid_transfers_utils import (
+        to_nmr_liquid_transfer_sampling,
+        from_nmr_liquid_transfer_sampling
+    )
+    
+    medusa.logger.info(f"Acquiring t0 NMR measurement {iteration_counter if iteration_counter else ''}...")
+    
+    # Transfer sample to NMR
+    to_nmr_liquid_transfer_sampling(medusa)
+    
+    # Try NMR acquisition with retry logic
+    for attempt in range(max_retries + 1):
+        try:
+            # Acquire and analyze spectrum
+            result = acquire_and_analyze_nmr_spectrum(
+                nmr_monomer_region=monitoring_params.get("nmr_monomer_region", (5.0, 6.0)),
+                nmr_standard_region=monitoring_params.get("nmr_standard_region", (6.5, 7.5)),
+                nmr_noise_region=monitoring_params.get("nmr_noise_region", (9.0, 10.0)),
+                nmr_scans=monitoring_params.get("nmr_scans", 32),
+                nmr_spectrum_center=monitoring_params.get("nmr_spectrum_center", 5),
+                nmr_spectrum_width=monitoring_params.get("nmr_spectrum_width", 12),
+                save_data=True,
+                nmr_data_base_path=nmr_data_base_path,
+                iteration_counter=iteration_counter,  # Pass iteration counter for t0 naming
+                experiment_id=experiment_id,
+                measurement_type="t0"  # Mark as t0 measurement
+            )
+            
+            # Check if acquisition was successful
+            if result['acquisition_success'] and result['success']:
+                # Transfer sample back to reaction vial
+                from_nmr_liquid_transfer_sampling(medusa)
+                
+                medusa.logger.info(f"t0 measurement successful on attempt {attempt + 1}")
+                return result
+            else:
+                raise Exception(result.get('error_message', 'Unknown acquisition error'))
+                
+        except Exception as e:
+            error_msg = f"t0 measurement attempt {attempt + 1} failed: {str(e)}"
+            medusa.logger.warning(error_msg)
+            
+            if attempt < max_retries:
+                medusa.logger.info(f"Retrying t0 measurement in 30 seconds...")
+                time.sleep(30)
+            else:
+                medusa.logger.error(f"All t0 measurement attempts failed after {max_retries + 1} tries")
+                # Transfer sample back to reaction vial even if failed
+                from_nmr_liquid_transfer_sampling(medusa)
+                return {
+                    'success': False,
+                    'acquisition_success': False,
+                    'error_message': f"t0 measurement failed after {max_retries + 1} attempts: {str(e)}",
+                    'monomer_area': None,
+                    'standard_area': None,
+                    'monomer_standard_ratio': None
+                }
+    
+    return {
+        'success': False,
+        'acquisition_success': False,
+        'error_message': f"t0 measurement failed after {max_retries + 1} attempts",
+        'monomer_area': None,
+        'standard_area': None,
+        'monomer_standard_ratio': None
+    }
+
+
+def acquire_multiple_t0_measurements(medusa, monitoring_params, experiment_id, num_measurements=3, nmr_data_base_path=None):
+    """
+    Acquire multiple t0 NMR measurements and calculate the average.
+    
+    This function performs multiple t0 measurements and returns both individual
+    results and the averaged baseline for conversion calculations.
+    
+    Args:
+        medusa: Medusa instance
+        monitoring_params: dict containing monitoring parameters
+        experiment_id: Experiment identifier for filenames
+        num_measurements: Number of t0 measurements to perform
+        nmr_data_base_path: Base path for saving NMR data
+        
+    Returns:
+        dict: Results containing individual measurements and averaged baseline
+    """
+    medusa.logger.info(f"Acquiring {num_measurements} t0 NMR measurements for baseline...")
+    
+    t0_measurements = []
+    successful_measurements = []
+    
+    for i in range(num_measurements):
+        medusa.logger.info(f"t0 measurement {i+1}/{num_measurements}")
+        
+        result = acquire_t0_measurement_with_retry(
+            medusa, monitoring_params, experiment_id, max_retries=3, 
+            nmr_data_base_path=nmr_data_base_path, iteration_counter=i+1  # Pass iteration counter (1, 2, 3...)
+        )
+        
+        t0_measurements.append(result)
+        
+        if result['success'] and result['monomer_area'] is not None and result['standard_area'] is not None:
+            successful_measurements.append(result)
+            medusa.logger.info(f"t0 measurement {i+1} successful: Monomer={result['monomer_area']:.2f}, Standard={result['standard_area']:.2f}")
+        else:
+            medusa.logger.warning(f"t0 measurement {i+1} failed: {result.get('error_message', 'Unknown error')}")
+    
+    # Calculate averages from successful measurements
+    if len(successful_measurements) > 0:
+        monomer_areas = [m['monomer_area'] for m in successful_measurements]
+        standard_areas = [m['standard_area'] for m in successful_measurements]
+        ratios = [m['monomer_standard_ratio'] for m in successful_measurements]
+        
+        avg_monomer_area = sum(monomer_areas) / len(monomer_areas)
+        avg_standard_area = sum(standard_areas) / len(standard_areas)
+        avg_ratio = sum(ratios) / len(ratios)
+        
+        medusa.logger.info(f"t0 baseline calculated from {len(successful_measurements)} successful measurements")
+        medusa.logger.info(f"Average: Monomer={avg_monomer_area:.2f}, Standard={avg_standard_area:.2f}, Ratio={avg_ratio:.4f}")
+        
+        return {
+            'success': True,
+            'individual_measurements': t0_measurements,
+            'successful_count': len(successful_measurements),
+            'total_count': num_measurements,
+            'average_monomer_area': avg_monomer_area,
+            'average_standard_area': avg_standard_area,
+            'average_ratio': avg_ratio,
+            'monomer_areas': monomer_areas,
+            'standard_areas': standard_areas,
+            'ratios': ratios
+        }
+    else:
+        medusa.logger.error("No successful t0 measurements obtained")
+        return {
+            'success': False,
+            'individual_measurements': t0_measurements,
+            'successful_count': 0,
+            'total_count': num_measurements,
+            'error_message': 'All t0 measurements failed'
+        }
+
 # --- Main/Test Block ---
 if __name__ == "__main__":
     # Example: batch process all spectra in a folder
     folder = r"C:\Users\xo37lay\source\repos\Auto_Polymerization\Auto_Polymerization\src\NMR\example_data_MMA_and_standard"
-    monomer_region = (5, 6.5)
-    std_region = (6.5, 8)
-    noise_region = (9, 10)  # Set to a region with no peaks
-    batch_analyze_nmr_folder(folder, monomer_region, std_region, noise_region, plot=True, save_plots=True)
+    nmr_monomer_region = (5, 6.5)
+    nmr_standard_region = (6.5, 8)
+    nmr_noise_region = (9, 10)  # Set to a region with no peaks
+    batch_analyze_nmr_folder(folder, nmr_monomer_region, nmr_standard_region, nmr_noise_region, plot=True, save_plots=True)

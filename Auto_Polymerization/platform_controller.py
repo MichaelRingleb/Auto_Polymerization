@@ -1,6 +1,7 @@
-#central unit to put together individual workflow steps into a complete workflow
-
-#imports the different workflow steps from the modules in the workflow_steps folder 
+"""
+Platform controller for the Auto_Polymerization workflow.
+Coordinates all workflow steps and manages the complete polymerization process.
+"""
 from re import M
 import sys
 import os
@@ -11,17 +12,15 @@ import time
 import matterlab_spectrometers as spectrometer
 import src.UV_VIS.uv_vis_utils as uv_vis
 import src.NMR.nmr_utils as nmr_utils
-# Import preparation module (filename must start with an underscore for valid import)
-import src.workflow_steps._0_preparation as prep
-# Import polymerization module
-import src.workflow_steps._1_polymerization_module as polymerization
-# Import user-editable platform configuration
-from users.config import platform_config as config
 
-#Setup logging for Medusa liquid transfers
-logger = logging.getLogger("platform_controller")
-logger.setLevel(logging.DEBUG)
-logger.addHandler(logging.StreamHandler())
+# Import user-editable platform configuration
+import users.config.platform_config as config
+
+#imports the different workflow steps from the modules in the workflow_steps folder 
+from src.workflow_steps._0_preparation import run_preparation_workflow
+from src.workflow_steps._1_polymerization_module import run_polymerization_workflow
+from src.workflow_steps._2_polymerization_monitoring import run_polymerization_monitoring
+
 
 def find_layout_json(config_folder='Auto_Polymerization/users/config/'):
     """
@@ -35,6 +34,19 @@ def find_layout_json(config_folder='Auto_Polymerization/users/config/'):
             return layout
     raise FileNotFoundError("No .json file found in the config folder.")
 
+
+def main():
+    """
+    Main platform controller function.
+    Executes the complete Auto_Polymerization workflow.
+    """
+
+    #Setup logging for Medusa liquid transfers
+    logger = logging.getLogger("platform_controller")
+    logger.setLevel(logging.DEBUG)
+    logger.addHandler(logging.StreamHandler())
+
+
 #Instantiate Medusa object
 layout = find_layout_json() 
 medusa = Medusa(
@@ -42,6 +54,97 @@ medusa = Medusa(
     logger=logger     
 )
 
+
+    logger.info(f"Starting Auto_Polymerization experiment: {config.experiment_id}")
+    
+    # Step 0: Preparation workflow
+    logger.info("Step 0: Running preparation workflow...")
+    try:
+        run_preparation_workflow(
+            medusa=medusa,
+            polymerization_temp=config.temperatures.get("polymerization_temp",20),
+            set_rpm=config.target_rpm.get("polymerization_rpm",600),
+            prime_transfer_params=config.prime_transfer_params,
+            run_minimal_test=False  # Set to True to run minimal workflow test
+        )
+
+        logger.info("Preparation workflow completed successfully.")
+    except Exception as e:
+        logger.error(f"Preparation workflow failed: {str(e)}")
+        return
+    
+    # Step 1: Polymerization with pre-polymerization setup
+    logger.info("Step 1: Running polymerization workflow with pre-polymerization setup...")
+    polymerization_result = run_polymerization_workflow(
+        medusa=medusa,
+        polymerization_params=config.polymerization_params,
+        polymerization_temp=config.temperatures["polymerization_temp"],
+        set_rpm=config.target_rpm["polymerization_rpm"],
+        deoxygenation_time=config.polymerization_params.get("deoxygenation_time", 300),
+        monitoring_params=config.polymerization_monitoring_params,  # Pass monitoring params for t0 measurements
+        experiment_id=config.experiment_id,
+        nmr_data_base_path=config.nmr_data_base_path
+    )
+    
+    if not polymerization_result['success']:
+        logger.error(f"Polymerization workflow failed: {polymerization_result['error_message']}")
+        return
+    
+    logger.info("Polymerization workflow completed successfully.")
+    
+    # Extract t0 baseline data for monitoring
+    t0_baseline = polymerization_result.get('t0_baseline')
+    if t0_baseline and t0_baseline['success']:
+        logger.info(f"t0 baseline established: {t0_baseline['successful_count']}/{t0_baseline['total_count']} successful measurements")
+    else:
+        logger.warning("No valid t0 baseline available for monitoring")
+    
+    # Step 2: Polymerization monitoring
+    logger.info("Step 2: Running polymerization monitoring...")
+    monitoring_result = run_polymerization_monitoring(
+        medusa=medusa,
+        monitoring_params=config.polymerization_monitoring_params,
+        experiment_id=config.experiment_id,
+        t0_baseline=t0_baseline,  # Pass t0 baseline data
+        nmr_data_base_path=config.nmr_data_base_path,
+        data_base_path=config.data_base_path
+    )
+    
+    if not monitoring_result['success']:
+        logger.error("Polymerization monitoring failed")
+        return
+    
+    logger.info("Polymerization monitoring completed successfully.")
+    logger.info(f"Final conversion: {monitoring_result['final_conversion']:.2f}%")
+    logger.info(f"Total measurements: {monitoring_result['total_measurements']}")
+    logger.info(f"Successful measurements: {monitoring_result['successful_measurements']}")
+    logger.info(f"Summary file: {monitoring_result['summary_file']}")
+    
+    # Step 3: Dialysis (placeholder for future implementation)
+    logger.info("Step 3: Dialysis workflow (placeholder)")
+    # TODO: Implement dialysis workflow
+    # from src.workflow_steps._2_dialysis_module import run_dialysis_workflow
+    # dialysis_result = run_dialysis_workflow(medusa, dialysis_params, experiment_id, base_path)
+    
+    # Step 4: Modification (placeholder for future implementation)
+    logger.info("Step 4: Modification workflow (placeholder)")
+    # TODO: Implement modification workflow
+    # from src.workflow_steps._3_modification_module import run_modification_workflow
+    # modification_result = run_modification_workflow(medusa, modification_params, experiment_id, base_path)
+    
+    # Step 5: Precipitation (placeholder for future implementation)
+    logger.info("Step 5: Precipitation workflow (placeholder)")
+    # TODO: Implement precipitation workflow
+    # from src.workflow_steps._4_precipitation_module import run_precipitation_workflow
+    # precipitation_result = run_precipitation_workflow(medusa, precipitation_params, experiment_id, base_path)
+    
+    # Step 6: Cleaning (placeholder for future implementation)
+    logger.info("Step 6: Cleaning workflow (placeholder)")
+    # TODO: Implement cleaning workflow
+    # from src.workflow_steps._5_cleaning_module import run_cleaning_workflow
+    # cleaning_result = run_cleaning_workflow(medusa, cleaning_params, experiment_id, base_path)
+    
+    logger.info(f"Auto_Polymerization experiment {config.experiment_id} completed successfully!")
 
 
 
@@ -74,24 +177,6 @@ polymerization.run_polymerization_workflow(
 
 
 
-iteration_counter = 0
-# Wait for NMR feedback regarding conversion before change to next step 
-while polymerization_conversion < 80:
-  iteration_counter += 1
-        # Pump 3 mL from reaction vial to NMR
-  medusa.transfer_volumetric(source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump", volume=2, transfer_type="liquid")
-        # Take NMR spectrum and evaluate signal at ca. 5.5 ppm with regards to signal intensity of same signal at beginning
-
-  nmr.set_hardlock_exp(num_scans=32, 
-                     solvent=HSolv.DMSO, 
-                     spectrum_center=5, 
-                     spectrum_width=12
-                     )
-  nmr.run()
-  nmr.proc_1D()   
-  nmr.save_data(base_path, "")  #filename should be timestamp + iteration_counter value
-  #furthermore apply the integration of the signal of the Monomer and the standard and the corresponding ratio and also set this into relation to the values from the t0 sample
-  #afterwards
 
 
         # Pump 3 mL from NMR back to reaction vial and flush rest into vial with argon
@@ -318,12 +403,18 @@ medusa.write_serial("COM12","GAS_OFF")
 
 
 #ready for next run
+    # Initialize medusa (this would be done by the actual platform)
+    # For now, we'll assume medusa is available
+    medusa = None  # Placeholder for actual medusa instance
 
 
 
 
 
 
+
+if __name__ == "__main__":
+  main()
 
 
 

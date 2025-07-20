@@ -105,9 +105,9 @@ def prime_tubing(medusa, prime_transfer_params):
         "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
         "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
         "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
-        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1),
-        
+        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)    
     })
+
     serial_communication_error_safe_transfer_volumetric(medusa, **{
         "source": "Monomer_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
         "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
@@ -115,9 +115,9 @@ def prime_tubing(medusa, prime_transfer_params):
         "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
         "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
         "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
-        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1),
-        
+        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)
     })
+
     serial_communication_error_safe_transfer_volumetric(medusa, **{
         "source": "Initiator_Vessel", "target": "Waste_Vessel", "pump_id": "Initiator_CTA_Pump",
         "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
@@ -125,28 +125,27 @@ def prime_tubing(medusa, prime_transfer_params):
         "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
         "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
         "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
-        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1),
-        
+        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)
     })
+
     serial_communication_error_safe_transfer_volumetric(medusa, **{
         "source": "CTA_Vessel", "target": "Waste_Vessel", "pump_id": "Initiator_CTA_Pump",
         "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
         "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
         "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
-        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1)
+        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
         "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
-        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1),
-
+        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)
     })
+
     serial_communication_error_safe_transfer_volumetric(medusa, **{
         "source": "Modification_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
         "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
         "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
         "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
-        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1)
+        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
         "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
-        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1),
-        
+        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)        
     })
 
 
@@ -197,10 +196,10 @@ def run_preparation_workflow(
         draw_speeds: dict mapping component names to draw speeds (must be supplied by caller)
         dispense_speeds: dict mapping component names to dispense speeds (must be supplied by caller)
     Notes:
-        This function orchestrates the preparation phase of the polymerization reaction.
-        It includes shimming the NMR spectrometer with deuterated solvent, removing the reaction vial from the heatplate, preheating the heatplate,
+    This function orchestrates the preparation phase of the polymerization reaction.
+    It includes shimming the NMR spectrometer with deuterated solvent, removing the reaction vial from the heatplate, preheating the heatplate, 
         and priming the tubings from the reaction component stock vials to the pumps.
-        The minimal workflow test gives the user the chance to check the hardware before the actual workflow starts.
+    The minimal workflow test gives the user the chance to check the hardware before the actual workflow starts.
         All steps are executed in parallel using threading and both must finish before returning.
         
         COM PORT CONFLICT RESOLUTION:

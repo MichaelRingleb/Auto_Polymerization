@@ -16,6 +16,11 @@ Do not rename or remove keys unless you are also updating the workflow code.
 """
 
 
+# Experiment ID and base path for data storage
+experiment_id= "MRG_061_I"
+data_base_path = "users/data"
+nmr_data_base_path = "users/data/NMR_data"  # Specific NMR data directory
+
 
 #Parameters for the preparation workflow substep, change, if you have longer lines, which are not sufficiently primed with the current volumes 
 prime_transfer_params = { 
@@ -66,7 +71,20 @@ timings = {
     "functionalization_interval_sec": 180,  # 3 minutes
     "functionalization_max_iterations": 200,
     "precipitation_wait_sec": 600,
-    
+}
+
+# Polymerization monitoring parameters
+polymerization_monitoring_params = {
+    "nmr_monomer_region": (5.0, 6.0),  # ppm range for monomer peaks
+    "nmr_standard_region": (6.5, 7.5),  # ppm range for internal standard peaks
+    "nmr_noise_region": (9.0, 10.0),  # ppm range for baseline noise calculation
+    "nmr_scans": 32,  # Number of NMR scans per measurement
+    "nmr_spectrum_center": 5,  # ppm center of NMR spectrum
+    "nmr_spectrum_width": 12,  # ppm width of NMR spectrum
+    "measurement_interval_minutes": 10,  # Time between measurements
+    "shimming_interval": 4,  # Reshim every N measurements
+    "conversion_threshold": 80,  # Stop at this conversion %
+    "max_monitoring_hours": 20,  # Maximum monitoring time, after this time the workflow will stop and continue with the next step
 }
 
 # Temperatures for various steps (C)
@@ -82,8 +100,7 @@ target_rpm = {
     "cleaning_rpm": 300,
 }
 
-
-#Parameters for the analytical transfers (NMR shimming, NMR sampling, UV-VIS)
+# Parameters for the analytical transfers (NMR shimming, NMR sampling, UV-VIS)
 #change if you changed the length of the tubing or the volume of the NMR cell 
 nmr_transfer_params = {
     # Parameters for NMR shimming transfer (deuterated solvent)
@@ -91,6 +108,9 @@ nmr_transfer_params = {
         "volume": 2.1,
         "draw_speed": 0.07,
         "dispense_speed": 0.07,
+        "flush": 1,
+        "flush_volume": 5,
+        "flush_speed": 0.15,
         "post_rinse": 1,
         "post_rinse_volume": 1.5,
         "post_rinse_speed": 0.1,
@@ -101,7 +121,9 @@ nmr_transfer_params = {
     "sampling": {
         "volume": 2.1,
         "draw_speed": 0.05,
-        "dispense_speed": 0.05,
+        "dispense_speed": 0.05,"flush": 1,
+        "flush_volume": 5,
+        "flush_speed": 0.15,
         "post_rinse": 1,
         "post_rinse_volume": 2.5,
         "post_rinse_speed": 0.1,
@@ -123,31 +145,7 @@ uv_vis_transfer_params = {
 
 
 
-draw_speeds = {
-    "solvent": 0.08,
-    "monomer": 0.08,
-    "initiator": 0.08,
-    "cta": 0.08,
-    "modification": 0.08,
-    "nmr": 0.05,
-    "uv_vis": 0.03,
-    "functionalization": 0.03,
-    "precipitation": 0.16,
-    "cleaning": 0.16,
-}
 
-dispense_speeds = {
-    "solvent": 0.13,
-    "monomer": 0.13,
-    "initiator": 0.13,
-    "cta": 0.13,
-    "modification": 0.05,
-    "nmr": 0.05,
-    "uv_vis": 0.016,
-    "functionalization": 0.032,
-    "precipitation": 0.33,
-    "cleaning": 0.05,
-}
 
 # Default volumes for different transfers / components
 default_volumes = {
