@@ -1,34 +1,39 @@
 """
-Modification Workflow Module
+Auto_Polymerization Modification Module
 
-This module implements the modification/functionalization workflow for the Auto_Polymerization platform.
-It includes deoxygenation, UV-VIS reference measurement, modification reagent addition, 
-UV-VIS monitoring until reaction completion, and post-modification dialysis.
+This module implements the complete modification/functionalization workflow for the Auto_Polymerization platform.
+It handles UV-VIS-based functionalization reactions with comprehensive monitoring and analysis.
 
 Key Features:
-    - Argon deoxygenation of reaction mixture
-    - UV-VIS reference spectrum acquisition with pure solvent
-    - Modification reagent addition with proper flushing
-    - UV-VIS monitoring with absorbance stability detection
-    - Post-modification dialysis using existing dialysis workflow
-    - Comprehensive error handling and retry logic
-    - Detailed summary file generation (txt and csv)
-    - Integration with medusa hardware control framework
+- Active argon deoxygenation of reaction mixture
+- UV-VIS reference spectrum acquisition with pure solvent
+- UV-VIS t0 spectrum acquisition with reaction mixture
+- Modification reagent addition with proper flushing and rinsing
+- UV-VIS monitoring with absorbance stability detection
+- Post-modification dialysis using existing dialysis workflow
+- Comprehensive error handling and retry logic
+- Detailed summary file generation (txt and csv formats)
+- Integration with medusa hardware control framework
+- Error-safe liquid transfers with COM port conflict handling
 
 Workflow Steps:
-    1. Deoxygenation with argon gas
-    2. UV-VIS reference spectrum (pure solvent)
-    3. UV-VIS t0 spectrum (reaction mixture)
-    4. Modification reagent addition
-    5. UV-VIS monitoring until reaction completion
-    6. Post-modification dialysis
-    7. Summary file generation
+1. Deoxygenation with argon gas (active pumping)
+2. UV-VIS reference spectrum (pure solvent baseline)
+3. UV-VIS t0 spectrum (reaction mixture before modification)
+4. Modification reagent addition with comprehensive cleaning
+5. UV-VIS monitoring until reaction completion (absorbance stability)
+6. Post-modification dialysis for purification
+7. Summary file generation with detailed results
+
+All liquid transfers use error-safe functions with COM port conflict handling.
+All parameters are configurable through platform_config.py.
 
 Dependencies:
-    - medusa: Hardware control framework
-    - src.UV_VIS.uv_vis_utils: UV-VIS spectroscopy utilities
-    - src.workflow_steps._3_dialysis_module: Dialysis workflow
-    - users.config.platform_config: Configuration parameters
+- medusa: Hardware control framework
+- src.UV_VIS.uv_vis_utils: UV-VIS spectroscopy utilities
+- src.liquid_transfers.liquid_transfers_utils: Error-safe transfer functions
+- src.workflow_steps._3_dialysis_module: Dialysis workflow
+- users.config.platform_config: Configuration parameters
 
 Author: Michael Ringleb (with help from cursor.ai)
 Date: [Current Date]
@@ -54,20 +59,21 @@ import users.config.platform_config as config
 
 
 
-
-# Deoxygenation function moved to liquid_transfers_utils.py
-# Use: deoxygenate_reaction_mixture(medusa, deoxygenation_time_sec, active_pumping=True)
-
-
 def setup_uv_vis_reference(medusa: Medusa) -> Tuple[bool, Optional[str]]:
     """
     Set up UV-VIS reference spectrum with pure solvent.
+    
+    This function transfers pure NMR solvent (typically deuterated DMSO) to the UV-VIS
+    cell and acquires a reference spectrum. This reference is used to calculate
+    absorbance values for reaction samples by providing a baseline for the solvent.
     
     Args:
         medusa: Medusa object for hardware control
         
     Returns:
         Tuple[bool, Optional[str]]: (success, filename if successful)
+            - success: True if reference spectrum was acquired successfully
+            - filename: Path to the saved reference spectrum file, or None if failed
     """
     
     try:
@@ -95,11 +101,17 @@ def setup_uv_vis_t0(medusa: Medusa) -> Tuple[bool, Optional[str]]:
     """
     Set up UV-VIS t0 spectrum with reaction mixture.
     
+    This function transfers reaction mixture to the UV-VIS cell and acquires
+    a t0 spectrum before modification reagent addition. This spectrum serves
+    as the baseline for monitoring the modification reaction progress.
+    
     Args:
         medusa: Medusa object for hardware control
         
     Returns:
         Tuple[bool, Optional[str]]: (success, filename if successful)
+            - success: True if t0 spectrum was acquired successfully
+            - filename: Path to the saved t0 spectrum file, or None if failed
     """
 
     
@@ -131,6 +143,10 @@ def add_modification_reagent(medusa: Medusa, modification_params: Dict) -> bool:
     """
     Add modification reagent to the reaction vial.
     
+    This function uses error-safe transfer functions to add the modification
+    reagent to the reaction vial. It ensures proper flushing and rinsing
+    of the UV-VIS cell to remove any residual solvent or reaction products.
+    
     Args:
         medusa: Medusa object for hardware control
         modification_params: Modification parameters from config
@@ -157,6 +173,12 @@ def add_modification_reagent(medusa: Medusa, modification_params: Dict) -> bool:
 def monitor_modification_reaction(medusa: Medusa, modification_params: Dict) -> Dict:
     """
     Monitor the modification reaction using UV-VIS spectroscopy.
+    
+    This function continuously monitors the UV-VIS absorbance of the reaction
+    mixture to detect the completion of the functionalization reaction.
+    It uses a stability-based approach, where the reaction is considered
+    complete when the absorbance remains stable within a tolerance for
+    a specified number of measurements.
     
     Args:
         medusa: Medusa object for hardware control
@@ -249,6 +271,9 @@ def generate_modification_summary(experiment_id: str, data_base_path: str,
     """
     Generate summary files for the modification workflow.
     
+    This function creates detailed text and CSV summary files for the modification
+    workflow, including parameters, results, and measurement history.
+    
     Args:
         experiment_id: Experiment identifier
         data_base_path: Base path for data storage
@@ -333,6 +358,11 @@ def run_modification_workflow(medusa: Medusa,
                             uv_vis_data_base_path: Optional[str] = None) -> Dict:
     """
     Run the complete modification workflow.
+    
+    This function orchestrates the entire modification workflow, including
+    deoxygenation, UV-VIS setup, modification reagent addition, monitoring,
+    and post-modification dialysis. It uses configurable parameters and
+    handles errors with retry logic.
     
     Args:
         medusa: Medusa object for hardware control

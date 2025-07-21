@@ -1,29 +1,11 @@
-# Auto_Polymerization
+# Auto_Polymerization Platform
 
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This repository contains the **Auto_Polymerization platform** for automated polymer synthesis and characterization.
+**Automated Polymer Synthesis and Characterization Platform**
 
-## 🚀 Quick Start
-
-### Device & Workflow Testing
-
-To quickly check your hardware and workflow integration, use the minimal workflow test:
-
-```bash
-cd Auto_Polymerization/tests
-python test_minimal_workflow.py
-```
-
-This script will:
-- Test heat/stir and temperature/RPM readout
-- Perform a simple volumetric pump transfer
-- Test all syringe and peristaltic pumps with a volumetric transfer
-- Test UV-VIS spectrometer (reference spectrum)
-- Test SerialDevice commands (gas valve, precipitation valve, linear actuator)
-
-**You can also run this script from the `demo/` folder.**
+The Auto_Polymerization platform is a comprehensive automated system for polymer synthesis, monitoring, purification, and functionalization. It integrates NMR spectroscopy, UV-VIS spectroscopy, and automated liquid handling to provide end-to-end polymer synthesis workflows.
 
 ---
 
@@ -69,8 +51,6 @@ pip install matterlab_serial_device
 
 https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices
 
-
-
 **Spectrometers:**
 
 - **NMR (Nanalysis Benchtop):**
@@ -80,14 +60,12 @@ https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices
   git checkout develop
   pip install -e .
 
-
 - **UV-VIS (Thorlabs CCS200):**
 
   git clone https://gitlab.com/aspuru-guzik-group/self-driving-lab/devices/spectrometer
   cd spectrometer
   git checkout develop
   pip install -e .
-
 
 > **Note:** If access is not public, contact Han Hao at University of Toronto.
 
@@ -141,7 +119,6 @@ default_volumes['monomer'] = 6
 Potentially you need to update the `DLL_FILE` value in `ccs_spectrometer.py` in the matterlab package:
 The correct file path is typically: 
 DLL_FILE = Path(r"C:\Program Files\IVI Foundation\VISA\Win64\Bin\TLCCS_64.dll")
-#
 
 **Arduino Setup:**
 1. Install Arduino IDE on your PC
@@ -185,31 +162,124 @@ Auto_Polymerization/
 ├── 📂 demo/                          # Demo and minimal workflow test scripts
 │   └── 🧪 test_minimal_workflow.py    # Minimal workflow and device test
 ├── 📂 tests/                         # Test scripts
-│   └── 🧪 test_minimal_workflow.py    # Minimal workflow and device test
+│   ├── 🧪 test_minimal_workflow.py    # Minimal workflow and device test
+│   ├── 🧪 test_modification_workflow.py # Modification workflow unit tests
+│   └── 🧪 test_uv_vis_utils.py        # UV-VIS utilities unit tests
 ├── 📂 src/                           # Source code modules
 │   ├── 🔬 UV_VIS/                    # UV-VIS spectroscopy utilities
+│   │   ├── uv_vis_utils.py           # UV-VIS data acquisition and analysis
+│   │   └── ERROR_SUMMARY.md          # Error handling documentation
 │   ├── 💧 liquid_transfers/          # Liquid transfer modules
+│   │   └── liquid_transfers_utils.py # Error-safe transfer functions
 │   ├── 🧲 NMR/                       # NMR analysis utilities and example data
+│   │   ├── nmr_utils.py              # NMR spectrum analysis and processing
+│   │   ├── examples/                 # Example NMR analysis scripts
+│   │   └── example_data_*/           # Example NMR data sets
 │   └── ⚙️ linear_actuator_and_valves/ # Hardware control modules
 ├── 📂 workflow_steps/                # Workflow step modules
+│   ├── _0_preparation.py             # Hardware setup and NMR shimming
+│   ├── _1_polymerization_module.py   # Polymerization reaction setup
+│   ├── _2_polymerization_monitoring.py # NMR-based reaction monitoring
+│   ├── _3_dialysis_module.py         # Polymer purification
+│   ├── _4_modification_module.py     # UV-VIS-based functionalization
+│   ├── _5_precipitation_module.py    # Polymer precipitation (placeholder)
+│   └── _6_cleaning_module.py         # System cleaning (placeholder)
 ├── 📂 users/                         # User configuration and data
 │   ├── ⚙️ config/                    # Configuration files
-│   │   └── platform_config.py         # User-editable platform configuration (speeds, volumes, etc.)
+│   │   ├── platform_config.py        # User-editable platform configuration
+│   │   ├── fluidic_design_autopoly.json # Hardware layout configuration
+│   │   └── old_designs/              # Previous hardware configurations
 │   ├── 📊 data/                      # Data storage
+│   ├── 📚 docs/                      # Documentation
 │   └── 🔧 setup/                     # Setup files
-├── 📂 Data/                          # Experimental data
-└── 🎮 platform_controller.py         # Main workflow controller
+│       ├── Arduino_contacts_overview_2025_06_27_bb.jpg
+│       ├── Flow paths.pptx
+│       ├── Linear_motor_and_relays.ino
+│       └── medusa_designer_setup.py
+├── 🎮 platform_controller.py         # Main workflow controller
+├── 🔄 controler_fallback.py          # Legacy controller with pseudo-code
+└── 📄 setup.py                       # Package setup
 ```
 
 ---
 
-## 🚦 Recommended Workflow
+## 🚦 Complete Workflow Overview
 
-1. **Install dependencies** as described below
+The Auto_Polymerization platform provides a complete automated workflow for polymer synthesis:
+
+### **Workflow Steps:**
+
+1. **Preparation** (`_0_preparation.py`)
+   - Hardware initialization and setup
+   - NMR shimming with deuterated solvent
+   - System priming and cleaning
+
+2. **Polymerization** (`_1_polymerization_module.py`)
+   - Component transfer (solvent, monomer, CTA, initiator)
+   - Active deoxygenation with argon gas
+   - Pre-polymerization NMR t0 measurements
+   - Reaction initiation with temperature control
+
+3. **Monitoring** (`_2_polymerization_monitoring.py`)
+   - NMR-based conversion tracking
+   - Automated shimming at regular intervals
+   - Real-time conversion calculation
+   - Stopping criteria based on conversion threshold
+
+4. **Dialysis** (`_3_dialysis_module.py`)
+   - Polymer purification using peristaltic pumps
+   - NMR-based purification monitoring
+   - Configurable stopping (noise-based or time-based)
+   - Automated system cleanup
+
+5. **Modification** (`_4_modification_module.py`)
+   - UV-VIS-based functionalization reaction
+   - Reference spectrum acquisition
+   - Absorbance monitoring for reaction completion
+   - Post-modification dialysis
+
+6. **Post-Modification Dialysis** (Platform Controller)
+   - Additional purification after modification
+   - Time-based stopping only
+   - System preparation for next run
+
+### **Key Features:**
+
+- **Error-Safe Transfers**: All liquid transfers use robust error handling with COM port conflict resolution
+- **Config-Driven**: All parameters configurable through `platform_config.py`
+- **Modular Design**: Each workflow step is a separate, testable module
+- **Comprehensive Logging**: Detailed logging throughout all operations
+- **Data Management**: Organized data storage with summary file generation
+
+---
+
+## 🚀 Getting Started
+
+### **Recommended Workflow:**
+
+1. **Install dependencies** as described in the [📦 Required Packages and Setup](#-required-packages-and-setup) section
 2. **Configure your hardware** using the setup files in `users/setup/`
 3. **Edit `users/config/platform_config.py`** to set your workflow parameters (speeds, volumes, etc.)
 4. **Test your devices and workflow** using `test_minimal_workflow.py` in `tests/` 
 5. **Run experiments** using `platform_controller.py`
+
+### **Quick Start:**
+
+To quickly check your hardware and workflow integration, use the minimal workflow test:
+
+```bash
+cd Auto_Polymerization/tests
+python test_minimal_workflow.py
+```
+
+This script will:
+- Test heat/stir and temperature/RPM readout
+- Perform a simple volumetric pump transfer
+- Test all syringe and peristaltic pumps with a volumetric transfer
+- Test UV-VIS spectrometer (reference spectrum)
+- Test SerialDevice commands (gas valve, precipitation valve, linear actuator)
+
+**You can also run this script from the `demo/` folder.**
 
 ---
 
@@ -219,18 +289,24 @@ Auto_Polymerization/
 |-----------|-------------|----------|
 | **🎮 Platform Controller** | Main workflow orchestration | `platform_controller.py` |
 | **🧪 Minimal Workflow Test** | End-to-end device and workflow test | `tests/test_minimal_workflow.py` |
-| **🔬 UV-VIS Utilities** | Spectroscopy data acquisition and analysis | `src/UV_VIS/` |
-| **🧲 NMR Utilities** | NMR spectrum analysis and batch processing | [`Auto_Polymerization/src/NMR/nmr_utils.py`](Auto_Polymerization/src/NMR/nmr_utils.py) |
+| **🔬 UV-VIS Utilities** | Spectroscopy data acquisition and analysis | `src/UV_VIS/uv_vis_utils.py` |
+| **🧲 NMR Utilities** | NMR spectrum analysis and batch processing | `src/NMR/nmr_utils.py` |
+| **💧 Liquid Transfer Utils** | Error-safe transfer functions | `src/liquid_transfers/liquid_transfers_utils.py` |
 | **⚙️ Workflow Modules** | Individual workflow steps | `workflow_steps/` |
+| **⚙️ Configuration** | User-editable parameters | `users/config/platform_config.py` |
 
 ---
 
 ## 📚 Documentation
 
-| Topic | Location |
-|-------|----------|
-| **🔬 UV-VIS Utilities** | [`Auto_Polymerization/src/UV_VIS/uv_vis_utils.py`](Auto_Polymerization/src/UV_VIS/uv_vis_utils.py) |
-| **⚙️ Workflow Steps** | Individual modules in `workflow_steps/` |
+| Topic | Location | Description |
+|-------|----------|-------------|
+| **🔬 UV-VIS Utilities** | `src/UV_VIS/uv_vis_utils.py` | UV-VIS data acquisition and analysis |
+| **🧲 NMR Utilities** | `src/NMR/nmr_utils.py` | NMR spectrum analysis and processing |
+| **💧 Liquid Transfers** | `src/liquid_transfers/liquid_transfers_utils.py` | Error-safe transfer functions |
+| **⚙️ Workflow Steps** | `workflow_steps/` | Individual workflow modules |
+| **🎮 Platform Controller** | `platform_controller.py` | Main workflow orchestration |
+| **⚙️ Configuration** | `users/config/platform_config.py` | User-editable parameters |
 
 ---
 
@@ -244,27 +320,35 @@ pip install -e .
 
 Changes to the source code will be picked up immediately.
 
+### **Testing:**
+
+Run unit tests for individual components:
+
+```bash
+# Test modification workflow
+python -m pytest tests/test_modification_workflow.py
+
+# Test UV-VIS utilities
+python -m pytest tests/test_uv_vis_utils.py
+
+# Test minimal workflow
+python tests/test_minimal_workflow.py
+```
+
+### **Code Quality:**
+
+- All functions include comprehensive docstrings
+- Error-safe transfer functions with retry logic
+- Modular design for easy testing and maintenance
+- Configuration-driven parameters for flexibility
+
+---
+
 ## 📄 License
 
 [MIT License](LICENSE.txt) - see the [LICENSE.txt](LICENSE.txt) file for details.
 
-## 🆘 Support
-
-For issues and questions:
-
-1. **Run the minimal workflow test** in `tests/` or `demo/`
-2. **Check the troubleshooting sections** in the README
-3. **Verify hardware connections** and configuration
-4. **Open an issue** on GitHub or contact the maintainers
-
 ---
-
-also: pip install lmfit and pybaselines for nmr 
-
-
-
-**❓ Questions or issues?**  
-Please [open an issue](https://github.com/your-repo/issues) on GitHub or contact the maintainers.
 
 ## 🧪 NMR Analysis Utilities
 
@@ -279,5 +363,19 @@ python -m src.NMR.nmr_utils
 ```
 
 This will process all spectra in the example data folder and output integration results and plots.
+
+---
+
+## 🆘 Support
+
+For issues and questions:
+
+1. **Run the minimal workflow test** in `tests/` or `demo/`
+2. **Check the troubleshooting sections** in the README
+3. **Verify hardware connections** and configuration
+4. **Open an issue** on GitHub or contact the maintainers
+
+**❓ Questions or issues?**  
+Please [open an issue](https://github.com/your-repo/issues) on GitHub or contact the maintainers.
 
 

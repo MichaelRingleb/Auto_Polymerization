@@ -1,16 +1,30 @@
 """
-_0_preparation.py
+Auto_Polymerization Preparation Module
 
-Preparation module for the Auto_Polymerization workflow.
-Encapsulates all steps required to prepare the system before polymerization, including NMR shimming, vial handling, heatplate preheating, gas valve control, and tubing priming.
+This module handles all preparation steps required before polymerization, including:
+- NMR shimming with deuterated solvent
+- Reaction vial positioning and heatplate preheating
+- Gas valve control for deoxygenation
+- System tubing priming and cleaning
+- Hardware initialization and setup
 
-All user-editable settings (draw_speeds, dispense_speeds, volumes, temperatures, etc.) should be set in users/config/platform_config.py and supplied as arguments from the controller.
+Key Features:
+- Parallel NMR shimming and preparation workflows
+- Error-safe liquid transfers with COM port conflict handling
+- Configurable parameters for all operations
+- Comprehensive logging and error reporting
+- Modular design for easy testing and maintenance
 
-All priming and analytical transfers now use serial_communication_error_safe_transfer_volumetric, a direct, parameter-preserving,
-error-safe wrapper for medusa.transfer_volumetric. All transfer parameters (source, target, pump_id, transfer_type, volume, etc.)
-are passed through unchanged. The only difference is robust retry logic for COM port conflicts.
+All user-editable settings (draw_speeds, dispense_speeds, volumes, temperatures, etc.) 
+should be set in users/config/platform_config.py and supplied as arguments from the controller.
 
-Supported keys for draw_speeds and dispense_speeds include: 'solvent', 'monomer', 'initiator', 'cta', 'modification', 'nmr', 'uv_vis'.
+All priming and analytical transfers use serial_communication_error_safe_transfer_volumetric, 
+a direct, parameter-preserving, error-safe wrapper for medusa.transfer_volumetric. 
+All transfer parameters are passed through unchanged. The only difference is robust 
+retry logic for COM port conflicts.
+
+Supported keys for draw_speeds and dispense_speeds include: 
+'solvent', 'monomer', 'initiator', 'cta', 'modification', 'nmr', 'uv_vis'.
 
 All functions are designed to be called from a workflow controller script.
 
@@ -28,7 +42,18 @@ The retry mechanism:
 
 This approach allows the parallel preparation workflow (NMR shimming + other prep steps) to
 run without COM port conflicts, automatically waiting for transfers to complete before retrying.
+
+Dependencies:
+- medusa: Hardware control framework
+- src.liquid_transfers.liquid_transfers_utils: Error-safe transfer functions
+- src.NMR.nmr_utils: NMR shimming and analysis utilities
+- users.config.platform_config: Configuration parameters
+
+Author: Michael Ringleb (with help from cursor.ai)
+Date: [Current Date]
+Version: 1.0
 """
+
 import time
 from serial.serialutil import SerialException
 from src.liquid_transfers.liquid_transfers_utils import (
@@ -41,18 +66,23 @@ import sys
 import os
 import threading
 
-# All calls to serial_communication_error_safe_transfer_volumetric now use the imported version.
-# Update any docstrings/comments to note the function is imported from liquid_transfers_utils.
-
 
 def shim_nmr_sample(medusa, shim_level=2, shim_repeats=2):
     """
     Transfer deuterated solvent to NMR, perform shimming, and return solvent to the original vessel.
-    Uses modular analytical transfer functions for shimming.
+    
+    This function performs NMR shimming to optimize magnetic field homogeneity for high-quality
+    NMR spectra. It transfers deuterated solvent (typically DMSO-d6) to the NMR spectrometer,
+    performs shimming at the specified level, then returns the solvent to preserve the expensive
+    deuterated material.
+    
     Args:
-        medusa: Medusa instance for liquid handling
-        shim_level: Shimming level (default 2)
-        shim_repeats: Number of shimming repetitions (default 2)
+        medusa: Medusa instance for hardware control
+        shim_level (int): Shimming level (default: 2)
+        shim_repeats (int): Number of shimming repetitions (default: 2)
+        
+    Returns:
+        None: Shimming operations are performed via hardware control
     """
     import src.NMR.nmr_utils as nmr
     medusa.logger.info("Transferring deuterated solvent to NMR for shimming...")
@@ -67,10 +97,19 @@ def shim_nmr_sample(medusa, shim_level=2, shim_repeats=2):
 def prepare_reaction_vial_and_heatplate(medusa, polymerization_temp, set_rpm):
     """
     Move the reaction vial out of the heatplate and preheat the heatplate.
+    
+    This function positions the reaction vial for component addition and preheats
+    the heatplate to the target polymerization temperature. The vial is moved out
+    of the heatplate to allow for safe component addition, then the heatplate is
+    preheated to minimize temperature equilibration time during polymerization.
+    
     Args:
-        medusa: Medusa instance
-        polymerization_temp: Target temperature for polymerization
-        set_rpm: Stirring speed (rpm)
+        medusa: Medusa instance for hardware control
+        polymerization_temp (float): Target temperature for polymerization (°C)
+        set_rpm (int): Stirring speed for the reaction (rpm)
+        
+    Returns:
+        None: Hardware operations are performed via Medusa control
     """
     medusa.logger.info("Moving reaction vial out of heatplate...")
     medusa.write_serial("Linear_Actuator", "2000")
@@ -80,9 +119,17 @@ def prepare_reaction_vial_and_heatplate(medusa, polymerization_temp, set_rpm):
 
 def open_gas_valve(medusa):
     """
-    Open the gas valve (default mode: gas flow blocked).
+    Open the gas valve for deoxygenation operations.
+    
+    This function opens the gas valve to allow argon flow for deoxygenation
+    of the reaction mixture. The valve is typically in a closed state by default
+    to prevent unwanted gas flow.
+    
     Args:
-        medusa: Medusa instance
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Valve operation is performed via serial communication
     """
     medusa.logger.info("Opening gas valve...")
     medusa.write_serial("Gas_Valve", "GAS_ON")
@@ -91,12 +138,22 @@ def open_gas_valve(medusa):
 def prime_tubing(medusa, prime_transfer_params):
     """
     Prime tubing from each vessel to waste using the appropriate pumps.
-    All priming steps now use serial_communication_error_safe_transfer_volumetric, a direct, parameter-preserving,
-    error-safe wrapper for medusa.transfer_volumetric. All transfer parameters are passed through unchanged.
-    The only difference is robust retry logic for COM port conflicts (PermissionError).
+    
+    This function performs comprehensive tubing priming to ensure all fluid paths
+    are properly filled and free of air bubbles. It primes each pump path from
+    its source vessel to waste, using configurable parameters for volumes, speeds,
+    and flush operations.
+    
+    All priming steps use serial_communication_error_safe_transfer_volumetric for
+    robust error handling of COM port conflicts.
+    
     Args:
-        medusa: Medusa instance
-        prime_transfer_params: dict containing all transfer parameters for all priming steps
+        medusa: Medusa instance for hardware control
+        prime_transfer_params (dict): Dictionary containing all transfer parameters
+            for priming operations including volumes, speeds, flush settings, etc.
+            
+    Returns:
+        None: Priming operations are performed via error-safe transfer functions
     """
     serial_communication_error_safe_transfer_volumetric(medusa, **{
         "source": "Solvent_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",

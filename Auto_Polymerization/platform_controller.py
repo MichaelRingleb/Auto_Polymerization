@@ -1,7 +1,36 @@
 """
-Platform controller for the Auto_Polymerization workflow.
-Coordinates all workflow steps and manages the complete polymerization process.
+Auto_Polymerization Platform Controller
+
+This module serves as the main orchestrator for the complete Auto_Polymerization workflow.
+It coordinates all workflow steps including preparation, polymerization, monitoring, 
+dialysis, modification, and post-modification dialysis.
+
+The platform controller manages:
+- Hardware initialization and configuration
+- Workflow step execution and error handling
+- Data flow between workflow modules
+- Logging and status reporting
+- Configuration management
+
+Workflow Steps:
+1. Preparation: Hardware setup, priming, and NMR shimming
+2. Polymerization: Component transfer, deoxygenation, and reaction initiation
+3. Monitoring: NMR-based polymerization progress tracking
+4. Dialysis: Polymer purification using peristaltic pumps
+5. Modification: UV-VIS-based functionalization reaction
+6. Post-modification dialysis: Additional purification after modification
+
+Dependencies:
+- medusa: Hardware control framework
+- matterlab_spectrometers: Spectroscopy control
+- src.workflow_steps.*: Individual workflow modules
+- users.config.platform_config: Configuration parameters
+
+Author: Michael Ringleb (with help from cursor.ai)
+Date: [Current Date]
+Version: 1.0
 """
+
 from re import M
 import sys
 import os
@@ -16,7 +45,7 @@ import src.NMR.nmr_utils as nmr_utils
 # Import user-editable platform configuration
 import users.config.platform_config as config
 
-#imports the different workflow steps from the modules in the workflow_steps folder 
+# Import workflow step modules
 from src.workflow_steps._0_preparation import run_preparation_workflow
 from src.workflow_steps._1_polymerization_module import run_polymerization_workflow
 from src.workflow_steps._2_polymerization_monitoring import run_polymerization_monitoring
@@ -27,7 +56,18 @@ from src.workflow_steps._4_modification_module import run_modification_workflow
 def find_layout_json(config_folder='Auto_Polymerization/users/config/'):
     """
     Search for the first .json file in the config folder and return its path.
-    Raises FileNotFoundError if no .json file is found.
+    
+    This function automatically discovers the Medusa layout configuration file
+    that defines the hardware connections and vessel configurations.
+    
+    Args:
+        config_folder (str): Path to the configuration folder containing layout files
+        
+    Returns:
+        str: Full path to the first .json layout file found
+        
+    Raises:
+        FileNotFoundError: If no .json file is found in the config folder
     """
     for fname in os.listdir(config_folder):
         if fname.endswith('.json'):
@@ -39,37 +79,51 @@ def find_layout_json(config_folder='Auto_Polymerization/users/config/'):
 
 def main():
     """
-    Main platform controller function.
-    Executes the complete Auto_Polymerization workflow.
+    Main platform controller function that executes the complete Auto_Polymerization workflow.
+    
+    This function orchestrates the entire polymerization process from preparation
+    through final modification. It handles hardware initialization, workflow
+    execution, error handling, and result reporting.
+    
+    Workflow Sequence:
+    1. Preparation: Hardware setup and NMR shimming
+    2. Polymerization: Component transfer and reaction initiation
+    3. Monitoring: NMR-based progress tracking
+    4. Dialysis: Polymer purification
+    5. Modification: UV-VIS-based functionalization
+    6. Post-modification dialysis: Additional purification
+    
+    Returns:
+        None: Exits on workflow completion or error
+        
+    Raises:
+        Various exceptions from workflow modules are caught and logged
     """
-
-    #Setup logging for Medusa liquid transfers
+    
+    # Setup logging for Medusa liquid transfers
     logger = logging.getLogger("platform_controller")
     logger.setLevel(logging.DEBUG)
     logger.addHandler(logging.StreamHandler())
 
-
-    #Instantiate Medusa object
+    # Instantiate Medusa object with layout configuration
     layout = find_layout_json() 
     medusa = Medusa(
         graph_layout=Path(layout),
         logger=logger     
     )
     
-
     medusa.logger.info(f"Starting Auto_Polymerization experiment: {config.experiment_id}")
     
-    # Step 0: Preparation workflow
+    # Step 0: Preparation workflow - Hardware setup and NMR shimming
     medusa.logger.info("Step 0: Running preparation workflow...")
     try:
         run_preparation_workflow(
             medusa=medusa,
-            polymerization_temp=config.temperatures.get("polymerization_temp",20),
-            set_rpm=config.target_rpm.get("polymerization_rpm",600),
+            polymerization_temp=config.temperatures.get("polymerization_temp", 20),
+            set_rpm=config.target_rpm.get("polymerization_rpm", 600),
             prime_transfer_params=config.prime_transfer_params,
             run_minimal_test=False  # Set to True to run minimal workflow test
         )
-
         medusa.logger.info("Preparation workflow completed successfully.")
     except Exception as e:
         medusa.logger.error(f"Preparation workflow failed: {str(e)}")
@@ -101,7 +155,7 @@ def main():
     else:
         medusa.logger.warning("No valid t0 baseline available for monitoring")
     
-    # Step 2: Polymerization monitoring
+    # Step 2: Polymerization monitoring - Track reaction progress via NMR
     medusa.logger.info("Step 2: Running polymerization monitoring...")
     monitoring_result = run_polymerization_monitoring(
         medusa=medusa,
@@ -122,19 +176,16 @@ def main():
     medusa.logger.info(f"Successful measurements: {monitoring_result['successful_measurements']}")
     medusa.logger.info(f"Summary file: {monitoring_result['summary_file']}")
     
-
-    # Step 3: Dialysis workflow
+    # Step 3: Dialysis workflow - Polymer purification
     # --- USER-CONFIGURABLE DIALYSIS STOPPING OPTIONS ---
     # Set to True to use NMR noise signal for stopping dialysis
     use_noise_comparison_based_stopping = True
     # Set to True to use time-based stopping for dialysis
     use_time_based_stopping = True
- 
-
+    
     # Update config for dialysis workflow
     config.dialysis_params["noise_comparison_based"] = use_noise_comparison_based_stopping
     config.dialysis_params["time_based"] = use_time_based_stopping
-
 
     medusa.logger.info("Step 3: Running dialysis workflow...")
     try:
@@ -143,10 +194,8 @@ def main():
     except Exception as e:
         medusa.logger.error(f"Dialysis workflow failed: {str(e)}")
         return
-
-
     
-    # Step 4: Modification workflow
+    # Step 4: Modification workflow - UV-VIS-based functionalization
     medusa.logger.info("Step 4: Running modification workflow...")
     try:
         modification_result = run_modification_workflow(
@@ -175,29 +224,26 @@ def main():
         medusa.logger.error(f"Modification workflow failed: {str(e)}")
         return
     
-    # Step 4b: Post-modification dialysis (time-based)
+    # Step 4b: Post-modification dialysis - Additional purification after modification
     medusa.logger.info("Step 4b: Running post-modification dialysis...")
     try:
         # Configure dialysis for time-based stopping only (noise-based disabled)
         original_dialysis_params = config.dialysis_params.copy()
         config.dialysis_params["noise_comparison_based"] = False
         config.dialysis_params["time_based"] = True
-        config.dialysis_params["dialysis_duration_mins"] = config.modification_params["post_modification_dialysis_hours"] * 60
+        config.dialysis_params["dialysis_duration_mins"] = config.modification_params.get("post_modification_dialysis_hours", 5) * 60
         
         post_dialysis_result = run_dialysis_workflow(medusa)
+        medusa.logger.info(f"Post-modification dialysis completed. Summary: {post_dialysis_result.get('summary_txt', 'N/A')}")
         
         # Restore original dialysis parameters
         config.dialysis_params = original_dialysis_params
         
-        if post_dialysis_result.get('success', False):
-            medusa.logger.info("Post-modification dialysis completed successfully")
-            medusa.logger.info(f"Summary: {post_dialysis_result.get('summary_txt', 'N/A')}")
-        else:
-            medusa.logger.warning("Post-modification dialysis failed, but continuing...")
-            
     except Exception as e:
         medusa.logger.error(f"Post-modification dialysis failed: {str(e)}")
-        # Continue with next step even if dialysis fails
+        # Restore original dialysis parameters even on failure
+        config.dialysis_params = original_dialysis_params
+        return
     
 
 
@@ -216,15 +262,7 @@ def main():
     
     medusa.logger.info(f"Auto_Polymerization experiment {config.experiment_id} completed successfully!")
 
-
-
-
-
-
-
-
-
-
+    # Legacy pseudo-code section (preserved as requested)
     #once functionalization is finished: 
 
         #open gas valve and pump 10 mL of argon to reaction vial through the UV_VIS cell
@@ -281,9 +319,6 @@ def main():
     #dry polymer by purging argon trhough it from below and above
     medusa.write_serial("COM12","GAS_ON")
     medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 100, dispense_speed=25, transfer_type="gas", flush=3)
-
-
-
 
     #clean everything each way from the pumps to the reaction vial, uv_vis and dialysis module before next run
       #open gas valve

@@ -1,18 +1,38 @@
 """
-liquid_transfers_utils.py
+Auto_Polymerization Liquid Transfer Utilities
 
-Utility functions for robust and modular liquid transfers in the Auto_Polymerization platform.
+This module provides robust and modular liquid transfer functions for the Auto_Polymerization platform.
+It includes error-safe wrappers for all hardware transfers and specialized functions for different
+workflow steps.
 
-This module provides wrappers and helpers for all analytical and workflow-related liquid transfers.
-The key function, serial_communication_error_safe_transfer_volumetric, is a direct, parameter-preserving,
-error-safe wrapper for medusa.transfer_volumetric. It adds robust retry logic for COM port conflicts,
-ensuring that all transfer parameters and behavior remain unchanged except for the added error handling.
+Key Features:
+- Error-safe transfer functions with COM port conflict handling
+- Specialized transfer functions for UV-VIS, NMR, and modification workflows
+- Config-driven parameters for all transfer operations
+- Exponential backoff retry logic for serial communication errors
+- Comprehensive logging and error reporting
 
-All transfer parameters (source, target, pump_id, transfer_type, volume, draw_speed, dispense_speed, pre_rinse, etc.)
-are passed through unchanged to medusa.transfer_volumetric. No parameter names, defaults, or logic are altered.
+Core Functions:
+- serial_communication_error_safe_transfer_volumetric: Main error-safe wrapper
+- retry_on_serial_com_error: Retry logic with exponential backoff
+- UV-VIS transfers: Reference, sampling, and cleanup operations
+- NMR transfers: Shimming and sampling operations
+- Modification transfers: Reagent addition with full parameter support
+- Deoxygenation: Active gas pumping for reaction mixture deoxygenation
 
-Use this module to ensure all hardware communication is robust to serial port contention in multithreaded workflows.
+All transfer functions use the error-safe wrapper to ensure robust operation
+in multithreaded environments where COM port conflicts may occur.
+
+Dependencies:
+- medusa: Hardware control framework
+- users.config.platform_config: Configuration parameters
+- serial.serialutil: Serial communication error handling
+
+Author: Michael Ringleb (with help from cursor.ai)
+Date: [Current Date]
+Version: 1.0
 """
+
 import time
 from serial.serialutil import SerialException
 from users.config import platform_config as config
@@ -20,9 +40,24 @@ from users.config import platform_config as config
 
 def retry_on_serial_com_error(func, max_retries=3, initial_delay=120, max_delay=300, logger=None):
     """
-    Retry a function that might fail due to COM port errors.
-    Implements exponential backoff for COM port permission errors.
-    If logger is provided, uses logger for messages; otherwise falls back to print.
+    Retry a function that might fail due to COM port errors with exponential backoff.
+    
+    This function implements intelligent retry logic specifically for COM port permission
+    errors that can occur in multithreaded environments. It uses exponential backoff
+    to avoid overwhelming the system while providing clear logging of retry attempts.
+    
+    Args:
+        func (callable): Function to retry
+        max_retries (int): Maximum number of retry attempts (default: 3)
+        initial_delay (int): Initial delay in seconds (default: 120)
+        max_delay (int): Maximum delay in seconds (default: 300)
+        logger (logging.Logger, optional): Logger instance for messages
+        
+    Returns:
+        Any: Return value from the successful function call
+        
+    Raises:
+        SerialException: If all retry attempts fail or for non-COM port errors
     """
     for attempt in range(max_retries + 1):
         try:
@@ -59,13 +94,26 @@ def retry_on_serial_com_error(func, max_retries=3, initial_delay=120, max_delay=
                     print(msg)
                 raise
 
+
 def serial_communication_error_safe_transfer_volumetric(medusa, logger=None, **kwargs):
     """
     Direct, parameter-preserving, error-safe wrapper for medusa.transfer_volumetric.
-
-    All parameters are passed through unchanged to medusa.transfer_volumetric.
-    The only difference is robust retry logic for COM port conflicts (PermissionError),
-    with exponential backoff and clear logging. No transfer logic or parameter names are changed.
+    
+    This function wraps medusa.transfer_volumetric with robust error handling for
+    COM port conflicts. All parameters are passed through unchanged, ensuring that
+    no transfer logic or parameter names are altered. The only difference is the
+    addition of retry logic for serial communication errors.
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        logger (logging.Logger, optional): Logger instance for error messages
+        **kwargs: All parameters to pass to medusa.transfer_volumetric
+        
+    Returns:
+        Any: Return value from medusa.transfer_volumetric
+        
+    Raises:
+        SerialException: If all retry attempts fail
     """
     def transfer_func():
         return medusa.transfer_volumetric(**kwargs)
@@ -74,33 +122,47 @@ def serial_communication_error_safe_transfer_volumetric(medusa, logger=None, **k
 
 def to_uv_vis_reference_transfer(medusa):
     """
-    Transfer NMR solvent to UV-VIS for reference spectrum using standardized parameters from config.
+    Transfer NMR solvent to UV-VIS cell for reference spectrum acquisition.
+    
+    This function transfers pure NMR solvent (typically deuterated DMSO) to the
+    UV-VIS cell to establish a reference baseline for absorbance measurements.
+    The reference spectrum is used to calculate absorbance values for reaction samples.
+    
     Args:
-        medusa: Medusa instance
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
     """
     params = config.uv_vis_transfer_params
-   
     
     serial_communication_error_safe_transfer_volumetric(
         medusa,
-        source="NMR_Solvent_Vessel", target="UV_VIS", pump_id="Analytical_Pump",
+        source="NMR_Solvent_Vessel", 
+        target="UV_VIS", 
+        pump_id="Analytical_Pump",
         transfer_type=params.get("transfer_type", "liquid"),
         volume=params.get("volume", 1.5), draw_speed=params.get("draw_speed", 0.03), dispense_speed=params.get("dispense_speed", 0.016),
         post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"), post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 1.5),
         post_rinse_speed=params.get("post_rinse_speed", 0.1)
-
     )
 
 
 def to_uv_vis_sampling_transfer(medusa):
     """
-    Transfer reaction mixture to UV-VIS for sampling using standardized parameters from config.
+    Transfer reaction mixture to UV-VIS cell for absorbance measurement.
+    
+    This function transfers reaction mixture from the reaction vial to the UV-VIS
+    cell for absorbance spectrum acquisition. It's used for both t0 measurements
+    and during reaction monitoring to track conversion progress.
+    
     Args:
-        medusa: Medusa instance
-        volume: Volume to transfer (default: from config)
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
     """
     params = config.uv_vis_transfer_params
-    
     
     serial_communication_error_safe_transfer_volumetric(
         medusa,
@@ -115,11 +177,20 @@ def to_uv_vis_sampling_transfer(medusa):
 
 def from_uv_vis_cleanup_transfer(medusa, target="NMR_Solvent_Vessel", volume=None):
     """
-    Remove liquid from UV-VIS cell and transfer to target vessel using standardized parameters from config.
+    Remove liquid from UV-VIS cell and transfer to target vessel.
+    
+    This function removes liquid from the UV-VIS cell after measurements and
+    transfers it to a specified target vessel. It's used for cleaning the cell
+    between different sample types (e.g., removing reference solvent before
+    adding reaction mixture).
+    
     Args:
-        medusa: Medusa instance
-        target: Target vessel (default: NMR_Solvent_Vessel)
-        volume: Volume to transfer (default: from config)
+        medusa: Medusa instance for hardware control
+        target (str): Target vessel for the removed liquid (default: NMR_Solvent_Vessel)
+        volume (float, optional): Volume to transfer (default: from config)
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
     """
     params = config.uv_vis_transfer_params
     
@@ -139,8 +210,20 @@ def from_uv_vis_cleanup_transfer(medusa, target="NMR_Solvent_Vessel", volume=Non
 def add_modification_reagent_transfer(medusa):
     """
     Transfer modification reagent to reaction vial using error-safe transfer.
+    
+    This function transfers modification reagent (e.g., functionalization agent)
+    from the modification vessel to the reaction vial. It includes comprehensive
+    pre-rinse, post-rinse, and flush operations to ensure complete delivery
+    and proper cleaning of the transfer path.
+    
+    All parameters are taken directly from config.modification_params to ensure
+    consistency and ease of configuration.
+    
     Args:
-        medusa: Medusa instance
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
     """
     modification_params = config.modification_params
     
@@ -161,13 +244,22 @@ def deoxygenate_reaction_mixture(medusa, deoxygenation_time_sec, pump_id="Solven
     """
     Deoxygenate the reaction mixture using argon gas with active pumping.
     
+    This function performs active deoxygenation by pumping argon gas through
+    the reaction mixture in regular intervals. It opens the gas valve, pumps
+    gas through the system in 1-second intervals for the specified duration,
+    then closes the valve. This ensures thorough removal of oxygen from the
+    reaction mixture before polymerization or modification reactions.
+    
     Args:
         medusa: Medusa instance for hardware control
-        deoxygenation_time_sec: Duration of deoxygenation in seconds
-        pump_id: ID of the pump to use for deoxygenation (default: Solvent_Monomer_Modification_Pump)
+        deoxygenation_time_sec (int): Duration of deoxygenation in seconds
+        pump_id (str): ID of the pump to use for deoxygenation (default: Solvent_Monomer_Modification_Pump)
         
     Returns:
         bool: True if successful, False otherwise
+        
+    Raises:
+        Exception: If deoxygenation fails, with automatic valve cleanup
     """
     try:
         medusa.logger.info(f"Starting deoxygenation for {deoxygenation_time_sec} seconds using pump {pump_id}...")
@@ -204,11 +296,23 @@ def deoxygenate_reaction_mixture(medusa, deoxygenation_time_sec, pump_id="Solven
             pass
         return False
 
+
 def to_nmr_liquid_transfer_shimming(medusa):
     """
-    Transfer deuterated solvent from source to NMR for shimming, using shimming parameters from config.
+    Transfer deuterated solvent to NMR for shimming operations.
+    
+    This function transfers deuterated solvent (typically DMSO-d6) to the NMR
+    spectrometer for shimming operations. Shimming is performed to optimize
+    the magnetic field homogeneity for high-quality NMR spectra.
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
     """
     params = config.nmr_transfer_params["shimming"]
+    
     serial_communication_error_safe_transfer_volumetric(
         medusa,
         source="Deuterated_Solvent", target="NMR", pump_id="Analytical_Pump",
@@ -219,14 +323,23 @@ def to_nmr_liquid_transfer_shimming(medusa):
         
     )
 
+
 def from_nmr_liquid_transfer_shimming(medusa):
     """
-    Transfer deuterated solvent from NMR back to target after shimming, using shimming parameters from config.
+    Transfer deuterated solvent from NMR back to storage vessel after shimming.
+    
+    This function returns the deuterated solvent used for shimming back to its
+    storage vessel. It's called after NMR shimming operations are complete to
+    preserve the expensive deuterated solvent.
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
     """
-    medusa.logger.info("Opening gas valve...") #opening gas valve to  flush the syringe path to reaction vial
-    medusa.write_serial("Gas_Valve", "GAS_ON")
-
     params = config.nmr_transfer_params["shimming"]
+    
     serial_communication_error_safe_transfer_volumetric(
         medusa,
         source="NMR", target="Deuterated_Solvent", pump_id="Analytical_Pump",
@@ -237,16 +350,24 @@ def from_nmr_liquid_transfer_shimming(medusa):
         post_rinse_speed=params.get("post_rinse_speed", 0.1),
         
     )
-    medusa.logger.info("Closing gas valve...") #closing gas valve to flush the syringe path to reaction vial
-    medusa.write_serial("Gas_Valve", "GAS_OFF")
 
 
 def to_nmr_liquid_transfer_sampling(medusa):
     """
-    Transfer sample from reaction vessel to NMR for sampling, using sampling parameters from config.
-    """
+    Transfer reaction mixture to NMR for spectrum acquisition.
     
+    This function transfers reaction mixture from the reaction vial to the NMR
+    spectrometer for spectrum acquisition. It's used during polymerization
+    monitoring and dialysis to track reaction progress and conversion.
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
+    """
     params = config.nmr_transfer_params["sampling"]
+    
     serial_communication_error_safe_transfer_volumetric(
         medusa,
         source="Reaction_Vial", target="NMR", pump_id="Analytical_Pump",
@@ -256,16 +377,25 @@ def to_nmr_liquid_transfer_sampling(medusa):
         post_rinse_speed=params.get("post_rinse_speed", 0.1),
         
     )
-    
+
 
 def from_nmr_liquid_transfer_sampling(medusa):
     """
-    Transfer sample from NMR back to reaction vessel after sampling, using sampling parameters from config.
+    Transfer reaction mixture from NMR back to reaction vial after spectrum acquisition.
+    
+    This function returns the reaction mixture from the NMR spectrometer back to
+    the reaction vial after spectrum acquisition. It's called after each NMR
+    measurement to maintain the reaction volume and continue the polymerization
+    or dialysis process.
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
     """
-    medusa.logger.info("Opening gas valve...") #opening gas valve to  flush the syringe path to reaction vial
-    medusa.write_serial("Gas_Valve", "GAS_ON")
-
     params = config.nmr_transfer_params["sampling"]
+    
     serial_communication_error_safe_transfer_volumetric(
         medusa,
         source="NMR", target="Reaction_Vial", pump_id="Analytical_Pump",

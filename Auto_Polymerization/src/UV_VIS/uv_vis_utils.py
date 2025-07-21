@@ -1,54 +1,55 @@
 """
-UV-VIS Spectroscopy Utilities Module
+Auto_Polymerization UV-VIS Spectroscopy Utilities
 
-This module provides robust, maintainable tools for UV-VIS spectroscopy data acquisition, processing,
+This module provides comprehensive tools for UV-VIS spectroscopy data acquisition, processing,
 and analysis in automated polymerization workflows. It includes functions for spectrum
-acquisition, negative value removal, absorbance calculation, and conversion analysis, with a focus on
+acquisition, data preprocessing, absorbance calculation, and conversion analysis, with a focus on
 centralized logic, error handling, and code clarity.
 
 Key Features:
-    - Automated spectrum acquisition using CCS200 spectrometer
-    - Centralized filename and timestamp generation for all saved data
-    - Negative value removal as a preprocessing step
-    - Absorbance calculation using a reference spectrum
-    - Conversion analysis at specific wavelengths (e.g., 520 nm)
-    - Batch processing of multiple spectrum files with duplicate detection
-    - Automatic file organization and naming conventions using constants
-    - Robust file loading with automatic encoding correction (UTF-8/UTF-16)
-    - Centralized logging for all operations (using Python's logging module)
-    - DRY (Don't Repeat Yourself) principles throughout
-    - Type hints and detailed docstrings for all public functions
-    - Error handling and informative warnings for missing/corrupt data
+- Automated spectrum acquisition using CCS200 spectrometer
+- Centralized filename and timestamp generation for all saved data
+- Negative value removal as a preprocessing step
+- Absorbance calculation using a reference spectrum
+- Conversion analysis at specific wavelengths (e.g., 520 nm)
+- Batch processing of multiple spectrum files with duplicate detection
+- Automatic file organization and naming conventions using constants
+- Robust file loading with automatic encoding correction (UTF-8/UTF-16)
+- Centralized logging for all operations (using Python's logging module)
+- DRY (Don't Repeat Yourself) principles throughout
+- Type hints and detailed docstrings for all public functions
+- Error handling and informative warnings for missing/corrupt data
+- Reaction completion detection based on absorbance stability
 
 Spectrum Types Supported:
-    - Reference spectra: Reference spectra for absorbance calculation
-    - t0 spectra: Initial time point spectra for conversion calculations
-    - Regular spectra: Sample spectra for analysis
-    - Absorbance spectra: Calculated absorbance values
+- Reference spectra: Reference spectra for absorbance calculation
+- t0 spectra: Initial time point spectra for conversion calculations
+- Regular spectra: Sample spectra for analysis
+- Absorbance spectra: Calculated absorbance values
 
 File Naming Conventions:
-    - Reference: {timestamp}_UV_VIS_reference_spectrum.txt
-    - t0: {timestamp}_UV_VIS_t0_spectrum.txt
-    - Regular: {timestamp}_UV_VIS_spectrum.txt
-    - Negative-removed: {base_name}_neg_removed.txt
-    - Absorbance: {base_name}_absorbance.txt
-    - Conversion: conversion_values.txt
+- Reference: {timestamp}_UV_VIS_reference_spectrum.txt
+- t0: {timestamp}_UV_VIS_t0_spectrum.txt
+- Regular: {timestamp}_UV_VIS_spectrum.txt
+- Negative-removed: {base_name}_neg_removed.txt
+- Absorbance: {base_name}_absorbance.txt
+- Conversion: conversion_values.txt
 
 Data Format:
-    All spectrum files are saved as tab-separated text files with header:
-    "Wavelength (nm)\tIntensity (a.u.)" or "Wavelength (nm)\tAbsorbance (a.u.)"
-
-Dependencies:
-    - numpy: For numerical operations and array handling
-    - matterlab_spectrometers: For spectrometer communication
-    - pathlib: For cross-platform path handling
-    - logging: For robust, configurable logging
-    - re: For timestamp extraction from filenames
+All spectrum files are saved as tab-separated text files with header:
+"Wavelength (nm)\tIntensity (a.u.)" or "Wavelength (nm)\tAbsorbance (a.u.)"
 
 Hardware Requirements:
-    - CCS200 spectrometer (USB connection)
-    - Device ID: M00479664
-    - Default integration time: 3 ms
+- CCS200 spectrometer (USB connection)
+- Device ID: M00479664
+- Default integration time: 3 ms
+
+Dependencies:
+- numpy: For numerical operations and array handling
+- matterlab_spectrometers: For spectrometer communication
+- pathlib: For cross-platform path handling
+- logging: For robust, configurable logging
+- re: For timestamp extraction from filenames
 
 Usage Example:
     # Take a reference spectrum
@@ -70,8 +71,8 @@ Usage Example:
     conversion_data = calculate_conversion_at_520nm()
 
 Author: Michael Ringleb (with help from cursor.ai)
-Date: [08.07.2025]
-Version: 0.6
+Date: [Current Date]
+Version: 1.0
 """
 
 import logging

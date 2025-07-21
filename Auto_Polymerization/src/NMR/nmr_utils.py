@@ -1,19 +1,24 @@
 """
-nmr_utils.py
+Auto_Polymerization NMR Analysis Utilities
 
-Automated, robust NMR spectrum analysis utilities for polymerization monitoring.
+Automated, robust NMR spectrum analysis utilities for polymerization monitoring and characterization.
 
 This module provides a comprehensive workflow for NMR spectrum analysis, specifically designed
 for monitoring polymerization reactions by quantifying monomer consumption relative to an
-internal standard. The workflow includes:
+internal standard. The workflow includes spectrum acquisition, shimming, peak analysis,
+conversion calculation, and batch processing capabilities.
 
 Key Features:
+- Automated NMR spectrum acquisition with retry logic
 - Baseline noise estimation with polynomial fit and type detection
 - Peak finding in user-defined regions (monomer, standard) with connectivity testing
 - Full peak integration using noise-level boundaries and robust numerical integration (Simpson's rule)
 - Overlap detection to prevent double-counting of identical integration regions
-- Batch processing of multiple spectra
+- Batch processing of multiple spectra with caching for performance
 - Publication-quality plotting with all key regions and methods annotated
+- Conversion calculation for polymerization monitoring
+- Dialysis monitoring and analysis
+- Comprehensive error handling and logging
 
 Design Philosophy:
 - Robust to noise: Uses noise-based thresholds rather than fixed parameters
@@ -21,9 +26,45 @@ Design Philosophy:
 - Connected peaks: For standards, only integrates peaks connected to the main peak
 - Overlap prevention: Detects and skips peaks with >90% overlapping integration regions
 - Simpson's rule: Uses numerical integration for accurate area calculation
+- Caching: Implements spectrum caching to improve performance for repeated analysis
+- Error handling: Comprehensive retry logic and error recovery
 
-Author: Auto_Polymerization Team (with help of cursor ai)
-Version: 0.1
+Hardware Requirements:
+- Nanalysis Benchtop NMR spectrometer
+- USB connection for data acquisition
+- Proper shimming and calibration
+
+Dependencies:
+- numpy: For numerical operations and array handling
+- scipy: For signal processing and integration
+- pybaselines: For baseline correction (optional)
+- matterlab_nmr: For NMR hardware control
+- pathlib: For cross-platform path handling
+- matplotlib: For plotting and visualization
+
+Usage Examples:
+    # Perform NMR shimming with retry logic
+    perform_nmr_shimming_with_retry(medusa, max_retries=5, shim_level=1)
+    
+    # Acquire and analyze NMR spectrum
+    result = acquire_and_analyze_nmr_spectrum(
+        nmr_monomer_region=(5.0, 6.0),
+        nmr_standard_region=(6.5, 7.5),
+        nmr_noise_region=(9.0, 10.0),
+        medusa=medusa
+    )
+    
+    # Calculate polymerization conversion
+    conversion = calculate_polymerization_conversion(
+        ppm, spec_real, monomer_region, standard_region, noise_region
+    )
+    
+    # Batch analyze NMR folder
+    batch_analyze_nmr_folder(folder_path, monomer_region, standard_region, noise_region)
+
+Author: Auto_Polymerization Team (with help from cursor.ai)
+Date: [Current Date]
+Version: 1.0
 """
 
 # --- Imports ---
@@ -49,16 +90,24 @@ _cache_max_size = 100  # Maximum number of cached spectra
 def _get_cached_spectrum(ppm_file, spec_file, medusa=None):
     """
     Get spectrum data from cache or load from files if not cached.
-    Always returns the real part of complex NMR data.
-    Includes file modification time checking to detect file changes.
+    
+    This function implements a caching mechanism to avoid reloading the same
+    NMR spectrum data multiple times, which improves performance for batch
+    processing. It includes file modification time checking to detect when
+    files have been updated.
+    
+    Always returns the real part of complex NMR data for intensity analysis.
     
     Args:
-        ppm_file: Path to ppm axis file
-        spec_file: Path to spectrum file
+        ppm_file: Path to ppm axis file (.npy format)
+        spec_file: Path to spectrum file (.npy format)
         medusa: Medusa instance for logging (optional)
         
     Returns:
         tuple: (ppm, spec_real) spectrum data where spec_real is always real
+        
+    Raises:
+        FileNotFoundError: If one or both files don't exist
     """
     cache_key = (str(ppm_file), str(spec_file))
     

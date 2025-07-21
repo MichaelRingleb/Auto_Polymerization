@@ -1,18 +1,43 @@
 """
-platform_config.py
+Auto_Polymerization Platform Configuration
 
-User-editable platform configuration for Auto_Polymerization.
+User-editable platform configuration for the complete Auto_Polymerization workflow.
 
 This file defines all workflow and transfer parameters for the platform, including:
+- Experiment metadata and data paths
 - Priming, NMR shimming, NMR sampling, and UV-VIS transfer parameters
 - Draw/dispense speeds, volumes, temperatures, timings, and RPMs for all workflow steps
+- Polymerization, monitoring, dialysis, and modification parameters
+- Hardware-specific settings and vessel configurations
 
-All parameters defined here are passed unchanged to the error-safe transfer logic (serial_communication_error_safe_transfer_volumetric),
-which is a direct, parameter-preserving wrapper for medusa.transfer_volumetric. Only parameter values should be changed by users;
+All parameters defined here are passed unchanged to the error-safe transfer logic 
+(serial_communication_error_safe_transfer_volumetric), which is a direct, parameter-preserving 
+wrapper for medusa.transfer_volumetric. Only parameter values should be changed by users;
 parameter names and structure must be preserved for correct operation.
 
+Configuration Sections:
+- General Experiment Metadata & Paths: Experiment ID and data storage locations
+- Timings: Workflow step durations and wait times
+- Temperatures: Target temperatures for different reactions
+- RPM Settings: Stirring speeds for different steps
+- Preparation Parameters: Priming and cleaning operations
+- Polymerization Parameters: Component transfer and reaction settings
+- Monitoring Parameters: NMR-based reaction monitoring settings
+- Dialysis Parameters: Polymer purification settings
+- Modification Parameters: UV-VIS-based functionalization settings
+- Transfer Parameters: Analytical transfer settings for NMR and UV-VIS
+
+Hardware Configuration:
 If you change tubing lengths, vessel sizes, or hardware, update the relevant volume values here.
 Do not rename or remove keys unless you are also updating the workflow code.
+
+Error-Safe Transfers:
+All liquid transfers use error-safe functions with COM port conflict handling and retry logic.
+Parameters are passed through unchanged to ensure consistent behavior.
+
+Author: Michael Ringleb (with help from cursor.ai)
+Date: [Current Date]
+Version: 1.0
 """
 
 # -------------------------------------------------------------------

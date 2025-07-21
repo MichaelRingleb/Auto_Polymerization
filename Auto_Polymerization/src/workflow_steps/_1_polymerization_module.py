@@ -1,25 +1,47 @@
 """
-_1_polymerization_module.py
+Auto_Polymerization Polymerization Module
 
-Polymerization module for the Auto_Polymerization workflow.
-Encapsulates all steps required to perform the polymerization reaction, including component transfer,
-deoxygenation, temperature control, and reaction monitoring.
+This module handles the complete polymerization reaction workflow, including:
+- Component transfer (solvent, monomer, CTA, initiator)
+- Active deoxygenation with argon gas
+- Pre-polymerization NMR setup and t0 measurements
+- Reaction initiation with temperature control
+- Comprehensive error handling and logging
 
-All user-editable settings (volumes, draw/dispense speeds, temperatures, timings, etc.) should be set 
-in users/config/platform_config.py and supplied as arguments from the controller.
+Key Features:
+- Error-safe liquid transfers with COM port conflict handling
+- Config-driven parameters for all operations
+- Active deoxygenation with configurable pump ID
+- Pre-polymerization NMR shimming and baseline measurements
+- Modular design for easy testing and maintenance
 
-All polymerization transfers use serial_communication_error_safe_transfer_volumetric, a direct, 
-parameter-preserving, error-safe wrapper for medusa.transfer_volumetric. All transfer parameters 
-are passed through unchanged. The only difference is robust retry logic for COM port conflicts.
+All user-editable settings (volumes, draw/dispense speeds, temperatures, timings, etc.) 
+should be set in users/config/platform_config.py and supplied as arguments from the controller.
+
+All polymerization transfers use serial_communication_error_safe_transfer_volumetric, 
+a direct, parameter-preserving, error-safe wrapper for medusa.transfer_volumetric. 
+All transfer parameters are passed through unchanged. The only difference is robust 
+retry logic for COM port conflicts.
 
 All functions are designed to be called from a workflow controller script.
 
 WORKFLOW ORDER (maintained in run_polymerization_workflow):
-1. Transfer reaction components
-2. Deoxygenate reaction mixture  
+1. Transfer reaction components (solvent, monomer, CTA, initiator)
+2. Deoxygenate reaction mixture with active argon pumping
 3. Perform pre-polymerization setup (shimming + t0 measurements)
-4. Start polymerization reaction
+4. Start polymerization reaction with temperature control
+
+Dependencies:
+- medusa: Hardware control framework
+- src.liquid_transfers.liquid_transfers_utils: Error-safe transfer functions
+- src.NMR.nmr_utils: NMR shimming and analysis utilities
+- users.config.platform_config: Configuration parameters
+
+Author: Michael Ringleb (with help from cursor.ai)
+Date: [Current Date]
+Version: 1.0
 """
+
 from src.liquid_transfers.liquid_transfers_utils import serial_communication_error_safe_transfer_volumetric, deoxygenate_reaction_mixture
 from src.NMR.nmr_utils import perform_nmr_shimming_with_retry, acquire_multiple_t0_measurements
 import time
@@ -32,13 +54,23 @@ import time
 def transfer_reaction_components(medusa, polymerization_params):
     """
     Transfer all reaction components (solvent, monomer, CTA, initiator) to the reaction vial.
-    Uses error-safe transfer logic with config-driven parameters.
+    
+    This function performs the complete component transfer sequence for polymerization.
+    It transfers solvent, monomer, chain transfer agent (CTA), and initiator in sequence,
+    using configurable parameters for volumes, speeds, and cleaning operations.
+    
+    All transfers use error-safe transfer logic with COM port conflict handling.
+    Each transfer includes pre-rinse, flush, and post-rinse operations to ensure
+    complete delivery and proper cleaning of the transfer path.
     
     Args:
-        medusa: Medusa instance for liquid handling
-        polymerization_params: dict containing all polymerization transfer parameters
+        medusa: Medusa instance for hardware control
+        polymerization_params (dict): Dictionary containing all polymerization transfer parameters
+            including volumes, speeds, flush settings, rinse parameters, etc.
+            
+    Returns:
+        None: Component transfers are performed via error-safe transfer functions
     """
-
     medusa.logger.info("Opening gas valve...") #opening gas valve to  flush the syringe path to reaction vial
     medusa.write_serial("Gas_Valve", "GAS_ON")
 
@@ -92,7 +124,6 @@ def transfer_reaction_components(medusa, polymerization_params):
     medusa.write_serial("Gas_Valve", "GAS_OFF")
 
     medusa.logger.info("All reaction components transferred successfully.")
-
 
 
 # =============================================================================
