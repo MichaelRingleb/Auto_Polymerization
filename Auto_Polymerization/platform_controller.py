@@ -51,7 +51,7 @@ from src.workflow_steps._1_polymerization_module import run_polymerization_workf
 from src.workflow_steps._2_polymerization_monitoring import run_polymerization_monitoring
 from src.workflow_steps._3_dialysis_module import run_dialysis_workflow
 from src.workflow_steps._4_modification_module import run_modification_workflow
-
+from src.workflow_steps._5_precipitation_module import run_precipitation_workflow
 
 def find_layout_json(config_folder='Auto_Polymerization/users/config/'):
     """
@@ -122,7 +122,7 @@ def main():
             polymerization_temp=config.temperatures.get("polymerization_temp", 20),
             set_rpm=config.target_rpm.get("polymerization_rpm", 600),
             prime_transfer_params=config.prime_transfer_params,
-            run_minimal_test=False  # Set to True to run minimal workflow test
+            run_minimal_test=config.run_minimal_workflow_test  # Set to True in config to run minimal workflow test
         )
         medusa.logger.info("Preparation workflow completed successfully.")
     except Exception as e:
@@ -245,15 +245,21 @@ def main():
         config.dialysis_params = original_dialysis_params
         return
     
-
-
     
     # Step 5: Precipitation (placeholder for future implementation)
-    medusa.logger.info("Step 5: Precipitation workflow (placeholder)")
-    # TODO: Implement precipitation workflow
-    # from src.workflow_steps._4_precipitation_module import run_precipitation_workflow
-    # precipitation_result = run_precipitation_workflow(medusa, precipitation_params, experiment_id, base_path)
-    
+    try:
+      medusa.logger.info("Step 5: Precipitation workflow started.")
+      run_precipitation_workflow(
+        medusa = medusa,
+      precipitation_wait_seconds = config.precipitation_params.get("precipitation_wait_sec", 600),  
+      precipitation_params =   config.precipitation_params
+      )
+      medusa.logger.info("Precipitation workflow finished successfully.")
+    except Exception as e:
+        medusa.logger.error(f"Precipitation workflow failed: {str(e)}")
+        return
+
+
     # Step 6: Cleaning (placeholder for future implementation)
     medusa.logger.info("Step 6: Cleaning workflow (placeholder)")
     # TODO: Implement cleaning workflow
@@ -268,39 +274,7 @@ def main():
 
 
 
-    #pump 25 mL of methanol to the precipitation module
-    #set solenoid valve accordingly
-    medusa.write_serial("COM12","PRECIP_ON")
-    #pump 25 mL of methanol to the precipitation module
-    medusa.transfer_volumetric(source="Methanol_Vessel", target="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
-    #close solenoid valve and open gas valve to bubble argon through bottom
-    medusa.write_serial("COM12","PRECIP_OFF")
-    medusa.write_serial("COM12","GAS_ON")
-
-    #add the polymer to the precipitation vessels upper port
-    medusa.transfer_volumetric(source="Reaction_Vial", target="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", draw_speed=10, dispense_speed=5, flush=3)
-    medusa.write_serial("COM12","GAS_OFF")
-    #wait for some minutes while bubbling (5 min)
-    time.sleep(300)
-
-    #remove supernatant from precipitation vessel
-    medusa.write_serial("COM12","PRECIP_ON")
-    medusa.transfer_volumetric(source="Precipitation_Vessel_Solenoid", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", draw_speed=10, dispense_speed=20)
-    #
-    #wash the polymer with methanol
-    medusa.write_serial("COM12","GAS_ON")
-    medusa.transfer_volumetric(source="Methanol_Vessel", target="Precipitation_Vessel_Solenoid", pump_id="Precipitation_Pump", volume= 25, transfer_type="liquid", flush=3)
-    medusa.write_serial("COM12","GAS_OFF")
-    #change solenoid position to bubble gas through bottom
-    medusa.write_serial("COM12","PRECIP_OFF")
-
-    #remove the supernatant from the precipitation vessel
-    medusa.write_serial("COM12","PRECIP_ON")
-    medusa.transfer_volumetric(source="Precipitation_Vessel_Solenoid", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", draw_speed=10, dispense_speed=20)
-    medusa.write_serial("COM12","PRECIP_OFF")
-    #dry polymer by purging argon trhough it from below and above
-    medusa.write_serial("COM12","GAS_ON")
-    medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Precipitation_Vessel_Dispense", pump_id="Precipitation_Pump", volume= 100, dispense_speed=25, transfer_type="gas", flush=3)
+    
 
     #clean everything each way from the pumps to the reaction vial, uv_vis and dialysis module before next run
       #open gas valve

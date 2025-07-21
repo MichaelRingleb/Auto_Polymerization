@@ -231,7 +231,7 @@
       "name": "Precipitation_Vessel_Solenoid",
       "settings": {
         "max_volume": 100,
-        "current_volume": 0,
+        "current_volume": 30,
         "addable": true,
         "removable": true,
         "content": "Lower port of precipitation vessel"

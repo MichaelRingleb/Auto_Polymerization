@@ -73,6 +73,13 @@ target_rpm = {
 # -------------------------------------------------------------------
 # PREPARATION WORKFLOW PARAMETERS
 # -------------------------------------------------------------------
+
+# Run minimal workflow during preparation of the platform
+# This workflow makes it possible to check visually, whether the commanding of the different workflow instruments (syringe pumps, peristaltic pumps, hotplate, actuator, valves and analytical devices work as intended.
+# set to false to disable
+run_minimal_workflow_test = True
+
+
 # Priming and cleaning parameters for all lines and pumps
 prime_transfer_params = {
     "prime_volume": 1,           # mL, volume for priming
@@ -88,6 +95,10 @@ prime_transfer_params = {
     "post_rinse_volume": 2.5,    # mL, volume per post-rinse
     "post_rinse_speed": 0.1,     # mL/s, speed for post-rinse
 }
+
+
+
+
 
 # -------------------------------------------------------------------
 # POLYMERIZATION WORKFLOW PARAMETERS
@@ -184,20 +195,38 @@ modification_params = {
 # Modification WORKFLOW PARAMETERS
 # -------------------------------------------------------------------
 precipitation_params = {
-    "methanol_volume": 2,            # mL, volume of precipitation reagent
-    "methanol_draw_speed": 0.08,     # mL/s, speed for drawing precipitation reagent
-    "methanol_dispense_speed": 0.13, # mL/s, speed for dispensing precipitation reagent
-    "methanol_flush": 1,             # times, number of flushes
-    "methanol_flush_volume": 5,      # mL, volume per flush
-    "methanol_flush_speed": 0.15,    # mL/s, speed for flushing
-    "methanol_pre_rinse": 1,                  # times
-    "methanol_pre_rinse_volume": 0.7,         # mL
-    "methanol_pre_rinse_speed": 0.1,          # mL/s
-    "methanol_post_rinse": 1,                 # times
-    "methanol_post_rinse_volume": 2.5,        # mL
-    "methanol_post_rinse_speed": 0.133,       # mL/s
-    "methanol_post_rinse_vessel": "Purge_Solvent_Vessel_1", # Vessel for post-rinse
-    "precipitation_wait_sec": 600,             # s, wait time for precipitation (10 min)
+    "non_solvent_volume": 25,            # mL, volume of precipitation solvent, (maximum should be 40 mL - polymer_volume)
+    "non_solvent_draw_speed": 0.08,     # mL/s, speed for drawing precipitation solvent
+    "non_solvent_dispense_speed": 0.05, # mL/s, speed for dispensing precipitation solvent
+    "non_solvent_flush": 1,             # times, number of flushes
+    "non_solvent_flush_volume": 5,      # mL, volume per flush
+    "non_solvent_flush_speed": 0.15,    # mL/s, speed for flushing
+    "non_solvent_post_rinse": 1,                 # times, number of post-rinses of the syringe with solvent from Purge_Solvent_Vessel_1
+    "non_solvent_post_rinse_volume": 2.5,        # mL
+    "non_solvent_post_rinse_speed": 0.133,       # mL/s
+    
+    "polymer_volume": 15,           # volume of polymer taken and transferred to the precipitation vessel (maximum should be 40 mL - "methanol volume")
+    "polymer_draw_speed": 0.08,     # mL/s, speed for drawing precipitation solvent
+    "polymer_dispense_speed": 0.05, # mL/s, speed for dispensing precipitation solvent
+    "polymer_flush": 1,             # times, number of flushes
+    "polymer_flush_volume": 5,      # mL, volume per flush
+    "polymer_flush_speed": 0.15,    # mL/s, speed for flushing
+    "polymer_post_rinse": 1,            # times, number of post-rinses of the syringe with solvent from Purge_Solvent_Vessel_1
+    "polymer_post_rinse_volume": 5,        # mL
+    "polymer_post_rinse_speed": 0.133,       # mL/s
+    
+    #supernatant volume (volume which is removed from precipitation vessel) will be methanol volume + 5 mL (if you want to change: look for removal_volume in _5_precipitation_module)
+    "remove_supernatant_draw_speed": 0.05,         # mL/s, speed for drawing precipitation solvent
+    "remove_supernatant_dispense_speed": 0.1,      # mL/s, speed for dispensing precipitation solvent
+    "remove_supernatant_post_rinse": 1,            # times, number of post-rinses of the syringe with solvent from Purge_Solvent_Vessel_1
+    "remove_supernatant_post_rinse_volume": 5,        # mL
+    "remove_supernatant_post_rinse_speed": 0.133,       # mL/s
+    
+    "washing_cylces": 0,                #number of cycles, the precipitated polymer is washed with methanol_volume mL methanol and subsequently methanol_volume +5 mL supernatant are removed
+
+    "post_rinse_vessel": "Purge_Solvent_Vessel_1",  #Vessel for post rinse solvent
+    "precipitation_wait_sec": 600,             # s, wait time for precipitation while argon sparging for mixing of non_solvent and polymer
+    "drying_wait_minutes": 120                 # min, wait time for drying of polymer (during this time, the polymer is sparging from the top and bottom of the precipitation vessel with inert gas)                          
 }
 
 

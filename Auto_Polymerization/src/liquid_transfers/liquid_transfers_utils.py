@@ -276,7 +276,7 @@ def deoxygenate_reaction_mixture(medusa, deoxygenation_time_sec, pump_id="Solven
                 target="Reaction_Vial", 
                 pump_id=pump_id, 
                 volume=10, draw_speed=0.25, dispense_speed=0.1,
-                transfer_type="liquid", 
+                transfer_type="gas", 
                 flush=1, flush_speed=0.25, flush_volume=10,
                 
             )
