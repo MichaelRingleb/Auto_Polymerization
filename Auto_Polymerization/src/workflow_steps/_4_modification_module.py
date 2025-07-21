@@ -262,8 +262,6 @@ def monitor_modification_reaction(medusa: Medusa, modification_params: Dict) -> 
     }
 
 
-# Post-modification dialysis is now handled directly in the platform controller
-# using the existing dialysis workflow with time-based stopping
 
 
 def generate_modification_summary(experiment_id: str, data_base_path: str, 
@@ -469,6 +467,31 @@ def run_modification_workflow(medusa: Medusa,
             modification_params
         )
         workflow_results['summary_files'] = summary_files
+        
+        # Step 8: Push 10 mL of argon to the UV/VIS cell (valve open, safe transfer)
+        medusa.logger.info("Step 8: Push 10 mL of argon to the UV/VIS cell (Analytical Pump)")
+        try:
+            # Open gas valve
+            medusa.write_serial("Gas_Valve", "GAS_ON")
+            # Push 10 mL of argon from Gas_Reservoir_Vessel to UV_VIS
+            from src.liquid_transfers.liquid_transfers_utils import serial_communication_error_safe_transfer_volumetric
+            serial_communication_error_safe_transfer_volumetric(
+                medusa,
+                source="Gas_Reservoir_Vessel",
+                target="UV_VIS",
+                pump_id="Analytical_Pump",
+                volume=10,
+                transfer_type="gas",
+                draw_speed=0.2,
+                dispense_speed=0.05,
+            )
+            medusa.logger.info("Argon push to UV/VIS cell completed successfully.")
+        except Exception as e:
+            medusa.logger.error(f"Argon push to UV/VIS cell failed: {str(e)}")
+        finally:
+            # Always close the gas valve
+            medusa.write_serial("Gas_Valve", "GAS_OFF")
+
         
         # Workflow completed successfully
         workflow_results['success'] = True

@@ -52,9 +52,6 @@ uv_vis_data_base_path = "users/data/UV_VIS_data"  # Directory for UV-VIS data (s
 # -------------------------------------------------------------------
 # TIMINGS FOR WORKFLOW STEPS (seconds unless otherwise noted)
 # -------------------------------------------------------------------
-timings = {
-    "precipitation_wait_sec": 600,             # s, wait time for precipitation (10 min)
-}
 
 # -------------------------------------------------------------------
 # TEMPERATURES FOR VARIOUS STEPS (°C)
@@ -62,7 +59,7 @@ timings = {
 temperatures = {
     "polymerization_temp": 75,         # °C, polymerization
     "functionalization_temp": 30,      # °C, modification/functionalization
-    "cleaning_dry_temp": 80,           # °C, cleaning
+    "cleaning_dry_temp": 50,           # °C, cleaning
 }
 
 # -------------------------------------------------------------------
@@ -181,6 +178,29 @@ modification_params = {
     "uv_vis_stability_tolerance_percent": 5.0,  # %, tolerance for absorbance stability check
     "uv_vis_stability_measurements": 10, # number of recent measurements to compare for stability
 }
+
+
+# -------------------------------------------------------------------
+# Modification WORKFLOW PARAMETERS
+# -------------------------------------------------------------------
+precipitation_params = {
+    "methanol_volume": 2,            # mL, volume of precipitation reagent
+    "methanol_draw_speed": 0.08,     # mL/s, speed for drawing precipitation reagent
+    "methanol_dispense_speed": 0.13, # mL/s, speed for dispensing precipitation reagent
+    "methanol_flush": 1,             # times, number of flushes
+    "methanol_flush_volume": 5,      # mL, volume per flush
+    "methanol_flush_speed": 0.15,    # mL/s, speed for flushing
+    "methanol_pre_rinse": 1,                  # times
+    "methanol_pre_rinse_volume": 0.7,         # mL
+    "methanol_pre_rinse_speed": 0.1,          # mL/s
+    "methanol_post_rinse": 1,                 # times
+    "methanol_post_rinse_volume": 2.5,        # mL
+    "methanol_post_rinse_speed": 0.133,       # mL/s
+    "methanol_post_rinse_vessel": "Purge_Solvent_Vessel_1", # Vessel for post-rinse
+    "precipitation_wait_sec": 600,             # s, wait time for precipitation (10 min)
+}
+
+
 
 
 # -------------------------------------------------------------------

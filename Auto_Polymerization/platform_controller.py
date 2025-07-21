@@ -263,27 +263,9 @@ def main():
     medusa.logger.info(f"Auto_Polymerization experiment {config.experiment_id} completed successfully!")
 
     # Legacy pseudo-code section (preserved as requested)
-    #once functionalization is finished: 
+  
 
-        #open gas valve and pump 10 mL of argon to reaction vial through the UV_VIS cell
-    medusa.write_serial("COM12","GAS_ON")
-    medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="UV_VIS", pump_id="Analytical_Pump", volume= 10, transfer_type="gas", dispense_speed=10, flush=3)
-        #close gas valve
-    medusa.write_serial("COM12","GAS_OFF")
 
-    #another round of dialysis (with peristaltic pumps)
-    # Start peristaltic pumps   
-    medusa.transfer_continuous(source="Reaction_Vial", target="Reaction_Vial", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0.7)
-    medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = True, transfer_rate=0.7)
-    #wait for 5 h 
-    time.sleep(18000)
-    # pump peristaltic pump tubing empty for polymer pump in different direction and stop eluent pump
-    medusa.transfer_continuous(source="Reaction_Vial", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = True, transfer_rate=0.7)
-    medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Solvent_Peri_Pump", direction_CW = False, transfer_rate=0)
-        #wait for 10 min to pump fully empty
-    time.sleep(600)
-        #turn off polymer pump
-    medusa.transfer_continuous(source="Elution_Solvent_Vessel", target="Waste_Vessel", pump_id="Polymer_Peri_Pump", direction_CW = False, transfer_rate=0)
 
 
     #pump 25 mL of methanol to the precipitation module
