@@ -58,7 +58,7 @@ uv_vis_data_base_path = "users/data/UV_VIS_data"  # Directory for UV-VIS data (s
 # -------------------------------------------------------------------
 temperatures = {
     "polymerization_temp": 75,         # °C, polymerization
-    "functionalization_temp": 30,      # °C, modification/functionalization
+    "modification_temp": 30,      # °C, modification/functionalization
     "cleaning_dry_temp": 50,           # °C, cleaning
 }
 
@@ -67,6 +67,8 @@ temperatures = {
 # -------------------------------------------------------------------
 target_rpm = {
     "polymerization_rpm": 600,   # rpm, polymerization
+    "modification_rpm": 400,     #rpm, modification
+    "post_modification_rpm": 300, #rpm after modification reaction is over and vial is lifted from the hotplate
     "cleaning_rpm": 300,         # rpm, cleaning
 }
 
@@ -228,6 +230,19 @@ precipitation_params = {
     "precipitation_wait_sec": 600,             # s, wait time for precipitation while argon sparging for mixing of non_solvent and polymer
     "drying_wait_minutes": 120                 # min, wait time for drying of polymer (during this time, the polymer is sparging from the top and bottom of the precipitation vessel with inert gas)                          
 }
+
+
+# -------------------------------------------------------------------
+# Cleaning workflow parameters
+# -------------------------------------------------------------------
+
+cleaning_params = {
+      "solvent_volume": 20,
+      "flush_speed": 0.2,
+      "gas_purge_time": 60,
+      "uv_vis_cleaning_volume": 5,
+      # ...etc.
+  }
 
 
 

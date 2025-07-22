@@ -52,6 +52,8 @@ from src.workflow_steps._2_polymerization_monitoring import run_polymerization_m
 from src.workflow_steps._3_dialysis_module import run_dialysis_workflow
 from src.workflow_steps._4_modification_module import run_modification_workflow
 from src.workflow_steps._5_precipitation_module import run_precipitation_workflow
+from src.workflow_steps._6_cleaning_module import run_cleaning_workflow
+
 
 def find_layout_json(config_folder='Auto_Polymerization/users/config/'):
     """
@@ -245,8 +247,8 @@ def main():
         config.dialysis_params = original_dialysis_params
         return
     
-    
-    # Step 5: Precipitation (placeholder for future implementation)
+
+    # Step 5: Precipitation workflow
     try:
       medusa.logger.info("Step 5: Precipitation workflow started.")
       run_precipitation_workflow(
@@ -259,6 +261,31 @@ def main():
         medusa.logger.error(f"Precipitation workflow failed: {str(e)}")
         return
 
+    # Step 6: Cleaning the setup (flushing with Purge_solvent)
+    cleaning_ok = ""
+
+    while cleaning_ok not in ("Y", "N"):
+      cleaning_ok = input("Please confirm that cleaning should be executed: Type in Y for yes or N for no! ").strip().upper()
+    if cleaning_ok == "Y":
+        try:
+            medusa.logger.info("Step 6: Cleaning the platform started.")
+            run_cleaning_workflow(
+                medusa=medusa,
+                precipitation_wait_seconds=config.precipitation_params.get("precipitation_wait_sec", 600),
+                cleaning_params=config.cleaning_params
+            )
+            medusa.logger.info("Cleaning workflow finished successfully.")
+        except Exception as e:
+            medusa.logger.error(f"Cleaning workflow failed: {str(e)}")
+    elif cleaning_ok == "N":
+        medusa.logger.info("You decided not to clean the platform automatically. Please make sure it is manually cleaned before you continue using it.")
+        exit()
+    else:
+        medusa.logger.warning("Invalid input received. Please enter Y or N.")
+
+
+
+
 
     # Step 6: Cleaning (placeholder for future implementation)
     medusa.logger.info("Step 6: Cleaning workflow (placeholder)")
@@ -268,49 +295,13 @@ def main():
     
     medusa.logger.info(f"Auto_Polymerization experiment {config.experiment_id} completed successfully!")
 
-    # Legacy pseudo-code section (preserved as requested)
-  
 
 
 
 
-    
 
-    #clean everything each way from the pumps to the reaction vial, uv_vis and dialysis module before next run
-      #open gas valve
-    medusa.write_serial("COM12","GAS_ON")	
-    medusa.heat_stir("Reaction_Vial", temperature= 20, rpm= 300)
-      #flush the UV_VIS cell
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_2", target="UV_VIS", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3, draw_speed=10, dispense_speed=3)
-      #flush purge solvent to the waste vessel
-    medusa.transfer_volumetric(source="UV_VIS", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 5, transfer_type="liquid", flush=3, draw_speed=3, dispense_speed=10)
-      #also remove solvent from reaction vial
-    medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Analytical_Pump", volume= 30, transfer_type="liquid", flush=3)
-      #flush the Solvent_Monomer_Modification_Pump flowpath
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Solvent_Monomer_Modification_Pump", volume= 20, transfer_type="liquid", flush=3)
-      #flush purge solvent to the waste vessel
-    medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Solvent_Monomer_Modification_Pump", volume= 30, transfer_type="liquid", flush=3)
-      #flush the Precipitation_Pump flowpath
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Precipitation_Pump", volume= 20, transfer_type="liquid", flush=3)
-      #flush purge solvent to the waste vessel
-    medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Precipitation_Pump", volume= 30, transfer_type="liquid", flush=3)
-      #fill reaction_vial with purge solvent
-    medusa.transfer_volumetric(source="Purge_Solvent_Vessel_1", target="Reaction_Vial", pump_id="Initiator_CTA_Pump", volume= 20, transfer_type="liquid", flush=3)
-      #flush purge solvent to the waste vessel
-    medusa.transfer_volumetric(source="Reaction_Vial", target="Waste_Vessel", pump_id="Initiator_CTA_Pump", volume= 30, transfer_type="liquid", flush=3)
-      #close gas valve
-    medusa.write_serial("COM12","GAS_OFF")
-      #dry the reaction vial
-    medusa.heat_stir("Reaction_Vial", temperature= 80, rpm= 0)
-      #wait until vial is at 80 °C (get property)
-      #pump 200 mL of argon to dry rest of vial
-    medusa.transfer_volumetric(source="Gas_Reservoir_Vessel", target="Reaction_Vial", pump_id="Precipitation_Pump", volume= 200, dispense_speed=25, transfer_type="gas", flush=3)
-      #get temperature of heatplate
-      #let heatplate cool down
-    medusa.heat_stir("Reaction_Vial", temperature= 25, rpm= 0)
-      #wait until heatplate is at 25 °C (get property)
-      #close gas valve
-    medusa.write_serial("COM12","GAS_OFF")
+
+     
 
 
 #ready for next run

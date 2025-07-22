@@ -87,7 +87,10 @@ def setup_uv_vis_reference(medusa: Medusa) -> Tuple[bool, Optional[str]]:
         
         if spectrum is not None and wavelengths is not None:
             medusa.logger.info(f"UV-VIS reference spectrum saved: {filename}")
+            # Remove NMR solvent from UV-VIS cell using proper transfer utility
+            from_uv_vis_cleanup_transfer(medusa, target="NMR_Solvent_Vessel", volume=config.uv_vis_transfer_params.get("volume", 1.5))
             return True, filename
+
         else:
             medusa.logger.error("Failed to acquire UV-VIS reference spectrum")
             return False, None
@@ -117,9 +120,6 @@ def setup_uv_vis_t0(medusa: Medusa) -> Tuple[bool, Optional[str]]:
     
     try:
         medusa.logger.info("Setting up UV-VIS t0 spectrum...")
-        
-        # Remove NMR solvent from UV-VIS cell using proper transfer utility
-        from_uv_vis_cleanup_transfer(medusa, target="NMR_Solvent_Vessel", volume=config.uv_vis_transfer_params.get("volume", 1.5))
         
         # Start flow through UV-VIS and measure t0 spectrum using proper transfer utility
         to_uv_vis_sampling_transfer(medusa, volume=config.uv_vis_transfer_params.get("volume", 1.5))
@@ -154,15 +154,33 @@ def add_modification_reagent(medusa: Medusa, modification_params: Dict) -> bool:
     Returns:
         bool: True if successful, False otherwise
     """
-   
+
+    #set hotplate to modification temperature
+    medusa.logger.info(f"Setting hotplate temperature and rpm for modification...")
+    medusa.heat_stir(vessel="Reaction_Vial", temperature = config.temperatures.get("modification_temp", 30), rpm = config.set_rpm.get("modification_rpm",400))
+
+
+    #check if the modification temperature is yet reached at the hotplate
+    modification_temp = config.temperatures.get("modification_temp", 30)
+    while abs(medusa.get_hotplate_temperature("Reaction_Vial") - modification_temp) > 2:
+        time.sleep(30)
+        real_temp = medusa.get_hotplate_temperature("Reaction_Vial") 
+        medusa.logger.info(f"Hotplate temperature {real_temp} °C is not within +-2°C of target temperature {modification_temp} °C. Waiting...")
+
     
-    try:
+    
+
+
+    try:             
         medusa.logger.info("Adding modification reagent...")
         
         # Use error-safe transfer for modification reagent addition
         add_modification_reagent_transfer(medusa)
         
         medusa.logger.info("Modification reagent added successfully")
+        # after addition of modification reagent, lower vial into heaptlate
+        medusa.logger.info("Lowering reaction vial into hotplate...")
+        medusa.write_serial("Linear_Actuator", "1000")       
         return True
         
     except Exception as e:
@@ -197,7 +215,8 @@ def monitor_modification_reaction(medusa: Medusa, modification_params: Dict) -> 
     iteration = 0
     reaction_complete = False
     final_conversion = None
-    
+
+
     medusa.logger.info(f"Starting modification reaction monitoring (max {max_iterations} iterations, {monitoring_interval} min intervals)")
     
     while not reaction_complete and iteration < max_iterations:
@@ -223,6 +242,7 @@ def monitor_modification_reaction(medusa: Medusa, modification_params: Dict) -> 
             
             if reaction_complete:
                 medusa.logger.info("Modification reaction completed based on absorbance stability")
+                 
                 break
             
             # Wait before next measurement
@@ -252,7 +272,14 @@ def monitor_modification_reaction(medusa: Medusa, modification_params: Dict) -> 
         medusa.logger.info(f"Modification completed successfully in {iteration} iterations")
         if final_conversion is not None:
             medusa.logger.info(f"Final conversion: {final_conversion:.2f}%")
-    
+
+    #after reaction is over, set hotplate temperature to 0 and continue stirring
+    medusa.logger.info("Reaction finished, lifting reaction vial from hotplate and setting temperature on hotplate to 0, while stirring.")
+    medusa.heat_stir(vessel="Reaction_Vial",temperature = 0, rpm = config.set_rpm.get("post_modification_rpm",300))
+    medusa.write_serial("Linear_Actuator", "2000")
+    medusa.logger.info(f"Vial lifted out of hotplate and hotplate temperature set to 0, while stirring at {config.set_rpm.get("post_modification_rpm")}.")
+
+
     return {
         'success': True,
         'total_iterations': iteration,

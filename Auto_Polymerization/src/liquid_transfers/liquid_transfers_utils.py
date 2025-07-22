@@ -198,9 +198,9 @@ def from_uv_vis_cleanup_transfer(medusa, target="NMR_Solvent_Vessel", volume=Non
         medusa,
         source="UV_VIS", target=target, pump_id="Analytical_Pump",
         transfer_type=params.get("transfer_type", "liquid"),
-        volume=params.get("volume", 1.5), 
+        volume=params.get("volume", 0.7), 
         draw_speed=params.get("draw_speed", 0.03), 
-        dispense_speed=params.get("dispense_speed", 0.1),
+        dispense_speed=params.get("dispense_speed", 0.05),
         flush=params.get("flush", 1), 
         flush_volume=params.get("flush_volume", 2), 
         flush_speed=params.get("flush_speed", 0.05)

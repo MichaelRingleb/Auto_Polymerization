@@ -98,7 +98,7 @@ def remove_supernatant(medusa, precipitation_params):
     #draw same amount of precipitation solvent as before (+5 mL) from the precipitation vessel 
     try:        
         #change variable for volume to remove 5 mL more than were originally added in form of non solvent
-        non_solvent_volume = precipitation_params.get("non_solvent_volume", None)
+        non_solvent_volume = config.precipitation_params.get("non_solvent_volume", None)
         removal_volume = int(non_solvent_volume) + 5 if non_solvent_volume is not None else precipitation_params.get("non_solvent_volume", 25)
         medusa.logger.info(f"Removing {removal_volume} mL from the precipitation vessel")
         #draw removal_volume from the precipitation valve and put to waste  
@@ -121,7 +121,7 @@ def remove_supernatant(medusa, precipitation_params):
 def dry_polymer(medusa): 
     #6. step: drying the polymer by sparging argon from top and bottom of the precipitation vessel
         
-    drying_wait_minutes = config.precipitation_params.get{"drying_wait_minutes", 0}
+    drying_wait_minutes = config.precipitation_params.get("drying_wait_minutes", 0)
     drying_wait_seconds = float(drying_wait_minutes) *60
     try:
         medusa.logger.info(f"Start drying of the polymer for {drying_wait_minutes} minutes...")
@@ -161,15 +161,15 @@ def dry_polymer(medusa):
 
 def close_all_valves(medusa):
     #closing inert gas valve
-    medusa.logger.info("Set gas valve to closed state...") #opening gas valve to make flushing possible
+    medusa.logger.info("Set gas valve to closed state...") #closing gas valve
     medusa.write_serial("Gas_Valve", "GAS_OFF")
-    medusa.logger.info("Gas valve closed") #opening gas valve to make flushing possible
+    medusa.logger.info("Gas valve closed.")
     #set solenoid valve to bubble argon through the precipiation solenoid valve
     medusa.logger.info("Setting state of precipitation solenoid valve to pump connection...") 
     medusa.write_serial("Precipitation_Valve","PRECIP_OFF")
-    medusa.logger.info("Setting state successful") 
+    medusa.logger.info("Set state successful.") 
 
-
+#this function will execute the compounded subfunctions to precipitate a polymer in a non-solvent
 def run_precipitation_workflow(medusa, precipitation_wait_sec,  precipitation_params):
         
     washing_steps = config.precipitation_params.get("washing_cycles",0)
@@ -186,3 +186,4 @@ def run_precipitation_workflow(medusa, precipitation_wait_sec,  precipitation_pa
         remove_supernatant(medusa, precipitation_params)
         medusa.logger.info(f"End of washing step {step + 1}.")
     dry_polymer(medusa, precipitation_params)
+    close_all_valves(medusa)

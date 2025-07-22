@@ -294,12 +294,10 @@ def stop_polymerization_reaction(medusa):
     Args:
         medusa: Medusa instance
     """
-    medusa.logger.info("Stopping heating and stirring...")
-    medusa.set_hotplate_temperature("Reaction_Vial", 25)  # Cool down
-    medusa.set_hotplate_rpm("Reaction_Vial", 300)  # Stir slower
-    medusa.logger.info("Polymerization reaction stopped.")
-    medusa.write_serial("COM12", "2000") # Also remove vial from heatplate with linear actuator to cool down faster
-
+    medusa.logger.info("Stopping heating and stir at 300 rpm...")
+    medusa.heat_stir(vessel="Reaction_Vial", temperature = 0, rpm = 300) #cool down
+    medusa.write_serial("Linear_Actuator", "2000") # Also remove vial from heatplate with linear actuator to cool down faster
+    medusa.logger.info("Reaction vial moved out of hotplate and stopped heating.")
 
 # =============================================================================
 # MAIN WORKFLOW FUNCTION
