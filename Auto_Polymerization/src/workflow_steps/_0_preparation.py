@@ -59,12 +59,13 @@ from serial.serialutil import SerialException
 from src.liquid_transfers.liquid_transfers_utils import (
     serial_communication_error_safe_transfer_volumetric,
     to_nmr_liquid_transfer_shimming,
-    from_nmr_liquid_transfer_shimming,
+    from_nmr_liquid_transfer_shimming, prime_tubing
 )
 import importlib.util
 import sys
 import os
 import threading
+import users.config.platform_config as config
 
 
 def shim_nmr_sample(medusa, shim_level=2, shim_repeats=2):
@@ -135,75 +136,7 @@ def open_gas_valve(medusa):
     medusa.write_serial("Gas_Valve", "GAS_ON")
 
 
-def prime_tubing(medusa, prime_transfer_params):
-    """
-    Prime tubing from each vessel to waste using the appropriate pumps.
-    
-    This function performs comprehensive tubing priming to ensure all fluid paths
-    are properly filled and free of air bubbles. It primes each pump path from
-    its source vessel to waste, using configurable parameters for volumes, speeds,
-    and flush operations.
-    
-    All priming steps use serial_communication_error_safe_transfer_volumetric for
-    robust error handling of COM port conflicts.
-    
-    Args:
-        medusa: Medusa instance for hardware control
-        prime_transfer_params (dict): Dictionary containing all transfer parameters
-            for priming operations including volumes, speeds, flush settings, etc.
-            
-    Returns:
-        None: Priming operations are performed via error-safe transfer functions
-    """
-    serial_communication_error_safe_transfer_volumetric(medusa, **{
-        "source": "Solvent_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
-        "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
-        "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
-        "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
-        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
-        "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
-        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)    
-    })
 
-    serial_communication_error_safe_transfer_volumetric(medusa, **{
-        "source": "Monomer_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
-        "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
-        "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
-        "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
-        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
-        "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
-        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)
-    })
-
-    serial_communication_error_safe_transfer_volumetric(medusa, **{
-        "source": "Initiator_Vessel", "target": "Waste_Vessel", "pump_id": "Initiator_CTA_Pump",
-        "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
-        "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
-        "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
-        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
-        "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
-        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)
-    })
-
-    serial_communication_error_safe_transfer_volumetric(medusa, **{
-        "source": "CTA_Vessel", "target": "Waste_Vessel", "pump_id": "Initiator_CTA_Pump",
-        "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
-        "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
-        "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
-        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
-        "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
-        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)
-    })
-
-    serial_communication_error_safe_transfer_volumetric(medusa, **{
-        "source": "Modification_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
-        "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
-        "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
-        "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
-        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
-        "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
-        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)        
-    })
 
 
 def close_gas_valve(medusa):

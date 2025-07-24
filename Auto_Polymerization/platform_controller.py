@@ -268,10 +268,9 @@ def main():
       cleaning_ok = input("Please confirm that cleaning should be executed: Type in Y for yes or N for no! ").strip().upper()
     if cleaning_ok == "Y":
         try:
-            medusa.logger.info("Step 6: Cleaning the platform started.")
+            medusa.logger.info("Step 6: Cleaning of the platform started.")
             run_cleaning_workflow(
                 medusa=medusa,
-                precipitation_wait_seconds=config.precipitation_params.get("precipitation_wait_sec", 600),
                 cleaning_params=config.cleaning_params
             )
             medusa.logger.info("Cleaning workflow finished successfully.")
@@ -284,32 +283,7 @@ def main():
         medusa.logger.warning("Invalid input received. Please enter Y or N.")
 
 
-
-
-
-    # Step 6: Cleaning (placeholder for future implementation)
-    medusa.logger.info("Step 6: Cleaning workflow (placeholder)")
-    # TODO: Implement cleaning workflow
-    # from src.workflow_steps._5_cleaning_module import run_cleaning_workflow
-    # cleaning_result = run_cleaning_workflow(medusa, cleaning_params, experiment_id, base_path)
-    
     medusa.logger.info(f"Auto_Polymerization experiment {config.experiment_id} completed successfully!")
-
-
-
-
-
-
-
-     
-
-
-#ready for next run
-    # Initialize medusa (this would be done by the actual platform)
-    # For now, we'll assume medusa is available
-    medusa = None  # Placeholder for actual medusa instance
-
-
 
 
 

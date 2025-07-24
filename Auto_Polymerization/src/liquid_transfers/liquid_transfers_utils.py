@@ -120,91 +120,78 @@ def serial_communication_error_safe_transfer_volumetric(medusa, logger=None, **k
     return retry_on_serial_com_error(transfer_func, logger=logger)
 
 
-def to_uv_vis_reference_transfer(medusa):
+
+def prime_tubing(medusa, prime_transfer_params):
     """
-    Transfer NMR solvent to UV-VIS cell for reference spectrum acquisition.
+    Prime tubing from each vessel to waste using the appropriate pumps.
     
-    This function transfers pure NMR solvent (typically deuterated DMSO) to the
-    UV-VIS cell to establish a reference baseline for absorbance measurements.
-    The reference spectrum is used to calculate absorbance values for reaction samples.
+    This function performs comprehensive tubing priming to ensure all fluid paths
+    are properly filled and free of air bubbles. It primes each pump path from
+    its source vessel to waste, using configurable parameters for volumes, speeds,
+    and flush operations.
+    
+    All priming steps use serial_communication_error_safe_transfer_volumetric for
+    robust error handling of COM port conflicts.
     
     Args:
         medusa: Medusa instance for hardware control
-        
+        prime_transfer_params (dict): Dictionary containing all transfer parameters
+            for priming operations including volumes, speeds, flush settings, etc.
+            
     Returns:
-        None: Transfer is performed via error-safe wrapper
+        None: Priming operations are performed via error-safe transfer functions
     """
-    params = config.uv_vis_transfer_params
-    
-    serial_communication_error_safe_transfer_volumetric(
-        medusa,
-        source="NMR_Solvent_Vessel", 
-        target="UV_VIS", 
-        pump_id="Analytical_Pump",
-        transfer_type=params.get("transfer_type", "liquid"),
-        volume=params.get("volume", 1.5), draw_speed=params.get("draw_speed", 0.03), dispense_speed=params.get("dispense_speed", 0.016),
-        post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"), post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 1.5),
-        post_rinse_speed=params.get("post_rinse_speed", 0.1)
-    )
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
+        "source": "Solvent_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
+        "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
+        "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
+        "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
+        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
+        "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
+        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)    
+    })
+
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
+        "source": "Monomer_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
+        "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
+        "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
+        "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
+        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
+        "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
+        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)
+    })
+
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
+        "source": "Initiator_Vessel", "target": "Waste_Vessel", "pump_id": "Initiator_CTA_Pump",
+        "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
+        "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
+        "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
+        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
+        "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
+        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)
+    })
+
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
+        "source": "CTA_Vessel", "target": "Waste_Vessel", "pump_id": "Initiator_CTA_Pump",
+        "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
+        "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
+        "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
+        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
+        "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
+        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)
+    })
+
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
+        "source": "Modification_Vessel", "target": "Waste_Vessel", "pump_id": "Solvent_Monomer_Modification_Pump",
+        "transfer_type": prime_transfer_params.get("transfer_type", "liquid"),
+        "pre_rinse": prime_transfer_params.get("pre_rinse", 1), "pre_rinse_volume": prime_transfer_params.get("pre_rinse_volume", 1.0), "pre_rinse_speed": prime_transfer_params.get("pre_rinse_speed", 0.1),
+        "volume": prime_transfer_params.get("prime_volume", 1.0), "draw_speed": prime_transfer_params.get("draw_speed", 0.1), "dispense_speed": prime_transfer_params.get("dispense_speed", 0.1),
+        "flush": prime_transfer_params.get("flush", 1), "flush_volume": prime_transfer_params.get("flush_volume", 5), "flush_speed": prime_transfer_params.get("flush_speed", 0.1),
+        "post_rinse_vessel": prime_transfer_params.get("post_rinse_vessel", "Purge_Solvent_Vessel_1"), "post_rinse": prime_transfer_params.get("post_rinse", 1), "post_rinse_volume": prime_transfer_params.get("post_rinse_volume", 2.5),
+        "post_rinse_speed": prime_transfer_params.get("post_rinse_speed", 0.1)        
+    })
 
 
-def to_uv_vis_sampling_transfer(medusa):
-    """
-    Transfer reaction mixture to UV-VIS cell for absorbance measurement.
-    
-    This function transfers reaction mixture from the reaction vial to the UV-VIS
-    cell for absorbance spectrum acquisition. It's used for both t0 measurements
-    and during reaction monitoring to track conversion progress.
-    
-    Args:
-        medusa: Medusa instance for hardware control
-        
-    Returns:
-        None: Transfer is performed via error-safe wrapper
-    """
-    params = config.uv_vis_transfer_params
-    
-    serial_communication_error_safe_transfer_volumetric(
-        medusa,
-        source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump",
-        transfer_type=params.get("transfer_type", "liquid"),
-        volume=params.get("volume", 1.5), draw_speed=params.get("draw_speed", 0.03), dispense_speed=params.get("dispense_speed", 0.016), 
-        post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"), post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 1.5), 
-        post_rinse_speed=params.get("post_rinse_speed", 0.1)
-        
-    )
-
-
-def from_uv_vis_cleanup_transfer(medusa, target="NMR_Solvent_Vessel", volume=None):
-    """
-    Remove liquid from UV-VIS cell and transfer to target vessel.
-    
-    This function removes liquid from the UV-VIS cell after measurements and
-    transfers it to a specified target vessel. It's used for cleaning the cell
-    between different sample types (e.g., removing reference solvent before
-    adding reaction mixture).
-    
-    Args:
-        medusa: Medusa instance for hardware control
-        target (str): Target vessel for the removed liquid (default: NMR_Solvent_Vessel)
-        volume (float, optional): Volume to transfer (default: from config)
-        
-    Returns:
-        None: Transfer is performed via error-safe wrapper
-    """
-    params = config.uv_vis_transfer_params
-    
-    serial_communication_error_safe_transfer_volumetric(
-        medusa,
-        source="UV_VIS", target=target, pump_id="Analytical_Pump",
-        transfer_type=params.get("transfer_type", "liquid"),
-        volume=params.get("volume", 0.7), 
-        draw_speed=params.get("draw_speed", 0.03), 
-        dispense_speed=params.get("dispense_speed", 0.05),
-        flush=params.get("flush", 1), 
-        flush_volume=params.get("flush_volume", 2), 
-        flush_speed=params.get("flush_speed", 0.05)
-    )
 
 
 def add_modification_reagent_transfer(medusa):
@@ -295,6 +282,96 @@ def deoxygenate_reaction_mixture(medusa, deoxygenation_time_sec, pump_id="Solven
         except:
             pass
         return False
+
+
+
+
+
+def to_uv_vis_reference_transfer(medusa):
+    """
+    Transfer NMR solvent to UV-VIS cell for reference spectrum acquisition.
+    
+    This function transfers pure NMR solvent (typically deuterated DMSO) to the
+    UV-VIS cell to establish a reference baseline for absorbance measurements.
+    The reference spectrum is used to calculate absorbance values for reaction samples.
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
+    """
+    params = config.uv_vis_transfer_params
+    
+    serial_communication_error_safe_transfer_volumetric(
+        medusa,
+        source="NMR_Solvent_Vessel", 
+        target="UV_VIS", 
+        pump_id="Analytical_Pump",
+        transfer_type=params.get("transfer_type", "liquid"),
+        volume=params.get("volume", 1.5), draw_speed=params.get("draw_speed", 0.03), dispense_speed=params.get("dispense_speed", 0.016),
+        post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"), post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 1.5),
+        post_rinse_speed=params.get("post_rinse_speed", 0.1)
+    )
+
+
+def to_uv_vis_sampling_transfer(medusa):
+    """
+    Transfer reaction mixture to UV-VIS cell for absorbance measurement.
+    
+    This function transfers reaction mixture from the reaction vial to the UV-VIS
+    cell for absorbance spectrum acquisition. It's used for both t0 measurements
+    and during reaction monitoring to track conversion progress.
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
+    """
+    params = config.uv_vis_transfer_params
+    
+    serial_communication_error_safe_transfer_volumetric(
+        medusa,
+        source="Reaction_Vial", target="UV_VIS", pump_id="Analytical_Pump",
+        transfer_type=params.get("transfer_type", "liquid"),
+        volume=params.get("volume", 1.5), draw_speed=params.get("draw_speed", 0.03), dispense_speed=params.get("dispense_speed", 0.016), 
+        post_rinse_vessel=params.get("post_rinse_vessel", "Purge_Solvent_Vessel_2"), post_rinse=params.get("post_rinse", 1), post_rinse_volume=params.get("post_rinse_volume", 1.5), 
+        post_rinse_speed=params.get("post_rinse_speed", 0.1)
+        
+    )
+
+
+def from_uv_vis_cleanup_transfer(medusa, target="NMR_Solvent_Vessel", volume=None):
+    """
+    Remove liquid from UV-VIS cell and transfer to target vessel.
+    
+    This function removes liquid from the UV-VIS cell after measurements and
+    transfers it to a specified target vessel. It's used for cleaning the cell
+    between different sample types (e.g., removing reference solvent before
+    adding reaction mixture).
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        target (str): Target vessel for the removed liquid (default: NMR_Solvent_Vessel)
+        volume (float, optional): Volume to transfer (default: from config)
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
+    """
+    params = config.uv_vis_transfer_params
+    
+    serial_communication_error_safe_transfer_volumetric(
+        medusa,
+        source="UV_VIS", target=target, pump_id="Analytical_Pump",
+        transfer_type=params.get("transfer_type", "liquid"),
+        volume=params.get("volume", 0.7), 
+        draw_speed=params.get("draw_speed", 0.03), 
+        dispense_speed=params.get("dispense_speed", 0.05),
+        flush=params.get("flush", 1), 
+        flush_volume=params.get("flush_volume", 2), 
+        flush_speed=params.get("flush_speed", 0.05)
+    )
 
 
 def to_nmr_liquid_transfer_shimming(medusa):
@@ -409,3 +486,112 @@ def from_nmr_liquid_transfer_sampling(medusa):
     ) 
     medusa.logger.info("Closing gas valve...") #closing gas valve to flush the syringe path to reaction vial
     medusa.write_serial("Gas_Valve", "GAS_OFF")
+
+
+def to_nmr_liquid_transfer_cleaning(medusa):
+    """
+    Transfer purge solvet to NMR for cleaning
+    
+    This function transfers purge solvent from the purge solvent vessel to the NMR
+    spectrometer to clean the flow cell.
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
+    """
+    params = config.cleaning_params
+    
+    serial_communication_error_safe_transfer_volumetric(
+        medusa,
+        source="Purge_Solvent_Vessel_2", target="NMR", pump_id="Analytical_Pump",
+        transfer_type=params.get("transfer_type", "liquid"),
+        volume=params.get("nmr_cleaning_volume", 2.1), draw_speed=params.get("nmr_cleaning_draw_speed", 0.1), dispense_speed=params.get("nmr_cleaning_dispense_speed", 0.05),       
+    )
+
+
+def from_nmr_liquid_transfer_cleaning(medusa):
+    """
+    Transfer purge solvent back from NMR to waste.
+    
+    This function transfers the purge solvent back from the NMR flow cell after 
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
+    """
+    params = config.cleaning_params
+    
+    serial_communication_error_safe_transfer_volumetric(
+        medusa,
+        source="NMR", target="Waste_Vessel", pump_id="Analytical_Pump",
+        transfer_type=params.get("transfer_type", "liquid"),
+        volume=params.get("nmr_cleaning_volume", 2.1), draw_speed=params.get("nmr_cleaning_dispense_speed", 0.1), dispense_speed=params.get("nmr_cleaning_draw_speed", 0.05),       
+    ) #draw speed = nmr_cleaning_dispense_speed and the other way around because we now remove the cleaning solvent from the nmr
+
+
+def nmr_flush_gas_cleaning(medusa): 
+    """
+    Transfer inert gas to the NMR cell to flush out the remaining liquid in the flow cell after cleaning with solvent.
+    
+    Args:
+        medusa: Medusa instance for hardware control
+        
+    Returns:
+        None: Transfer is performed via error-safe wrapper
+    """
+    params = config.cleaning_params
+    
+    serial_communication_error_safe_transfer_volumetric(
+        medusa,
+        source="Purge_Solvent_Vessel_2", target="NMR", pump_id="Analytical_Pump",
+        transfer_type=params.get("transfer_type", "gas"),
+        volume=params.get("nmr_cleaning_gas_volume", 4), draw_speed=params.get("nmr_cleaning_gas_draw_speed", 0.1), dispense_speed=params.get("nmr_cleaning_gas_dispense_speed", 0.05),       
+    ) 
+
+
+
+
+def clean_reaction_vial_transfers_to_vial(medusa):
+    """
+    Dispense purge solvent to reaction vial to clean it
+   
+    
+    Args:
+        medusa: Medusa instance for hardware control
+            
+    Returns:
+        None: Dispenses are performed via error-safe transfer functions
+    """
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
+        "source": "Purge_Solvent_Vessel_1", "target": "Reaction_Vial", "pump_id": "Solvent_Monomer_Modification_Pump",
+        "transfer_type": "liquid",
+        "volume": config.cleaning_params.get("cleaning_volume_each_pump", 6.0), "draw_speed": config.cleaning_params.get("draw_speed_each_pump", 0.1), "dispense_speed": config.cleaning_params.get("dispense_speed_each_pump", 0.1),
+        "flush": config.cleaning_params.get("flush_times_each_pump", 1), "flush_volume": config.cleaning_params.get("flush_volume_each_pump", 5),  
+    })
+
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
+        "source": "Purge_Solvent_Vessel_1", "target": "Reaction_Vial", "pump_id": "Precipitation_Pump",
+        "transfer_type": "liquid",
+        "volume": config.cleaning_params.get("cleaning_volume_each_pump", 6.0), "draw_speed": config.cleaning_params.get("draw_speed_each_pump", 0.1), "dispense_speed": config.cleaning_params.get("dispense_speed_each_pump", 0.1),
+        "flush": config.cleaning_params.get("flush_times_each_pump", 1), "flush_volume": config.cleaning_params.get("flush_volume_each_pump", 5),  
+    })
+
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
+        "source": "Purge_Solvent_Vessel_1", "target": "Reaction_Vial", "pump_id": "Initiator_CTA_Pump",
+        "transfer_type": "liquid",
+        "volume": config.cleaning_params.get("cleaning_volume_each_pump", 6.0), "draw_speed": config.cleaning_params.get("draw_speed_each_pump", 0.1), "dispense_speed": config.cleaning_params.get("dispense_speed_each_pump", 0.1),
+        "flush": config.cleaning_params.get("flush_times_each_pump", 1), "flush_volume": config.cleaning_params.get("flush_volume_each_pump", 5), 
+    })
+
+    serial_communication_error_safe_transfer_volumetric(medusa, **{
+        "source": "Purge_Solvent_Vessel_2", "target": "Reaction_Vial", "pump_id": "Analytical_Pump",
+        "transfer_type": "liquid",
+        "volume": config.cleaning_params.get("cleaning_volume_each_pump", 6.0), "draw_speed": config.cleaning_params.get("draw_speed_each_pump", 0.1), "dispense_speed": config.cleaning_params.get("dispense_speed_each_pump", 0.1),
+        "flush": config.cleaning_params.get("flush_times_each_pump", 1), "flush_volume": config.cleaning_params.get("flush_volume_each_pump", 5),  
+    })
+
+   

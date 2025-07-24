@@ -59,7 +59,7 @@ uv_vis_data_base_path = "users/data/UV_VIS_data"  # Directory for UV-VIS data (s
 temperatures = {
     "polymerization_temp": 75,         # °C, polymerization
     "modification_temp": 30,      # °C, modification/functionalization
-    "cleaning_dry_temp": 50,           # °C, cleaning
+    "cleaning_dry_temp": 80,           # °C, cleaning dry temperature to get rid of the remaining purge solvent
 }
 
 # -------------------------------------------------------------------
@@ -69,7 +69,7 @@ target_rpm = {
     "polymerization_rpm": 600,   # rpm, polymerization
     "modification_rpm": 400,     #rpm, modification
     "post_modification_rpm": 300, #rpm after modification reaction is over and vial is lifted from the hotplate
-    "cleaning_rpm": 300,         # rpm, cleaning
+    "cleaning_rpm": 300,         # rpm, stir speed during cleaning of reaction vial
 }
 
 # -------------------------------------------------------------------
@@ -78,7 +78,7 @@ target_rpm = {
 
 # Run minimal workflow during preparation of the platform
 # This workflow makes it possible to check visually, whether the commanding of the different workflow instruments (syringe pumps, peristaltic pumps, hotplate, actuator, valves and analytical devices work as intended.
-# set to false to disable
+# set to false to disable, recmommended to do
 run_minimal_workflow_test = True
 
 
@@ -227,7 +227,7 @@ precipitation_params = {
     "washing_cylces": 0,                #number of cycles, the precipitated polymer is washed with methanol_volume mL methanol and subsequently methanol_volume +5 mL supernatant are removed
 
     "post_rinse_vessel": "Purge_Solvent_Vessel_1",  #Vessel for post rinse solvent
-    "precipitation_wait_sec": 600,             # s, wait time for precipitation while argon sparging for mixing of non_solvent and polymer
+    "precipitation_wait_sec": 600,             # s, wait time for precipitation while argon spargidng for mixing of non_solvent and polymer
     "drying_wait_minutes": 120                 # min, wait time for drying of polymer (during this time, the polymer is sparging from the top and bottom of the precipitation vessel with inert gas)                          
 }
 
@@ -236,13 +236,35 @@ precipitation_params = {
 # Cleaning workflow parameters
 # -------------------------------------------------------------------
 
-cleaning_params = {
-      "solvent_volume": 20,
-      "flush_speed": 0.2,
-      "gas_purge_time": 60,
-      "uv_vis_cleaning_volume": 5,
-      # ...etc.
-  }
+cleaning_params = {   
+    "uv_vis_cleaning_volume": 7, #mL
+    "uv_vis_cleaning_draw_speed": 0.1  , #mL/s
+    "uv_vis_cleaning_dispnse_speed": 0.05, #mL/s
+    "uv_vis_cleaning_flush": 1, #number of flushes with argon , draw and dispense speeds according to draw and dispense for liquid transfer
+    "uv_vis_cleaning_flush_volume": 3, #volume for flushing of flow path 
+      #post rinse not required as we work always with the purge solvent 
+      
+    "nmr_cleaning_repetitions": 2, #number of repetitions of pushing solvent to the nmr cell and then drawing back to pump and to waste
+    "nmr_cleaning_volume":2.1, #mL, volume which is used per cycle for the cleaning of the NMR
+    "nmr_cleaning_draw_speed": 0.1, #mL/s, 
+    "nmr_cleaning_dispense_speed": 0.07, #mL/s, speed for dispensing to NMR cell
+    "nmr_cleaning_gas_volume": 3, #mL, amount of inert gas used to flush the rest of solvent, etc out of the NMR flow cell after cleaning 
+    "nmr_cleaning_gas_draw_speed": 0.5 , #mL/s, speed with which the gas is drawn to the pump for flushing the nmr cell
+    "nmr_cleaning_gas_dispense_speed": 0.05 , #mL/s, speed for dispense of inert gas to the NMR cell
+    
+    "reaction_vial_cleaning_wait_time_min": 15, #min, time for stirring solvent in the reaction vial
+    "reaction_vial_cleaning_repetitions": 1, #number of repetitions, the reaction vial will be flsuhed with purge solvent and stirred (1 means, it will be flushed twice)
+    "cleaning_volume_each_pump": 6, #mL, MAX: 8; volume of purge solvent per pump to transfer to reaction vial for cleaning of that
+    "draw_speed_each_pump":0.25, #mL/s draw speed for all of the pumps to draw from purge solvent vessels and later dispense to reaction vial
+    "dispense_speed_each_pump": 0.1, #mL/s dispense speed for all pumps to dispense to reaction vial
+    "flush_times_each_pump": 1, #amounts of flushes with inert gas to push liquid from pump to Reaction vial
+    "flush_volume_each_pump": 3, #volume for the flush with inert gas  
+    "reaction_vial_cleaning_post_rinse_vessel": "Purge_Solvent_1", #definition of used vial for post rinsing of syringe after removal of cleaning solvent from the reaction vial
+    "reaction_vial_cleaning_post_rinse_volume": 2, #mL, amount of solvent to post rinse the syringe with after the removal of the cleaning solvent
+
+   "dry_reaction_vial_wait_min": 120, #min, time how long reaction vial will be heated and purged with inert gas, temperature for heating defined in temperatures dict
+
+       }
 
 
 
