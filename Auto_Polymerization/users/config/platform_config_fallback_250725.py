@@ -189,7 +189,7 @@ modification_params = {
     "max_monitoring_iterations": 200,    # max iterations for monitoring (10 hours)
     "post_modification_dialysis_hours": 5, # h, duration for post-modification dialysis
     "uv_vis_stability_tolerance_percent": 5.0,  # %, tolerance for absorbance stability check
-    "uv_vis_stability_measurements": 10, # number of recent measurements to compare for stability
+    "uv_vis_stability_measurements": 5, # number of recent measurements to compare for stability
 }
 
 

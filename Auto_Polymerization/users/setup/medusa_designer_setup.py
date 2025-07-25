@@ -61,7 +61,7 @@ def add_to_existing_design():
 
 if __name__ == "__main__":
     # Example usage: open an existing design
-    #add_to_existing_design()
-    make_new_design()
+    add_to_existing_design()
+    #make_new_design()
 
     

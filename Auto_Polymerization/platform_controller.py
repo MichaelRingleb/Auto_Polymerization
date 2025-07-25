@@ -179,15 +179,18 @@ def main():
     medusa.logger.info(f"Summary file: {monitoring_result['summary_file']}")
     
     # Step 3: Dialysis workflow - Polymer purification
-    # --- USER-CONFIGURABLE DIALYSIS STOPPING OPTIONS ---
+    #commented parts are legacy code and can be removed after check of the system
+
+    
+    # --- USER-CONFIGURABLE DIALYSIS STOPPING OPTIONS --- should already be implemneted in the config dictionary
     # Set to True to use NMR noise signal for stopping dialysis
-    use_noise_comparison_based_stopping = True
+    #use_noise_comparison_based_stopping = True
     # Set to True to use time-based stopping for dialysis
-    use_time_based_stopping = True
+    #use_time_based_stopping = True
     
     # Update config for dialysis workflow
-    config.dialysis_params["noise_comparison_based"] = use_noise_comparison_based_stopping
-    config.dialysis_params["time_based"] = use_time_based_stopping
+    #config.dialysis_params["noise_comparison_based"] = use_noise_comparison_based_stopping
+    #config.dialysis_params["time_based"] = use_time_based_stopping
 
     medusa.logger.info("Step 3: Running dialysis workflow...")
     try:

@@ -50,10 +50,6 @@ uv_vis_data_base_path = "users/data/UV_VIS_data"  # Directory for UV-VIS data (s
 
 
 # -------------------------------------------------------------------
-# TIMINGS FOR WORKFLOW STEPS (seconds unless otherwise noted)
-# -------------------------------------------------------------------
-
-# -------------------------------------------------------------------
 # TEMPERATURES FOR VARIOUS STEPS (°C)
 # -------------------------------------------------------------------
 temperatures = {
@@ -99,9 +95,6 @@ prime_transfer_params = {
 }
 
 
-
-
-
 # -------------------------------------------------------------------
 # POLYMERIZATION WORKFLOW PARAMETERS
 # -------------------------------------------------------------------
@@ -139,8 +132,8 @@ polymerization_params = {
 # -------------------------------------------------------------------
 # Used for both polymerization and dialysis shimming intervals, etc.
 polymerization_monitoring_params = {
-    "nmr_monomer_region": (5.0, 6.0),      # ppm, monomer peak region
-    "nmr_standard_region": (6.5, 7.5),     # ppm, internal standard region
+    "nmr_monomer_region": (5.0, 6.4),      # ppm, monomer peak region
+    "nmr_standard_region": (6.5, 8),     # ppm, internal standard region
     "nmr_noise_region": (9.0, 10.0),       # ppm, baseline noise region
     "nmr_scans": 32,                       # scans per measurement
     "nmr_spectrum_center": 5,              # ppm, spectrum center
@@ -159,7 +152,7 @@ dialysis_params = {
     "noise_comparison_based": True,      # If True, stop dialysis when monomer peak < 3x noise (NMR-based)
     "time_based": True,                  # If True, stop dialysis after a set duration (see below)
     "dialysis_duration_mins": 300,       # min, duration for time-based stopping
-    "dialysis_measurement_interval_minutes": None,  # min, overrides monitoring interval if set
+    "dialysis_measurement_interval_minutes": None,  # min, overrides monitoring interval if set (standard monitoring interval is 10 min)
     # The following parameters are referenced from other config dicts:
     # "sample_volume_ml": nmr_transfer_params['sample_volume_ml']
     # "reshim_interval": polymerization_monitoring_params['shimming_interval']
@@ -188,8 +181,9 @@ modification_params = {
     "monitoring_interval_minutes": 3,    # min, interval between UV-VIS measurements
     "max_monitoring_iterations": 200,    # max iterations for monitoring (10 hours)
     "post_modification_dialysis_hours": 5, # h, duration for post-modification dialysis
+
     "uv_vis_stability_tolerance_percent": 5.0,  # %, tolerance for absorbance stability check
-    "uv_vis_stability_measurements": 10, # number of recent measurements to compare for stability
+    "uv_vis_stability_measurements": 5, # number of recent measurements to compare for stability
 }
 
 
