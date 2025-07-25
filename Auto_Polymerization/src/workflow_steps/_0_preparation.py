@@ -137,8 +137,6 @@ def open_gas_valve(medusa):
 
 
 
-
-
 def close_gas_valve(medusa):
     """
     Close the gas valve.

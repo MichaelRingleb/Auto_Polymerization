@@ -1,11 +1,9 @@
 from re import T
-from medusa.core import vessel
-from Auto_Polymerization.users.setup import medusa_designer_setup
 from src.liquid_transfers.liquid_transfers_utils import  (nmr_flush_gas_cleaning, to_nmr_liquid_transfer_cleaning, 
 from_nmr_liquid_transfer_cleaning, serial_communication_error_safe_transfer_volumetric, clean_reaction_vial_transfers_to_vial)
 import time
 import users.config.platform_config as config
-import medusa
+
 
 #open the gas valve so every transfer afterwards can use the flushing
 def open_gas_valve(medusa):

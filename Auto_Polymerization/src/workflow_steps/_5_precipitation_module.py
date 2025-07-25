@@ -4,7 +4,6 @@ import users.config.platform_config as config
 
 
 
-
 def add_non_solvent(medusa, precipitation_params):
     #1. step: pump user defined mL of non solvent to precipiation vessel
     #pump x mL of methao
