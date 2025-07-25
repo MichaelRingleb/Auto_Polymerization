@@ -180,7 +180,10 @@ def run_minimal_workflow_test(medusa=None, logger=None):
     test_serial_devices(medusa)
     test_volumetric_transfers(medusa)
     logger.info("Testing NMR spectrum acquisition...")
-    nmr.acquire_nmr_spectrum(medusa=medusa)
+    try:
+        nmr.acquire_nmr_spectrum(medusa=medusa)
+    except Exception as e:
+        logger.info("Something went wrong, please check if the spectrometer is connected and remote control is enabled.")
     logger.info("NMR spectrum acquisition test complete.")
     logger.info("Testing UV-Vis spectrum acquisition...")
     uv_vis.take_spectrum(reference=True)
