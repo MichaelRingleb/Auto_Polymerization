@@ -183,7 +183,7 @@ def run_minimal_workflow_test(medusa=None, logger=None):
     try:
         nmr.acquire_nmr_spectrum(medusa=medusa)
     except Exception as e:
-        logger.info("Something went wrong, please check if the spectrometer is connected and remote control is enabled.")
+        logger.warning("SOMETHING WENT WRONG, PLEASE CHECK IF THE NMR-SPECTROMETER IS CONNECTED AND REMOTE CONTROL IS ENABLED.")
     logger.info("NMR spectrum acquisition test complete.")
     logger.info("Testing UV-Vis spectrum acquisition...")
     uv_vis.take_spectrum(reference=True)
