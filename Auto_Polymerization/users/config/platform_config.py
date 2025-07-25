@@ -17,7 +17,6 @@ parameter names and structure must be preserved for correct operation.
 
 Configuration Sections:
 - General Experiment Metadata & Paths: Experiment ID and data storage locations
-- Timings: Workflow step durations and wait times
 - Temperatures: Target temperatures for different reactions
 - RPM Settings: Stirring speeds for different steps
 - Preparation Parameters: Priming and cleaning operations

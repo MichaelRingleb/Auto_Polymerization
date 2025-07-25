@@ -3,9 +3,9 @@
 [![Python 3.10](https://img.shields.io/badge/python-3.10-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**Automated Polymer Synthesis and Characterization Platform**
+**Automated, Robust, and Modular Polymer Synthesis and Characterization Platform**
 
-The Auto_Polymerization platform is a comprehensive automated system for polymer synthesis, monitoring, purification, and functionalization. It integrates NMR spectroscopy, UV-VIS spectroscopy, and automated liquid handling to provide end-to-end polymer synthesis workflows.
+The Auto_Polymerization platform is a robust, modular, and fully automated system for polymer synthesis, monitoring, purification, and functionalization. It integrates NMR and UV-VIS spectroscopy, automated liquid handling, and comprehensive error-safe hardware control to provide end-to-end, reproducible polymer synthesis workflows. All modules are designed with DRY (Don't Repeat Yourself) principles, batch processing, and robust error handling for maximum reliability, maintainability, and extensibility. All hardware actions are logged, and all modules and functions include comprehensive, standardized docstrings.
 
 ---
 
@@ -234,8 +234,10 @@ The Auto_Polymerization platform provides a complete automated workflow for poly
 
 5. **Modification** (`_4_modification_module.py`)
    - UV-VIS-based functionalization reaction
-   - Reference spectrum acquisition
-   - Absorbance monitoring for reaction completion
+   - Reference and t0 spectrum acquisition
+   - Hotplate temperature and vial position control (actuator)
+   - Absorbance monitoring for reaction completion (stability-based at 520 nm)
+   - Final argon push to UV/VIS cell for safe clearing
    - Post-modification dialysis
 
 6. **Post-Modification Dialysis** (Platform Controller)
@@ -245,11 +247,14 @@ The Auto_Polymerization platform provides a complete automated workflow for poly
 
 ### **Key Features:**
 
-- **Error-Safe Transfers**: All liquid transfers use robust error handling with COM port conflict resolution
-- **Config-Driven**: All parameters configurable through `platform_config.py`
-- **Modular Design**: Each workflow step is a separate, testable module
-- **Comprehensive Logging**: Detailed logging throughout all operations
-- **Data Management**: Organized data storage with summary file generation
+- **Error-Safe Transfers**: All liquid and gas transfers use robust error handling with COM port conflict resolution and exponential backoff.
+- **Absorbance Stability Monitoring**: Functionalization completion is detected by monitoring absorbance stability at 520 nm.
+- **Final Argon Push**: After modification, the UV/VIS cell is cleared with a controlled argon push.
+- **Config-Driven & DRY**: All parameters are set in `platform_config.py` and all code follows DRY principles.
+- **Comprehensive Logging & Docstrings**: All hardware actions and errors are logged; all modules and functions have standardized docstrings.
+- **Batch Processing**: UV-VIS and NMR data are processed in batch with duplicate protection and robust file handling.
+- **Modular Design**: Each workflow step is a separate, testable module for easy extension and maintenance.
+- **Robust Error Handling**: All modules include error handling and logging for safe unattended operation.
 
 ---
 
@@ -289,10 +294,10 @@ This script will:
 |-----------|-------------|----------|
 | **🎮 Platform Controller** | Main workflow orchestration | `platform_controller.py` |
 | **🧪 Minimal Workflow Test** | End-to-end device and workflow test | `tests/test_minimal_workflow.py` |
-| **🔬 UV-VIS Utilities** | Spectroscopy data acquisition and analysis | `src/UV_VIS/uv_vis_utils.py` |
+| **🔬 UV-VIS Utilities** | Spectroscopy data acquisition, batch processing, absorbance stability, and analysis | `src/UV_VIS/uv_vis_utils.py` |
 | **🧲 NMR Utilities** | NMR spectrum analysis and batch processing | `src/NMR/nmr_utils.py` |
-| **💧 Liquid Transfer Utils** | Error-safe transfer functions | `src/liquid_transfers/liquid_transfers_utils.py` |
-| **⚙️ Workflow Modules** | Individual workflow steps | `workflow_steps/` |
+| **💧 Liquid Transfer Utils** | Error-safe, config-driven transfer functions | `src/liquid_transfers/liquid_transfers_utils.py` |
+| **⚙️ Workflow Modules** | Individual workflow steps (modular, testable) | `workflow_steps/` |
 | **⚙️ Configuration** | User-editable parameters | `users/config/platform_config.py` |
 
 ---
@@ -301,9 +306,9 @@ This script will:
 
 | Topic | Location | Description |
 |-------|----------|-------------|
-| **🔬 UV-VIS Utilities** | `src/UV_VIS/uv_vis_utils.py` | UV-VIS data acquisition and analysis |
+| **🔬 UV-VIS Utilities** | `src/UV_VIS/uv_vis_utils.py` | UV-VIS data acquisition, batch processing, absorbance stability, and analysis |
 | **🧲 NMR Utilities** | `src/NMR/nmr_utils.py` | NMR spectrum analysis and processing |
-| **💧 Liquid Transfers** | `src/liquid_transfers/liquid_transfers_utils.py` | Error-safe transfer functions |
+| **💧 Liquid Transfers** | `src/liquid_transfers/liquid_transfers_utils.py` | Error-safe, config-driven transfer functions |
 | **⚙️ Workflow Steps** | `workflow_steps/` | Individual workflow modules |
 | **🎮 Platform Controller** | `platform_controller.py` | Main workflow orchestration |
 | **⚙️ Configuration** | `users/config/platform_config.py` | User-editable parameters |
@@ -337,10 +342,11 @@ python tests/test_minimal_workflow.py
 
 ### **Code Quality:**
 
-- All functions include comprehensive docstrings
-- Error-safe transfer functions with retry logic
-- Modular design for easy testing and maintenance
-- Configuration-driven parameters for flexibility
+- All modules and functions include comprehensive, standardized docstrings
+- Error-safe transfer functions with retry logic and exponential backoff
+- Modular, DRY, and config-driven design for easy testing, extension, and maintenance
+- Batch processing and duplicate protection for all spectroscopy data
+- Robust error handling and logging throughout
 
 ---
 
@@ -373,7 +379,8 @@ For issues and questions:
 1. **Run the minimal workflow test** in `tests/` or `demo/`
 2. **Check the troubleshooting sections** in the README
 3. **Verify hardware connections** and configuration
-4. **Open an issue** on GitHub or contact the maintainers
+4. **Run the full test suite** to ensure all modules are working as expected
+5. **Open an issue** on GitHub or contact the maintainers
 
 **❓ Questions or issues?**  
 Please [open an issue](https://github.com/your-repo/issues) on GitHub or contact the maintainers.

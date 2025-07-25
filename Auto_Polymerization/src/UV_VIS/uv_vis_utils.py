@@ -1,10 +1,8 @@
 """
 Auto_Polymerization UV-VIS Spectroscopy Utilities
 
-This module provides comprehensive tools for UV-VIS spectroscopy data acquisition, processing,
-and analysis in automated polymerization workflows. It includes functions for spectrum
-acquisition, data preprocessing, absorbance calculation, and conversion analysis, with a focus on
-centralized logic, error handling, and code clarity.
+This module provides comprehensive tools for UV-VIS spectroscopy data acquisition, processing, and analysis in automated polymerization workflows. It includes functions for spectrum acquisition, 
+data preprocessing, absorbance calculation, and conversion analysis, with a focus on DRY principles, batch processing, and robust error handling.
 
 Key Features:
 - Automated spectrum acquisition using CCS200 spectrometer

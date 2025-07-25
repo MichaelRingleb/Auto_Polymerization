@@ -1,27 +1,22 @@
 """
 Auto_Polymerization Liquid Transfer Utilities
 
-This module provides robust and modular liquid transfer functions for the Auto_Polymerization platform.
-It includes error-safe wrappers for all hardware transfers and specialized functions for different
-workflow steps.
+This module provides robust, error-safe, and config-driven liquid and gas transfer functions for the Auto_Polymerization platform.
+It includes wrappers for all hardware transfers and specialized functions for different workflow steps, ensuring safe operation in multithreaded environments.
 
 Key Features:
-- Error-safe transfer functions with COM port conflict handling
-- Specialized transfer functions for UV-VIS, NMR, and modification workflows
+- Error-safe transfer functions with COM port conflict handling and exponential backoff
+- Specialized transfer functions for UV-VIS, NMR, modification, and cleaning workflows
 - Config-driven parameters for all transfer operations
-- Exponential backoff retry logic for serial communication errors
 - Comprehensive logging and error reporting
 
 Core Functions:
-- serial_communication_error_safe_transfer_volumetric: Main error-safe wrapper
-- retry_on_serial_com_error: Retry logic with exponential backoff
-- UV-VIS transfers: Reference, sampling, and cleanup operations
-- NMR transfers: Shimming and sampling operations
-- Modification transfers: Reagent addition with full parameter support
+- serial_communication_error_safe_transfer_volumetric: Main error-safe wrapper for medusa.transfer_volumetric
+- retry_on_serial_com_error: Retry logic with exponential backoff for serial errors
+- UV-VIS/NMR/Modification/Cleaning transfer helpers: Workflow-specific transfer logic
 - Deoxygenation: Active gas pumping for reaction mixture deoxygenation
 
-All transfer functions use the error-safe wrapper to ensure robust operation
-in multithreaded environments where COM port conflicts may occur.
+All transfer functions use the error-safe wrapper to ensure robust operation in multithreaded environments where COM port conflicts may occur.
 
 Dependencies:
 - medusa: Hardware control framework

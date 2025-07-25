@@ -2,8 +2,7 @@
 Auto_Polymerization Platform Controller
 
 This module serves as the main orchestrator for the complete Auto_Polymerization workflow.
-It coordinates all workflow steps including preparation, polymerization, monitoring, 
-dialysis, modification, and post-modification dialysis.
+It coordinates all workflow steps including preparation, polymerization, monitoring, dialysis, modification, and post-modification dialysis.
 
 The platform controller manages:
 - Hardware initialization and configuration
@@ -11,6 +10,7 @@ The platform controller manages:
 - Data flow between workflow modules
 - Logging and status reporting
 - Configuration management
+- User interaction for cleaning confirmation
 
 Workflow Steps:
 1. Preparation: Hardware setup, priming, and NMR shimming

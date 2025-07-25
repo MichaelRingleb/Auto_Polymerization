@@ -8,22 +8,25 @@ Key Features:
 - Active argon deoxygenation of reaction mixture
 - UV-VIS reference spectrum acquisition with pure solvent
 - UV-VIS t0 spectrum acquisition with reaction mixture
-- Modification reagent addition with proper flushing and rinsing
+- Modification reagent addition with proper flushing, rinsing, and hotplate control
 - UV-VIS monitoring with absorbance stability detection
 - Post-modification dialysis using existing dialysis workflow
 - Comprehensive error handling and retry logic
 - Detailed summary file generation (txt and csv formats)
 - Integration with medusa hardware control framework
 - Error-safe liquid transfers with COM port conflict handling
+- Final argon push to UV/VIS cell for safe clearing
+- Hotplate temperature and vial movement control
 
 Workflow Steps:
 1. Deoxygenation with argon gas (active pumping)
-2. UV-VIS reference spectrum (pure solvent baseline)
+2. UV-VIS reference spectrum (pure solvent reference)
 3. UV-VIS t0 spectrum (reaction mixture before modification)
-4. Modification reagent addition with comprehensive cleaning
+4. Modification reagent addition with hotplate and vial control
 5. UV-VIS monitoring until reaction completion (absorbance stability)
 6. Post-modification dialysis for purification
 7. Summary file generation with detailed results
+8. Final argon push to UV/VIS cell
 
 All liquid transfers use error-safe functions with COM port conflict handling.
 All parameters are configurable through platform_config.py.
@@ -61,19 +64,25 @@ import users.config.platform_config as config
 
 def setup_uv_vis_reference(medusa: Medusa) -> Tuple[bool, Optional[str]]:
     """
-    Set up UV-VIS reference spectrum with pure solvent.
-    
-    This function transfers pure NMR solvent (typically deuterated DMSO) to the UV-VIS
-    cell and acquires a reference spectrum. This reference is used to calculate
-    absorbance values for reaction samples by providing a baseline for the solvent.
-    
+    Acquire and save a UV-VIS reference spectrum using pure solvent.
+
+    This function:
+    - Transfers pure NMR solvent to the UV-VIS cell.
+    - Acquires a reference spectrum for absorbance calculations.
+    - Removes the solvent from the UV-VIS cell after acquisition.
+
     Args:
-        medusa: Medusa object for hardware control
-        
+        medusa (Medusa): Medusa hardware control object.
+
     Returns:
-        Tuple[bool, Optional[str]]: (success, filename if successful)
-            - success: True if reference spectrum was acquired successfully
-            - filename: Path to the saved reference spectrum file, or None if failed
+        Tuple[bool, Optional[str]]: (success, filename)
+            - success (bool): True if the reference spectrum was acquired and saved.
+            - filename (str or None): Path to the saved reference spectrum file, or None if acquisition failed.
+
+    Side Effects:
+        - Controls hardware (liquid transfer, spectrum acquisition).
+        - Writes spectrum file to disk.
+        - Logs all actions and errors.
     """
     
     try:
@@ -102,19 +111,24 @@ def setup_uv_vis_reference(medusa: Medusa) -> Tuple[bool, Optional[str]]:
 
 def setup_uv_vis_t0(medusa: Medusa) -> Tuple[bool, Optional[str]]:
     """
-    Set up UV-VIS t0 spectrum with reaction mixture.
-    
-    This function transfers reaction mixture to the UV-VIS cell and acquires
-    a t0 spectrum before modification reagent addition. This spectrum serves
-    as the baseline for monitoring the modification reaction progress.
-    
+    Acquire and save a UV-VIS t0 spectrum using the reaction mixture.
+
+    This function:
+    - Transfers the reaction mixture to the UV-VIS cell.
+    - Acquires a t0 spectrum before modification reagent addition.
+
     Args:
-        medusa: Medusa object for hardware control
-        
+        medusa (Medusa): Medusa hardware control object.
+
     Returns:
-        Tuple[bool, Optional[str]]: (success, filename if successful)
-            - success: True if t0 spectrum was acquired successfully
-            - filename: Path to the saved t0 spectrum file, or None if failed
+        Tuple[bool, Optional[str]]: (success, filename)
+            - success (bool): True if the t0 spectrum was acquired and saved.
+            - filename (str or None): Path to the saved t0 spectrum file, or None if acquisition failed.
+
+    Side Effects:
+        - Controls hardware (liquid transfer, spectrum acquisition).
+        - Writes spectrum file to disk.
+        - Logs all actions and errors.
     """
 
     
@@ -141,18 +155,24 @@ def setup_uv_vis_t0(medusa: Medusa) -> Tuple[bool, Optional[str]]:
 
 def add_modification_reagent(medusa: Medusa, modification_params: Dict) -> bool:
     """
-    Add modification reagent to the reaction vial.
-    
-    This function uses error-safe transfer functions to add the modification
-    reagent to the reaction vial. It ensures proper flushing and rinsing
-    of the UV-VIS cell to remove any residual solvent or reaction products.
-    
+    Add modification reagent to the reaction vial with hotplate and vial control.
+
+    This function:
+    - Sets the hotplate to the modification temperature and rpm.
+    - Waits until the hotplate reaches the target temperature.
+    - Adds the modification reagent using error-safe transfer.
+    - Lowers the reaction vial into the hotplate after reagent addition.
+
     Args:
-        medusa: Medusa object for hardware control
-        modification_params: Modification parameters from config
-        
+        medusa (Medusa): Medusa hardware control object.
+        modification_params (dict): Modification parameters from config.
+
     Returns:
-        bool: True if successful, False otherwise
+        bool: True if successful, False otherwise.
+
+    Side Effects:
+        - Controls hardware (hotplate, actuator, liquid transfer).
+        - Logs all actions and errors.
     """
 
     #set hotplate to modification temperature
@@ -190,20 +210,24 @@ def add_modification_reagent(medusa: Medusa, modification_params: Dict) -> bool:
 
 def monitor_modification_reaction(medusa: Medusa, modification_params: Dict) -> Dict:
     """
-    Monitor the modification reaction using UV-VIS spectroscopy.
-    
-    This function continuously monitors the UV-VIS absorbance of the reaction
-    mixture to detect the completion of the functionalization reaction.
-    It uses a stability-based approach, where the reaction is considered
-    complete when the absorbance remains stable within a tolerance for
-    a specified number of measurements.
-    
+    Monitor the modification reaction using UV-VIS spectroscopy and absorbance stability.
+
+    This function:
+    - Continuously monitors the UV-VIS absorbance of the reaction mixture.
+    - Detects reaction completion based on absorbance stability over a set number of measurements.
+    - After completion, lifts the vial from the hotplate and sets the hotplate temperature to 0 while stirring.
+
     Args:
-        medusa: Medusa object for hardware control
-        modification_params: Modification parameters from config
-        
+        medusa (Medusa): Medusa hardware control object.
+        modification_params (dict): Modification parameters from config.
+
     Returns:
-        Dict: Monitoring results including final conversion and measurement count
+        dict: Monitoring results including final conversion, measurement count, and completion status.
+
+    Side Effects:
+        - Controls hardware (liquid transfer, hotplate, actuator).
+        - Writes measurement data to disk.
+        - Logs all actions and errors.
     """
 
     monitoring_interval = config.modification_params["monitoring_interval_minutes"]
@@ -294,19 +318,24 @@ def monitor_modification_reaction(medusa: Medusa, modification_params: Dict) -> 
 def generate_modification_summary(experiment_id: str, data_base_path: str, 
                                 monitoring_results: Dict, modification_params: Dict) -> Dict:
     """
-    Generate summary files for the modification workflow.
-    
-    This function creates detailed text and CSV summary files for the modification
-    workflow, including parameters, results, and measurement history.
-    
+    Generate summary files (TXT and CSV) for the modification workflow.
+
+    This function:
+    - Creates detailed text and CSV summary files for the modification workflow.
+    - Includes parameters, results, and measurement history.
+
     Args:
-        experiment_id: Experiment identifier
-        data_base_path: Base path for data storage
-        monitoring_results: Results from modification monitoring
-        modification_params: Modification parameters used
-        
+        experiment_id (str): Experiment identifier.
+        data_base_path (str): Base path for data storage.
+        monitoring_results (dict): Results from modification monitoring.
+        modification_params (dict): Modification parameters used.
+
     Returns:
-        Dict: Paths to generated summary files
+        dict: Paths to generated summary files (TXT and CSV).
+
+    Side Effects:
+        - Writes summary files to disk.
+        - Logs all actions and errors.
     """
     logger = logging.getLogger(__name__)
     
@@ -382,22 +411,31 @@ def run_modification_workflow(medusa: Medusa,
                             data_base_path: Optional[str] = None,
                             uv_vis_data_base_path: Optional[str] = None) -> Dict:
     """
-    Run the complete modification workflow.
-    
-    This function orchestrates the entire modification workflow, including
-    deoxygenation, UV-VIS setup, modification reagent addition, monitoring,
-    and post-modification dialysis. It uses configurable parameters and
-    handles errors with retry logic.
-    
+    Run the complete modification workflow, including all hardware and data steps.
+
+    This function orchestrates:
+    - Deoxygenation
+    - UV-VIS reference and t0 setup
+    - Modification reagent addition with hotplate/vial control
+    - UV-VIS monitoring with absorbance stability
+    - Post-modification dialysis (handled in platform controller)
+    - Summary file generation
+    - Final argon push to UV/VIS cell
+
     Args:
-        medusa: Medusa object for hardware control
-        modification_params: Modification parameters (uses config if None)
-        experiment_id: Experiment identifier (uses config if None)
-        data_base_path: Base path for data storage (uses config if None)
-        uv_vis_data_base_path: UV-VIS data path (uses config if None)
-        
+        medusa (Medusa): Medusa hardware control object.
+        modification_params (dict, optional): Modification parameters (uses config if None).
+        experiment_id (str, optional): Experiment identifier (uses config if None).
+        data_base_path (str, optional): Base path for data storage (uses config if None).
+        uv_vis_data_base_path (str, optional): UV-VIS data path (uses config if None).
+
     Returns:
-        Dict: Complete workflow results
+        dict: Complete workflow results, including success status, step results, summary files, and error messages.
+
+    Side Effects:
+        - Controls hardware (liquid transfer, hotplate, actuator, gas valve).
+        - Writes data and summary files to disk.
+        - Logs all actions and errors.
     """
     # Use config values if not provided
     if modification_params is None:
